@@ -51,11 +51,14 @@ public class Mediator {
     private Set<PIMPServer> servers = new HashSet<PIMPServer>();
 
     public Entry get(PIMPServer server, String key) {
+        // TODO Auto-generated method stub
         return get(server, key, (Set<String>) null);
     }
 
     public Entry get(PIMPServer server, String key, Set<String> columns) {
         servers.add(server);
+        
+        
         // TODO Auto-generated method stub
         return null;
     }
@@ -66,7 +69,7 @@ public class Mediator {
                     "The legal argument: column must not be null!");
         }
         Set<String> columns = new HashSet<String>();
-        columns.add(key);
+        columns.add(column);
         return get(server, key, columns);
     }
 
@@ -131,6 +134,7 @@ public class Mediator {
     
     private ServerResponse process(PIMPServer server, ClientRequestScan request) {
         // TODO Auto-generated method stub
+    	
         return null;
     }
 
@@ -146,6 +150,5 @@ public class Mediator {
 
         // TODO Auto-generated method stub
         return null;
-    }
-
+    } 
 }
