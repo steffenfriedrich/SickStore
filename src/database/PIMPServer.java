@@ -2,7 +2,7 @@ package database;
 
 import java.io.IOException;
 
-import backend.Entry;
+import backend.Mediator;
 import backend.Store;
 
 import com.esotericsoftware.kryonet.Connection;
@@ -26,21 +26,25 @@ public class PIMPServer extends Participant {
         super.register(server);
 
         server.addListener(new Listener() {
-            public void received(Connection c, Object object) {
+            public void received(final Connection c, final Object object) {
                 if (!(object instanceof FrameworkMessage)) {
-                    new ServerReceivedHandler(c, object, node).start();
+                    new Thread() {
+                        public void run() {
+                            Mediator.getInstance().processQuery(node, c,object);
+                            };
+                    }.start();
                 }
             }
 
             public void disconnected(Connection c) {
-                new ServerDisconnectedHandler(c, node).start();
+                        System.out.println("Server disconnected from connection " + c.getID());
             }
         });
         server.bind(port);
         server.start();
     }
 
-    protected void send(int connectionID, Object object) {
+    public void send(int connectionID, Object object) {
         server.sendToTCP(connectionID, object);
     }
 
@@ -66,41 +70,10 @@ public class PIMPServer extends Participant {
 
         PIMPServer server = new PIMPServer(tcpPort);
 
-        Entry entry = new Entry();
-        entry.put("name", "Jonny");
-        server.put("1", entry);
-
         PIMPClient c1 = new PIMPClient(timeout, host, tcpPort, "c1");
         c1.connect();
 
-        Entry value = c1.get("1");
-        value.put("age", 26);
-
-        System.out.println(c1.put("2", value));
-    }
-
-    public Entry get(String key) {
-        return store.get(key);
-    }
-
-    public void put(String key, Entry value) {
-        store.put(key, value);
-    }
-
-    /**
-     * Updates the given column under the given key with the given value. If
-     * there is no entry under the given key, a new entry is created. If the
-     * given column is <code>null</code>, it is removed.
-     * 
-     * @param key
-     * @param column
-     * @param value
-     */
-    public synchronized void put(String key, String column, Object value) {
-        store.put(key, column, value);
-    }
-
-    public synchronized Object get(String key, String column) {
-        return store.get(key, column);
+        PIMPClient c2 = new PIMPClient(timeout, host, tcpPort, "c2");
+        c2.connect();
     }
 }

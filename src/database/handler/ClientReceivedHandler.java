@@ -1,14 +1,18 @@
 package database.handler;
 
+import java.util.List;
+
 import backend.Entry;
 
 import com.esotericsoftware.kryonet.Connection;
 
 import database.PIMPClient;
+import database.messages.ServerResponseDelete;
 import database.messages.ServerResponseException;
-import database.messages.ServerResponseGet;
-import database.messages.ServerResponseGetColumn;
-import database.messages.ServerResponsePut;
+import database.messages.ServerResponseInsert;
+import database.messages.ServerResponseRead;
+import database.messages.ServerResponseScan;
+import database.messages.ServerResponseUpdate;
 
 public class ClientReceivedHandler extends Thread {
     private Object object;
@@ -24,30 +28,44 @@ public class ClientReceivedHandler extends Thread {
 
     @Override
     public void run() {
-        if (object instanceof ServerResponseGet) {
-            ServerResponseGet message = (ServerResponseGet) object;
+        if (object instanceof ServerResponseDelete) {
+        	ServerResponseDelete message = (ServerResponseDelete) object;
+
+            Long id = message.getId(); 
+
+            pimpclient.outstandingRequests.put(id, true);
+
+        }  else  if (object instanceof ServerResponseInsert) {
+        	ServerResponseInsert message = (ServerResponseInsert) object;
+
+            Long id = message.getId();
+
+            pimpclient.outstandingRequests.put(id, true);
+
+        }  else if (object instanceof ServerResponseRead) {
+        	ServerResponseRead message = (ServerResponseRead) object;
 
             Long id = message.getId();
             Entry entry = message.getEntry();
 
             pimpclient.outstandingRequests.put(id, entry);
 
-        } else if (object instanceof ServerResponseGetColumn) {
-            ServerResponseGetColumn message = (ServerResponseGetColumn) object;
+        }  else if (object instanceof ServerResponseScan) {
+        	ServerResponseScan message = (ServerResponseScan) object;
 
-            Long id = message.getId(); 
-            Object entry = message.getValue();
+            Long id = message.getId();
+            List<Entry> entries = message.getEntries();
 
-            pimpclient.outstandingRequests.put(id, entry);
+            pimpclient.outstandingRequests.put(id, entries);
 
-        } else if (object instanceof ServerResponsePut) {
-            ServerResponsePut message = (ServerResponsePut) object;
+        }  else if (object instanceof ServerResponseUpdate) {
+        	ServerResponseUpdate message = (ServerResponseUpdate) object;
 
             Long id = message.getId();
 
             pimpclient.outstandingRequests.put(id, true);
 
-        } else if (object instanceof ServerResponseException) {
+        }  else if (object instanceof ServerResponseException) {
             ServerResponseException message = (ServerResponseException) object;
 
             Long id = message.getId();

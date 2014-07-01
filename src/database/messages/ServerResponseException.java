@@ -15,8 +15,7 @@ public class ServerResponseException extends ServerResponse {
     }
 
     public ServerResponseException(Long id, Exception exception) {
-        super();
-        this.id = id;
+        super(id);
         this.exception = exception;
     }
 

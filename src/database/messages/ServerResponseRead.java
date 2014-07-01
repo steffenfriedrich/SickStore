@@ -2,13 +2,13 @@ package database.messages;
 
 import backend.Entry;
 
-public class ServerResponseGet extends ServerResponse {
+public class ServerResponseRead extends ServerResponse {
     private Entry entry;
 
-    private ServerResponseGet() {
+    private ServerResponseRead() {
     }
 
-    public ServerResponseGet(Long id, Entry entry) {
+    public ServerResponseRead(Long id, Entry entry) {
         super();
         this.id = id;
         this.entry = entry;

@@ -5,6 +5,7 @@
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.7-sources.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.7.jar"/>
 	<classpathentry kind="lib" path="lib/kryonet-2.21-all.jar" sourcepath="lib/kryonet-kryonet-2.21.zip"/>
+	<classpathentry kind="lib" path="lib/reflections-0.9.9-RC1-uberjar.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

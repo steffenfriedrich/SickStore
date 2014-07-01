@@ -1,65 +1,64 @@
 package database;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import sun.swing.MenuItemLayoutHelper.ColumnAlignment;
+import org.reflections.Reflections;
 
 import backend.Entry;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.EndPoint;
 
-import database.messages.ClientRequestGet;
-import database.messages.ClientRequestGetColumn;
-import database.messages.ClientRequestPut;
-import database.messages.ClientRequestPutColumn;
-import database.messages.ServerResponseException;
-import database.messages.ServerResponseGet;
-import database.messages.ServerResponseGetColumn;
-import database.messages.ServerResponsePut;
+import database.messages.ClientRequest;
 import database.messages.exception.DatabaseException;
-import database.messages.exception.ExceptionNoColumnProvided;
-import database.messages.exception.ExceptionNoKeyProvided;
-import database.messages.exception.ExceptionNoValueProvided;
-import database.messages.exception.ExceptionUnknownMessageType;
 
 // This class is a convenient place to keep things common to both the client and server.
 public class Participant {
-    // This registers objects that are going to be sent over the network.
-    static public void register(EndPoint endPoint) {
-        Kryo kryo = endPoint.getKryo();
+	// This registers objects that are going to be sent over the network.
+	static public void register(EndPoint endPoint) {
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 
-        for (Class c : new Class[] {
-                // Some primitives etc.
-                AtomicLong.class,
-                ConcurrentHashMap.class,
-                Entry.class,
-                HashMap.class,
-                Long.class,
-                Map.class,
-                Object.class,
-                String.class,
-                String[].class,
+		// register some primitives etc.
+		classes.add(AtomicLong.class);
+		classes.add(ConcurrentHashMap.class);
+		classes.add(Entry.class);
+		classes.add(Exception.class);
+		classes.add(HashMap.class);
+		classes.add(IllegalArgumentException.class);
+		classes.add(Long.class);
+		classes.add(Map.class);
+		classes.add(Object.class);
+		classes.add(String.class);
+		classes.add(String[].class);
 
-                // Exceptions
-                Exception.class,
-                DatabaseException.class,
-                ExceptionNoColumnProvided.class,
-                ExceptionNoKeyProvided.class,
-                ExceptionNoValueProvided.class,
-                ExceptionUnknownMessageType.class,
-                IllegalArgumentException.class,
+		// register exceptions
+		classes.addAll(getClassesInPackageOf(DatabaseException.class));
+		// register messages
+		classes.addAll(getClassesInPackageOf(ClientRequest.class));
 
-                // Messages
-                ClientRequestGet.class, ClientRequestGetColumn.class,
-                ClientRequestPut.class, ClientRequestPutColumn.class,
-                ServerResponseException.class,ServerResponseGetColumn.class, ServerResponseGet.class,
-                ServerResponsePut.class }) {
-            kryo.register(c);
-        }
+		Kryo kryo = endPoint.getKryo();
+		for (Class<?> c : classes) {
+			kryo.register(c);
+		}
+	}
 
-    }
+	/**
+	 * 
+	 * @param c
+	 *            a class
+	 * @return all classes that are part of the same package as <code>c</code>
+	 */
+	private static Set<Class<? extends Object>> getClassesInPackageOf(Class<?> c) {
+		Reflections reflections = new Reflections(c.getName());
+
+		Set<Class<? extends Object>> allClasses = reflections
+				.getSubTypesOf(Object.class);
+
+		return allClasses;
+	}
 }

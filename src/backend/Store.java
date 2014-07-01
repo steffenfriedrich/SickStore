@@ -3,6 +3,8 @@
  */
 package backend;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
 
 /**
@@ -24,55 +26,82 @@ public class Store {
         return instance;
     }
 
-    private TreeMap<String, Entry> values = new TreeMap<String, Entry>();
+    private TreeMap<String, EntrySet> values = new TreeMap<String, EntrySet>();
 
-    public synchronized Entry get(String key) {
+    public synchronized EntrySet get(String key) {
         return values.get(key);
     }
 
     /**
-     * Stores the given entry value under the given key. If the given value is
-     * <code>null</code>, the given key is removed.
+     * Stores the given entry value under the given key and timestamp.  
      * 
      * @param key
      * @param value
+     * @param timestamp
      */
-    public synchronized void put(String key, Entry value) {
-        if (value == null) {
-            values.remove(key);
-        } else {
-            values.put(key, value);
+    public synchronized void put(String key, Entry value, Long timestamp) {
+        EntrySet entrySet = values.get(key);
+
+        if (entrySet == null) {
+            entrySet = new EntrySet();
+
+            values.put(key, entrySet);
         }
+
+        entrySet.put(timestamp, value);
     }
 
     /**
-     * Updates the given column under the given key with the given value. If
-     * there is no entry under the given key, a new entry is created. If the
-     * given column is <code>null</code>, it is removed.
+     * Returns a list of all the keys in a specific key range
      * 
      * @param key
-     * @param column
-     * @param value
+     *            the first key in the range
+     * @param range
+     *            that is a number of keys (key range size)
+     * @param asc
+     *            if true, the range consists of <code>key</code>and a
+     *            higher-valued keys; else, the range consists of
+     *            <code>key</code> and lower-valued keys
+     * @return a list of all the keys in a specific key range
      */
-    public synchronized void put(String key, String column, Object value) {
-        Entry entry = values.get(key);
+    public synchronized List<String> getKeyRange(String key, int range,
+            final boolean asc) {
+        if (key == null) {
+            throw new IllegalArgumentException("Key must not be null!");
+        }
+        if (range < 1) {
+            throw new IllegalArgumentException(
+                    "Range must be greater than or equal to 1!");
+        }
+        String nextKey = null;
+        List<String> versions = new ArrayList<String>(range);
+        versions.add(key);
 
-        if (entry == null) {
-            entry = new Entry();
-            put(key, entry);
+        while (range > 1
+                && (asc && (nextKey = higherKey(key)) != null || !asc
+                        && (nextKey = lowerKey(key)) != null)) {
+            versions.add(nextKey);
+            range--;
         }
 
-        entry.put(column, value);
+        return versions;
     }
 
-    public synchronized Object get(String key, String column) {
-        Entry entry = values.get(key);
+    /**
+     * Returns a list of all the {@link EntrySet} instances in a specific key range 
+     * @return a list of all the {@link EntrySet} instances in a specific key range
+     * 
+     * @see #getKeyRange(String, int, boolean)
+     */
+    public synchronized List<EntrySet> getRange(String key, int range,
+            final boolean asc) {
+        List<EntrySet> versions = new ArrayList<EntrySet>(range);
 
-        if (entry == null) {
-            return null;
+        for (String k : getKeyRange(key, range, asc)) {
+            versions.add(get(k));
         }
 
-        return entry.get(column);
+        return versions;
     }
 
     /**
