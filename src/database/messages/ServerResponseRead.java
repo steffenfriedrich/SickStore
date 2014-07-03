@@ -1,24 +1,24 @@
 package database.messages;
 
-import backend.Entry;
+import backend.Version;
 
 public class ServerResponseRead extends ServerResponse {
-    private Entry entry;
+	private Version entry;
 
-    private ServerResponseRead() {
-    }
+	private ServerResponseRead() {
+		super(); 
+	}
 
-    public ServerResponseRead(Long id, Entry entry) {
-        super();
-        this.id = id;
-        this.entry = entry;
-    }
+	public ServerResponseRead(long clientRequestID, Version entry) { 
+	super(clientRequestID);
+		this.entry = entry;
+	}
 
-    public Entry getEntry() {
-        return entry;
-    }
+	public Version getEntry() {
+		return entry;
+	}
 
-    public void setEntry(Entry entry) {
-        this.entry = entry;
-    }
+	public void setEntry(Version entry) {
+		this.entry = entry;
+	}
 }

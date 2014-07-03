@@ -1,23 +1,31 @@
 package database.messages;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class ServerResponse {
 
-    protected Long id;
+	protected static final AtomicLong counter = new AtomicLong();
 
-    public ServerResponse() {
-        super();
-    }
+	/** The request ID of the client request that triggered this response */
+	protected Long clientRequestID;
 
-    public ServerResponse(Long id) {
-        this();
-        this.id = id;
-    }
+	public Long getClientRequestID() {
+		return clientRequestID;
+	}
 
-    public Long getId() {
-        return id;
-    }
+	/** The request ID of the client request that triggered this response */
+	protected Long id;
 
-    public void setId(Long id) {
-        this.id = id;
-    } 
+	public ServerResponse() {
+		super();
+	}
+
+	public ServerResponse(long clientRequestID) {
+		this.clientRequestID = clientRequestID;
+		this.id = counter.incrementAndGet();
+	}
+
+	public Long getId() {
+		return id;
+	}
 }

@@ -2,25 +2,25 @@ package database.messages;
 
 import java.util.List;
 
-import backend.Entry;
+import backend.Version;
 
 public class ServerResponseScan extends ServerResponse {
-    private List<Entry> entries;
+	private List<Version> entries;
 
-    private ServerResponseScan() {
-    }
+	private ServerResponseScan() {
+		super();
+	}
 
-    public ServerResponseScan(Long id, List<Entry> entries) {
-        super();
-        this.id = id;
-        this.entries =  entries;
-    }
+	public ServerResponseScan(long clientRequestID, List<Version> entries) {
+		super(clientRequestID);
+		this.entries = entries;
+	}
 
-    public List<Entry> getEntries() {
-        return entries;
-    }
+	public List<Version> getEntries() {
+		return entries;
+	}
 
-    public void setEntries(List<Entry> entries) {
-        this.entries = entries;
-    } 
+	public void setEntries(List<Version> entries) {
+		this.entries = entries;
+	}
 }

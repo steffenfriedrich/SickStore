@@ -3,9 +3,13 @@
  */
 package backend;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.esotericsoftware.jsonbeans.ObjectMap.Keys;
 import com.esotericsoftware.kryonet.Connection;
 
 import database.PIMPServer;
@@ -21,6 +25,7 @@ import database.messages.ServerResponseException;
 import database.messages.ServerResponseInsert;
 import database.messages.ServerResponseRead;
 import database.messages.ServerResponseUpdate;
+import database.messages.exception.DatabaseException;
 import database.messages.exception.ExceptionNoKeyProvided;
 import database.messages.exception.ExceptionUnknownMessageType;
 
@@ -35,120 +40,74 @@ import database.messages.exception.ExceptionUnknownMessageType;
  * 
  */
 public class Mediator {
-    private final static Mediator instance;
-    private Store store = Store.getInstance();
-    static {
-        instance = new Mediator();
-    }
+	private final static Mediator instance;
 
-    private Mediator() {
-    }
+	private Store store = Store.getInstance();
+	static {
+		instance = new Mediator();
+	}
 
-    public static Mediator getInstance() {
-        return instance;
-    }
+	private Mediator() {
+	}
 
-    private Set<PIMPServer> servers = new HashSet<PIMPServer>();
+	public static Mediator getInstance() {
+		return instance;
+	}
 
-    public Entry get(PIMPServer server, String key) {
-        // TODO Auto-generated method stub
-        return get(server, key, (Set<String>) null);
-    }
+	public Version get(int server, String key, long timestamp) {
+		return get(server, key, (Set<String>) null, timestamp);
+	}
 
-    public Entry get(PIMPServer server, String key, Set<String> columns) {
-        servers.add(server);
-        
-        
-        // TODO Auto-generated method stub
-        return null;
-    }
+	public Version get(int server, String key, Set<String> columns,
+			long timestamp) {
+		if (columns == null) {
+			throw new NullPointerException("Columns must not be null!");
+		}
+		if (key == null) {
+			throw new NullPointerException("Key must not be null!");
+		}
 
-    public Entry get(PIMPServer server, String key, String column) {
-        if (column == null) {
-            throw new IllegalArgumentException(
-                    "The legal argument: column must not be null!");
-        }
-        Set<String> columns = new HashSet<String>();
-        columns.add(column);
-        return get(server, key, columns);
-    }
+		VersionSet versions = store.get(key);
+		Version version = null;
 
-    public Entry getRange(PIMPServer server, String key, Set<String> columns) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+		// find the version that was up-to-date (most recent) at the given
+		// timestamp
+		for (long t : versions.descendingKeySet()) {
+			version = versions.get(t);
+			if (version.isVisible(server, timestamp)) {
+				break;
+			}
+		}
 
-    public void put(PIMPServer server, String key, Entry version) {
-        // TODO Auto-generated method stub
-    }
+		try {
+			return version.clone(columns);
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
-    public void processQuery(PIMPServer server, Connection c, Object request) {
-        Long id = -1l;
-        ServerResponse response = null;
-        try {
-            if (request instanceof ClientRequestDelete) {
-                response = process(server, (ClientRequestDelete) request);
-            } else if (request instanceof ClientRequestInsert) {
-                response = process(server, (ClientRequestInsert) request);
-            } else if (request instanceof ClientRequestRead) {
-                response = process(server, (ClientRequestRead) request);
-            } else if (request instanceof ClientRequestScan) {
-                response = process(server, (ClientRequestScan) request);
-            } else if (request instanceof ClientRequestUpdate) {
-                response = process(server, (ClientRequestUpdate) request);
-            } else {
-                if (request instanceof ClientRequest) {
-                    id = ((ClientRequest) request).getId();
-                }
-                throw new ExceptionUnknownMessageType(
-                        "Cannot process request; unknown message type: "
-                                + request.getClass());
-            }
-        } catch (Exception e) {
-            server.send(c.getID(), new ServerResponseException(id, e));
-        }
-        server.send(c.getID(), response);
-    }
+	public Version get(int server, String key, String column, long timestamp) {
+		if (column == null) {
+			throw new IllegalArgumentException("Column must not be null!");
+		}
+		Set<String> columns = new HashSet<String>();
+		columns.add(column);
+		return get(server, key, columns, timestamp);
+	}
 
-    private ServerResponseUpdate process(PIMPServer server, ClientRequestUpdate request) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	public List<Version> getRange(int server, String key, int range,
+			boolean asc, Set<String> columns, long timestamp) {
+		List<String> keys = store.getKeyRange(key, range, asc);
+		List<Version> versions = new ArrayList<Version>();
 
-    private ServerResponseInsert process(PIMPServer server, ClientRequestInsert request) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+		for (String k : keys) {
+			versions.add(get(server, k, columns, timestamp));
+		}
+		return versions;
+	}
 
-    private ServerResponseDelete process(PIMPServer server, ClientRequestDelete request) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    
-    
-    
-    
-    
-    
-    
-    private ServerResponse process(PIMPServer server, ClientRequestScan request) {
-        // TODO Auto-generated method stub
-    	
-        return null;
-    }
-
-    private ServerResponseRead process(PIMPServer server, ClientRequestRead request)
-            throws ExceptionNoKeyProvided {
-
-        Long id = request.getId();
-        String key = request.getKey();
-        if (key == null) {
-            throw new ExceptionNoKeyProvided(
-                    "Cannot process get request; no key was provided.");
-        }
-
-        // TODO Auto-generated method stub
-        return null;
-    } 
+	public void put(String key, Version version, long timestamp) {
+		store.put(key, version, timestamp);
+	}
 }

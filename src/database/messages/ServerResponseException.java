@@ -1,25 +1,22 @@
 package database.messages;
 
 public class ServerResponseException extends ServerResponse {
-    public Exception getException() {
-        return exception;
-    }
+	public Exception getException() {
+		return exception;
+	}
 
-    public void setException(Exception exception) {
-        this.exception = exception;
-    }
+	public void setException(Exception exception) {
+		this.exception = exception;
+	}
 
-    private Exception exception;
+	private Exception exception;
 
-    private ServerResponseException() {
-    }
+	private ServerResponseException() {
+		super();
+	}
 
-    public ServerResponseException(Long id, Exception exception) {
-        super(id);
-        this.exception = exception;
-    }
-
-    public ServerResponseException(Exception exception) {
-        this(-1l, exception);
-    }
+	public ServerResponseException(long clientRequestID, Exception exception) {
+		super(clientRequestID);
+		this.exception = exception;
+	}
 }

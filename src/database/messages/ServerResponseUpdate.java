@@ -2,11 +2,13 @@ package database.messages;
 
 public class ServerResponseUpdate extends ServerResponse {
 
-    private ServerResponseUpdate() {
-    }
+	private ServerResponseUpdate() {
+		super();
+	}
+	
 
-    public ServerResponseUpdate(Long id) {
-        super();
-        this.id = id;
-    }
+
+	public ServerResponseUpdate(long clientRequestID) {
+		super(clientRequestID);
+	}
 }

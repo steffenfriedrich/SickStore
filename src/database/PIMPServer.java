@@ -3,6 +3,7 @@ package database;
 import java.io.IOException;
 
 import backend.Mediator;
+import backend.QueryHandler;
 import backend.Store;
 
 import com.esotericsoftware.kryonet.Connection;
@@ -11,69 +12,85 @@ import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 import com.esotericsoftware.minlog.Log;
 
+import database.messages.ClientRequest;
+
 public class PIMPServer extends Participant {
-    protected Server server;
-    private final PIMPServer node = this;
-    private final int port;
-    private Store store = Store.getInstance();
+	protected Server server;
+	private final PIMPServer node = this;
+	private final int port; 
+	private final int ID;
 
-    public PIMPServer(int port) throws IOException {
-        this.port = port;
-        server = new Server();
+	public PIMPServer(int port) throws IOException {
+		// register server in database backend
+		ID = QueryHandler.getInstance().register(node);
+		this.port = port;
+		server = new Server();
 
-        // For consistency, the classes to be sent over the network are
-        // registered by the same method for both the client and server.
-        super.register(server);
+		// For consistency, the classes to be sent over the network are
+		// registered by the same method for both the client and server.
+		super.register(server);
 
-        server.addListener(new Listener() {
-            public void received(final Connection c, final Object object) {
-                if (!(object instanceof FrameworkMessage)) {
-                    new Thread() {
-                        public void run() {
-                            Mediator.getInstance().processQuery(node, c,object);
-                            };
-                    }.start();
-                }
-            }
+		server.addListener(new Listener() {
+			public void received(final Connection c, final Object object) {
+				if (!(object instanceof FrameworkMessage)) {
+					if (object instanceof ClientRequest) {
+						// Mark the request as received by this server
+						((ClientRequest) object).setReceivedBy(node.getID());
+						((ClientRequest) object).setReceivedAt(System
+								.currentTimeMillis());
+					}
+					new Thread() {
+						public void run() {
+							QueryHandler.getInstance()
+									.processQuery(node, c, object);
+						};
+					}.start();
+				}
+			}
 
-            public void disconnected(Connection c) {
-                        System.out.println("Server disconnected from connection " + c.getID());
-            }
-        });
-        server.bind(port);
-        server.start();
-    }
+			public void disconnected(Connection c) {
+				System.out.println("Server disconnected from connection "
+						+ c.getID());
+			}
+		});
+		server.bind(this.port);
+		server.start();
+	}
 
-    public void send(int connectionID, Object object) {
-        server.sendToTCP(connectionID, object);
-    }
+	public int getID() {
+		return ID;
+	}
 
-    public static void main(String[] args) throws Exception {
-        String host = "localhost";
-        int timeout = 120;
-        int tcpPort = 54555;
+	public void send(int connectionID, Object object) {
+		server.sendToTCP(connectionID, object);
+	}
 
-        Log.set(Log.LEVEL_DEBUG);
+	public static void main(String[] args) throws Exception {
+		String host = "localhost";
+		int timeout = 120;
+		int tcpPort = 54555;
 
-        final long t = System.currentTimeMillis();
+		Log.set(Log.LEVEL_DEBUG);
 
-        // new Thread() {
-        // @Override
-        // public void run() {
-        // while (System.currentTimeMillis() < t + 2000) {
-        //
-        // }
-        //
-        // System.exit(-1);
-        // }
-        // }.start();
+		final long t = System.currentTimeMillis();
 
-        PIMPServer server = new PIMPServer(tcpPort);
+		// new Thread() {
+		// @Override
+		// public void run() {
+		// while (System.currentTimeMillis() < t + 2000) {
+		//
+		// }
+		//
+		// System.exit(-1);
+		// }
+		// }.start();
 
-        PIMPClient c1 = new PIMPClient(timeout, host, tcpPort, "c1");
-        c1.connect();
+		PIMPServer server = new PIMPServer(tcpPort);
 
-        PIMPClient c2 = new PIMPClient(timeout, host, tcpPort, "c2");
-        c2.connect();
-    }
+		PIMPClient c1 = new PIMPClient(timeout, host, tcpPort, "c1");
+		c1.connect();
+
+		PIMPClient c2 = new PIMPClient(timeout, host, tcpPort, "c2");
+		c2.connect();
+	}
 }
