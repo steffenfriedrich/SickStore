@@ -2,10 +2,10 @@ package database.messages;
 
 public class ClientRequestDelete extends ClientRequest {
 
-	private ClientRequestDelete() { 
-	}
+    private ClientRequestDelete() {
+    }
 
-	public ClientRequestDelete(String table, String key) {
-		super(table, key);
-	}
+    public ClientRequestDelete(String table, String key) {
+        super(table, key);
+    }
 }

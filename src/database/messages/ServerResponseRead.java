@@ -3,22 +3,22 @@ package database.messages;
 import backend.Version;
 
 public class ServerResponseRead extends ServerResponse {
-	private Version entry;
+    private Version version;
 
-	private ServerResponseRead() {
-		super(); 
-	}
+    private ServerResponseRead() {
+        super();
+    }
 
-	public ServerResponseRead(long clientRequestID, Version entry) { 
-	super(clientRequestID);
-		this.entry = entry;
-	}
+    public ServerResponseRead(long clientRequestID, Version version) {
+        super(clientRequestID);
+        this.version = version;
+    }
 
-	public Version getEntry() {
-		return entry;
-	}
+    public Version getVersion() {
+        return version;
+    }
 
-	public void setEntry(Version entry) {
-		this.entry = entry;
-	}
+    public void setVersion(Version version) {
+        this.version = version;
+    }
 }

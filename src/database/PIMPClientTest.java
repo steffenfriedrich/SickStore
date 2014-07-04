@@ -3,6 +3,14 @@
  */
 package database;
 
+import static org.junit.Assert.assertNotEquals;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import junit.framework.TestCase;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,78 +21,159 @@ import backend.Version;
  * @author Wolfram Wingerath
  * 
  */
-public class PIMPClientTest {
+public class PIMPClientTest extends TestCase {
 
-	private PIMPServer server;
-	private PIMPClient c1;
-	private PIMPClient c2;
+    private PIMPServer server;
+    private PIMPClient c1;
+    private PIMPClient c2;
 
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws Exception {
+    /**
+     * @throws java.lang.Exception
+     */
+    @Before
+    public void setUp() throws Exception {
 
-		// specify connection parameters
-		String host = "localhost";
-		int timeout = 120;
-		int tcpPort = 54555;
+        // specify connection parameters
+        String host = "localhost";
+        int timeout = 120;
+        int tcpPort = 54555;
 
-		// Create and start server and clients
-		server = new PIMPServer(tcpPort);
-		c1 = new PIMPClient(timeout, host, tcpPort, "Client 1");
-		c1.connect();
-		c2 = new PIMPClient(timeout, host, tcpPort, "Client 2");
-		c2.connect();
-	}
+        // Create and start server and clients
+        server = new PIMPServer(tcpPort);
+        c1 = new PIMPClient(timeout, host, tcpPort, "Client 1");
+        c1.connect();
+        c2 = new PIMPClient(timeout, host, tcpPort, "Client 2");
+        c2.connect();
 
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception {
-	}
+    }
 
-	@Test
-	public void test() throws Exception {
-		String table = "table";
-		String key = "1";
-		String column = "name";
-		String value = "Jonny";
-		Version entry = null;
-		Object result = null;
+    /**
+     * @throws java.lang.Exception
+     */
+    @After
+    public void tearDown() throws Exception {
+    }
 
-		//
-		//
-		// //the database is empty
-		// //put-column/get-column
-		// //we expect some not-existing value under a not-existing key to be
-		// inserted on put
-		// c1.insert(table, key, column, value);
-		// assertEquals(value, c2.get(key,column));
-		//
-		//
-		// //put/get entire entries
-		// entry = new Entry();
-		// entry.put("name", "Steffen");
-		// entry.put("age", 26);
-		// c2.put("2", entry);
-		// result =c1.get("2");
-		// assertTrue(value!= result);
-		// assertEquals(entry, result);
-		//
-		// TODO put/get: multiple columns
+    @Test
+    public void testAPI() throws Exception {
+        // Client 1: write something to the database
+        Version bob = new Version();
+        bob.put("name", "bob");
+        bob.put("hair", "brown");
+        bob.put("age", 25);
+        c1.insert("", "bob", bob);
+        // Client 2: read...
+        // ... only Bob's age
+        Set<String> columns = new HashSet<String>();
+        columns.add("age");
+        Version bobCopy = c2.read("", "bob", columns);
+        assertEquals(bob.get("age"), bobCopy.get("age"));
+        assertNotEquals(bob, bobCopy);
+        columns.add("hair");
+        bobCopy = c2.read("", "bob", columns);
+        assertNotEquals(bob, bobCopy);
+        assertEquals(bob.get("hair"), bobCopy.get("hair"));
+        bobCopy = c2.read("", "bob", null);
+        assertEquals(bob, bobCopy);
 
-		// TODO Range scans: entire entries
+        // Create an insert some more objects
+        Version john = new Version();
+        john.put("name", "john");
+        john.put("hair", "yellow");
+        john.put("age", 21);
+        c1.insert("", "john", john);
 
-		// TODO range scans: single columns
+        Version adele = new Version();
+        adele.put("name", "adele");
+        adele.put("hair", "red");
+        adele.put("age", 24);
+        c1.insert("", "adele", adele);
 
-		// TODO range scans: multi-column
+        Version mike = new Version();
+        mike.put("name", "mike");
+        mike.put("hair", "blonde");
+        mike.put("age", 31);
+        c1.insert("", "mike", mike);
 
-		// we expect some not-existing value under a not-existing key to be
-		// inserted on put
-		// c1.put(key, column, value);
-		// assertEquals(value, c2.get(key,column));
-	}
+        // perform range query and compare
+        List<Version> copies = c2.scan("", "adele", 3, null);
+        assertEquals(adele, copies.get(0));
+        assertEquals(bob, copies.get(1));
+        assertEquals(john, copies.get(2));
+        assertEquals(3, copies.size());
+
+        // extend range and expect one additional row
+        copies = c2.scan("", "adele", 4, null);
+        assertEquals(adele, copies.get(0));
+        assertEquals(bob, copies.get(1));
+        assertEquals(john, copies.get(2));
+        assertEquals(mike, copies.get(3));
+        assertEquals(4, copies.size());
+
+        // a larger range should return the same result
+        copies = c2.scan("", "adele", 27, null);
+        assertEquals(adele, copies.get(0));
+        assertEquals(bob, copies.get(1));
+        assertEquals(john, copies.get(2));
+        assertEquals(mike, copies.get(3));
+        assertEquals(4, copies.size());
+
+        // perform range query in descending order and compare
+        copies = c2.scan("", "mike", 4, null, false);
+        assertEquals(mike, copies.get(0));
+        assertEquals(john, copies.get(1));
+        assertEquals(bob, copies.get(2));
+        assertEquals(adele, copies.get(3));
+        assertEquals(4, copies.size());
+
+        // have the range begin and end somewhere in the middle
+        copies = c2.scan("", "bob", 2, null);
+        assertEquals(bob, copies.get(0));
+        assertEquals(john, copies.get(1));
+        assertEquals(2, copies.size());
+
+        // remove something and do the same scan again
+        assertTrue(c2.delete("", "john"));
+        copies = c1.scan("", "bob", 2, null);
+        assertEquals(bob, copies.get(0));
+        assertEquals(mike, copies.get(1));
+        assertEquals(2, copies.size());
+
+        // perform range query and compare
+        copies = c1.scan("", "adele", 3, null);
+        assertEquals(adele, copies.get(0));
+        assertEquals(bob, copies.get(1));
+        assertEquals(mike, copies.get(2));
+        assertEquals(3, copies.size());
+
+        // Not perform an update
+        Version mikeOld = new Version();
+        mikeOld.put("name", "mike");
+        mikeOld.put("hair", "gray");
+        mikeOld.put("age", 65);
+        c1.update("", "mike", mikeOld);
+
+        // perform range query and compare
+        copies = c1.scan("", "adele", 3, null);
+        assertEquals(adele, copies.get(0));
+        assertEquals(bob, copies.get(1));
+        assertEquals(mikeOld, copies.get(2));
+        assertNotSame(mikeOld, copies.get(2));
+        assertEquals(3, copies.size());
+
+        // now test scan with projection (only part of all columns requested)
+
+        // perform range query and compare
+        columns.clear();
+        columns.add("name");
+        copies = c1.scan("", "adele", 3, columns);
+        assertEquals("adele", copies.get(0).get("name"));
+        assertEquals(1, copies.get(0).getValues().size());
+        assertEquals("bob", copies.get(1).get("name"));
+        assertEquals(1, copies.get(1).getValues().size());
+        assertEquals("mike", copies.get(2).get("name"));
+        assertEquals(1, copies.get(2).getValues().size());
+        assertEquals(3, copies.size());
+    }
 
 }

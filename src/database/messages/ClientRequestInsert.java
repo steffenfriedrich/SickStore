@@ -3,20 +3,21 @@ package database.messages;
 import backend.Version;
 
 public class ClientRequestInsert extends ClientRequest {
-	private Version version; 
-	public Version getVersion() {
-		return version;
-	}
+    private Version version;
 
-	public void setVersion(Version version) {
-		this.version = version;
-	}
+    public Version getVersion() {
+        return version;
+    }
 
-	private ClientRequestInsert() { 
-	}
+    public void setVersion(Version version) {
+        this.version = version;
+    }
 
-	public ClientRequestInsert(String table, String key, Version  version) {
-		super(table, key);
-		this.version =  version;
-	}
+    private ClientRequestInsert() {
+    }
+
+    public ClientRequestInsert(String table, String key, Version version) {
+        super(table, key);
+        this.version = version;
+    }
 }
