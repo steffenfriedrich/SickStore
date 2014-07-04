@@ -91,4 +91,11 @@ public class PIMPServer extends Participant {
         PIMPClient c2 = new PIMPClient(timeout, host, tcpPort, "c2");
         c2.connect();
     }
+
+    /**
+     * Stops the server process.
+     */
+    public void shutdown() {
+        server.stop();
+    }
 }

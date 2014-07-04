@@ -10,6 +10,7 @@ public class AllTests
         TestSuite suite = new TestSuite("Database tests");
         // $JUnit-BEGIN$
         suite.addTestSuite(PIMPClientTest.class);
+        suite.addTestSuite(PIMPServerTest.class);
         // $JUnit-END$
         return suite;
     }

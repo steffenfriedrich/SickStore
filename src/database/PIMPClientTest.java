@@ -24,8 +24,7 @@ import backend.Version;
 public class PIMPClientTest extends TestCase {
 
     private PIMPServer server;
-    private PIMPClient c1;
-    private PIMPClient c2;
+    private PIMPClient c1;  
 
     /**
      * @throws java.lang.Exception
@@ -41,9 +40,7 @@ public class PIMPClientTest extends TestCase {
         // Create and start server and clients
         server = new PIMPServer(tcpPort);
         c1 = new PIMPClient(timeout, host, tcpPort, "Client 1");
-        c1.connect();
-        c2 = new PIMPClient(timeout, host, tcpPort, "Client 2");
-        c2.connect();
+        c1.connect(); 
 
     }
 
@@ -52,6 +49,8 @@ public class PIMPClientTest extends TestCase {
      */
     @After
     public void tearDown() throws Exception {
+        c1.disconnect(); 
+        server.shutdown();
     }
 
     @Test
@@ -66,14 +65,14 @@ public class PIMPClientTest extends TestCase {
         // ... only Bob's age
         Set<String> columns = new HashSet<String>();
         columns.add("age");
-        Version bobCopy = c2.read("", "bob", columns);
+        Version bobCopy = c1.read("", "bob", columns);
         assertEquals(bob.get("age"), bobCopy.get("age"));
         assertNotEquals(bob, bobCopy);
         columns.add("hair");
-        bobCopy = c2.read("", "bob", columns);
+        bobCopy = c1.read("", "bob", columns);
         assertNotEquals(bob, bobCopy);
         assertEquals(bob.get("hair"), bobCopy.get("hair"));
-        bobCopy = c2.read("", "bob", null);
+        bobCopy = c1.read("", "bob", null);
         assertEquals(bob, bobCopy);
 
         // Create an insert some more objects
@@ -96,14 +95,14 @@ public class PIMPClientTest extends TestCase {
         c1.insert("", "mike", mike);
 
         // perform range query and compare
-        List<Version> copies = c2.scan("", "adele", 3, null);
+        List<Version> copies = c1.scan("", "adele", 3, null);
         assertEquals(adele, copies.get(0));
         assertEquals(bob, copies.get(1));
         assertEquals(john, copies.get(2));
         assertEquals(3, copies.size());
 
         // extend range and expect one additional row
-        copies = c2.scan("", "adele", 4, null);
+        copies = c1.scan("", "adele", 4, null);
         assertEquals(adele, copies.get(0));
         assertEquals(bob, copies.get(1));
         assertEquals(john, copies.get(2));
@@ -111,7 +110,7 @@ public class PIMPClientTest extends TestCase {
         assertEquals(4, copies.size());
 
         // a larger range should return the same result
-        copies = c2.scan("", "adele", 27, null);
+        copies = c1.scan("", "adele", 27, null);
         assertEquals(adele, copies.get(0));
         assertEquals(bob, copies.get(1));
         assertEquals(john, copies.get(2));
@@ -119,7 +118,7 @@ public class PIMPClientTest extends TestCase {
         assertEquals(4, copies.size());
 
         // perform range query in descending order and compare
-        copies = c2.scan("", "mike", 4, null, false);
+        copies = c1.scan("", "mike", 4, null, false);
         assertEquals(mike, copies.get(0));
         assertEquals(john, copies.get(1));
         assertEquals(bob, copies.get(2));
@@ -127,13 +126,13 @@ public class PIMPClientTest extends TestCase {
         assertEquals(4, copies.size());
 
         // have the range begin and end somewhere in the middle
-        copies = c2.scan("", "bob", 2, null);
+        copies = c1.scan("", "bob", 2, null);
         assertEquals(bob, copies.get(0));
         assertEquals(john, copies.get(1));
         assertEquals(2, copies.size());
 
         // remove something and do the same scan again
-        assertTrue(c2.delete("", "john"));
+        assertTrue(c1.delete("", "john"));
         copies = c1.scan("", "bob", 2, null);
         assertEquals(bob, copies.get(0));
         assertEquals(mike, copies.get(1));

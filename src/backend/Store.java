@@ -4,17 +4,26 @@
 package backend;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
+ * 
+ * This class is responsible for introducing data-centric staleness by serving
+ * stale data to the server nodes. </br> To this end, all servers have to supply
+ * the {@link Store} instance with a reference to themselves, so that they
+ * get their corresponding degree of staleness.
+ * 
  * @author Wolfram Wingerath
  * 
  */
 public class Store {
-
-    final static Store instance;
-
+    private final static Store instance;
+ 
     static {
         instance = new Store();
     }
@@ -22,13 +31,84 @@ public class Store {
     private Store() {
     }
 
+    private TreeMap<String, VersionSet> values = new TreeMap<String, VersionSet>();
+
     public static Store getInstance() {
         return instance;
     }
 
-    private TreeMap<String, VersionSet> values = new TreeMap<String, VersionSet>();
+    public synchronized Version get(int server, String key, long timestamp) {
+        return get(server, key, (Set<String>) null, timestamp);
+    }
 
-    public synchronized VersionSet get(String key) {
+    public synchronized Version get(int server, String key, Set<String> columns,
+            long timestamp) {
+        if (key == null) {
+            throw new NullPointerException("Key must not be null!");
+        }
+
+        VersionSet versions =  getVersionSet(key);
+        Version version = null;
+
+        // find the version that was up-to-date (most recent) at the given
+        // timestamp
+        if (versions != null) {
+            NavigableSet<Long> timestamps = versions.descendingKeySet();
+            for (long t : timestamps) {
+                version = versions.get(t);
+                if (isVisible(server, version.getVisibility(), timestamp, t)) {
+                    break;
+                } else {
+                    version = Version.NULL;
+                }
+            }
+        }
+
+        if (!version.isNull()) { 
+            try {
+                return version.clone(columns);
+            } catch (CloneNotSupportedException e) {
+                e.printStackTrace();
+            }
+        }
+            return Version.NULL;
+    }
+
+    public synchronized Version get(int server, String key, String column, long timestamp) {
+        if (column == null) {
+            throw new IllegalArgumentException("Column must not be null!");
+        }
+        Set<String> columns = new HashSet<String>();
+        columns.add(column);
+        return get(server, key, columns, timestamp);
+    }
+
+    public synchronized List<Version> getRange(int server, String key, int range,
+            boolean asc, Set<String> columns, long timestamp) {
+        if (key == null) {
+            throw new IllegalArgumentException("Key must not be null!");
+        }
+        if (range < 1) {
+            throw new IllegalArgumentException(
+                    "Range must be greater than or equal to 1!");
+        }
+
+        List<Version> versions = new ArrayList<Version>(range);
+        String nextKey = key;
+        Version version = null;
+
+        do {
+            version = get(server, nextKey, columns, timestamp);
+            if (!version.isNull()) {
+                versions.add(version);
+            }
+        } while (range > versions.size()
+                && (asc && (nextKey =  higherKey(nextKey)) != null || !asc
+                        && (nextKey = lowerKey(nextKey)) != null));
+
+        return versions;
+    } 
+    private synchronized VersionSet getVersionSet(String key) {
         return values.get(key);
     }
 
@@ -49,62 +129,8 @@ public class Store {
         }
         entrySet.put(timestamp, value);
     }
-
-    /**
-     * Returns a list of all the keys in a specific key range
-     * 
-     * @param key
-     *            the first key in the range
-     * @param range
-     *            that is a number of keys (key range size)
-     * @param asc
-     *            if true, the range consists of <code>key</code>and a
-     *            higher-valued keys; else, the range consists of
-     *            <code>key</code> and lower-valued keys
-     * @return a list of all the keys in a specific key range
-     */
-    public synchronized List<String> getKeyRange(String key, int range,
-            final boolean asc) {
-        if (key == null) {
-            throw new IllegalArgumentException("Key must not be null!");
-        }
-        if (range < 1) {
-            throw new IllegalArgumentException(
-                    "Range must be greater than or equal to 1!");
-        }
-        String nextKey = key;
-        List<String> versions = new ArrayList<String>(range);
-        versions.add(key);
-
-        while (range > 1
-                && (asc && (nextKey = higherKey(nextKey)) != null || !asc
-                        && (nextKey = lowerKey(nextKey)) != null)) {
-            versions.add(nextKey);
-            range--;
-        }
-
-        return versions;
-    }
-
-    /**
-     * Returns a list of all the {@link VersionSet} instances in a specific key
-     * range
-     * 
-     * @return a list of all the {@link VersionSet} instances in a specific key
-     *         range
-     * 
-     * @see #getKeyRange(String, int, boolean)
-     */
-    public synchronized List<VersionSet> getRange(String key, int range,
-            final boolean asc) {
-        List<VersionSet> versions = new ArrayList<VersionSet>(range);
-
-        for (String k : getKeyRange(key, range, asc)) {
-            versions.add(get(k));
-        }
-
-        return versions;
-    }
+ 
+ 
 
     /**
      * Returns the least key strictly greater than the given key, or null if
@@ -114,7 +140,7 @@ public class Store {
      * @param key
      * @return
      */
-    public synchronized String higherKey(String key) {
+    private synchronized String higherKey(String key) {
         return values.higherKey(key);
     }
 
@@ -126,7 +152,27 @@ public class Store {
      * @param key
      * @return
      */
-    public synchronized String lowerKey(String key) {
+    private synchronized String lowerKey(String key) {
         return values.lowerKey(key);
+    }
+
+    /** 
+     * 
+     * @param server
+     *            a server ID 
+     * @param stalenessWindows  
+     * @param readTimestamp
+     * @param writeTimestamp
+     * @return
+     */
+    public boolean isVisible(int server, Map<Integer, Long>  stalenessWindows, long readTimestamp, long writeTimestamp) {
+        Long staleness = stalenessWindows.get(server);
+        if (staleness == null) {
+            return false;
+        } else {
+            long visibleSince = writeTimestamp+staleness;
+ 
+            return visibleSince <= readTimestamp;
+        }
     }
 }

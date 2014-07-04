@@ -104,24 +104,6 @@ public class Version {
         return false;
     }
 
-    /**
-     * 
-     * @param server
-     *            a server ID
-     * @param timestamp
-     *            a timestamp
-     * @return whether or not this version was visible for the given server at
-     *         the given timestamp
-     */
-    public boolean isVisible(int server, long timestamp) {
-        Long visibleSince = null;
-        if ((visibleSince = visibility.get(server)) == null) {
-            return false;
-        } else {
-            return visibleSince <= timestamp;
-        }
-    }
-
     public boolean isNull() {
         return getValues().isEmpty() || isNull;
     }

@@ -57,7 +57,10 @@ public class PIMPClient extends Participant {
             }
         });
     }
-
+@Override
+public String toString() {
+    return name;
+}
     public PIMPClient(int timeout, String host, int tcpPort, String name)
             throws IOException {
         this();

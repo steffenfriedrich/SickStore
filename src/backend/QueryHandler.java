@@ -45,19 +45,27 @@ public class QueryHandler {
 
     protected final Set<Integer> servers = new HashSet<Integer>();
 
-    public Set<Integer> getServers() {
+    public synchronized Set<Integer> getServers() {
         return servers;
     }
 
     private StalenessGenerator staleness = new ConstantStaleness(0, 0);
 
-    private Mediator mediator = Mediator.getInstance();
+    public synchronized StalenessGenerator getStaleness() {
+        return staleness;
+    }
+
+    public synchronized void setStaleness(StalenessGenerator staleness) {
+        this.staleness = staleness;
+    }
+
+    private Store mediator = Store.getInstance();
 
     public static QueryHandler getInstance() {
         return instance;
     }
 
-    public void processQuery(PIMPServer server, Connection c, Object request) {
+    public synchronized void processQuery(PIMPServer server, Connection c, Object request) {
         Long id = -1l;
         ServerResponse response = null;
         try {
@@ -147,7 +155,7 @@ public class QueryHandler {
         }
 
         Map<Integer, Long> visibility = staleness.get(server, request);
-        Version version = new Version(server, visibility, true);
+        Version version = new Version(server,  visibility, true);
         mediator.put(key, version, timestamp);
 
         ServerResponseDelete response = new ServerResponseDelete(

@@ -21,7 +21,7 @@ public class VersionTest extends TestCase {
         visibility.put(1, 100l);
         visibility.put(2, 102l);
         // create a version object and set some values
-        Version version = new Version(1, visibility);
+        Version version = new Version();
         version.put("name", "Bob");
         version.put("age", "25");
 

@@ -32,8 +32,10 @@ public class ConstantStaleness implements StalenessGenerator {
      */
     @Override
     public   Map<Integer, Long> get(int server, ClientRequest request) {
-        QueryHandler handler = QueryHandler.getInstance();
+                QueryHandler handler = QueryHandler.getInstance();
         HashMap<Integer, Long> delay = new HashMap<Integer, Long>();
+        
+         
         for (Integer s : handler.getServers()) {
             if (s== server) { 
             delay.put(s, ownReads);
