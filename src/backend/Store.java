@@ -32,13 +32,25 @@ public class Store {
         instance = new Store();
     }
 
-    private Store() {
+    public static Store getInstance() {
+        return instance;
     }
 
     private TreeMap<String, VersionSet> values = new TreeMap<String, VersionSet>();
 
-    public static Store getInstance() {
-        return instance;
+    private Store() {
+    }
+
+    public void delete(int server, String key, Version version, long timestamp)
+            throws DeleteException {
+        Version alreadyExisting = get(server, key, timestamp);
+        if (alreadyExisting.isNull()) {
+            throw new DeleteException(
+                    "Value cannot be deleted, because there is no value under key \""
+                            + key + "\".");
+        } else {
+            insertOrUpdate(key, version, timestamp);
+        }
     }
 
     public synchronized Version get(int server, String key, long timestamp) {
@@ -119,6 +131,30 @@ public class Store {
     }
 
     /**
+     * Returns the least key strictly greater than the given key, or null if
+     * there is no such key.
+     * 
+     * 
+     * @param key
+     * @return
+     */
+    private synchronized String higherKey(String key) {
+        return values.higherKey(key);
+    }
+
+    public void insert(int server, String key, Version version, long timestamp)
+            throws InsertException {
+        Version alreadyExisting = get(server, key, timestamp);
+        if (alreadyExisting.isNull()) {
+            insertOrUpdate(key, version, timestamp);
+        } else {
+            throw new InsertException(
+                    "Value cannot be stored, because there already is a value under key \""
+                            + key + "\".");
+        }
+    }
+
+    /**
      * Stores the given entry value under the given key and timestamp.
      * 
      * @param key
@@ -145,30 +181,6 @@ public class Store {
     }
 
     /**
-     * Returns the least key strictly greater than the given key, or null if
-     * there is no such key.
-     * 
-     * 
-     * @param key
-     * @return
-     */
-    private synchronized String higherKey(String key) {
-        return values.higherKey(key);
-    }
-
-    /**
-     * Returns the greatest key strictly less than the given key, or null if
-     * there is no such key.
-     * 
-     * 
-     * @param key
-     * @return
-     */
-    private synchronized String lowerKey(String key) {
-        return values.lowerKey(key);
-    }
-
-    /**
      * 
      * @param server
      *            a server ID
@@ -189,6 +201,18 @@ public class Store {
         }
     }
 
+    /**
+     * Returns the greatest key strictly less than the given key, or null if
+     * there is no such key.
+     * 
+     * 
+     * @param key
+     * @return
+     */
+    private synchronized String lowerKey(String key) {
+        return values.lowerKey(key);
+    }
+
     public void update(int server, String key, Version version, long timestamp)
             throws UpdateException {
         Version alreadyExisting = get(server, key, timestamp);
@@ -198,30 +222,6 @@ public class Store {
                             + key + "\".");
         } else {
             insertOrUpdate(key, version, timestamp);
-        }
-    }
-
-    public void delete(int server, String key, Version version, long timestamp)
-            throws DeleteException {
-        Version alreadyExisting = get(server, key, timestamp);
-        if (alreadyExisting.isNull()) {
-            throw new DeleteException(
-                    "Value cannot be deleted, because there is no value under key \""
-                            + key + "\".");
-        } else {
-            insertOrUpdate(key, version, timestamp);
-        }
-    }
-
-    public void insert(int server, String key, Version version, long timestamp)
-            throws InsertException {
-        Version alreadyExisting = get(server, key, timestamp);
-        if (alreadyExisting.isNull()) {
-            insertOrUpdate(key, version, timestamp);
-        } else {
-            throw new InsertException(
-                    "Value cannot be stored, because there already is a value under key \""
-                            + key + "\".");
         }
     }
 }

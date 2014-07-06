@@ -4,10 +4,10 @@ public class UnknownMessageTypeException extends DatabaseException {
 
     private static final long serialVersionUID = -6776306738124955527L;
 
-    public UnknownMessageTypeException(String string) {
-        super(string);
+    public UnknownMessageTypeException() {
     }
 
-    public UnknownMessageTypeException() {
+    public UnknownMessageTypeException(String string) {
+        super(string);
     }
 }

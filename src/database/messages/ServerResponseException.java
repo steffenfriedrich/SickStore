@@ -4,8 +4,8 @@ import database.messages.exception.DatabaseException;
 
 public class ServerResponseException extends ServerResponse {
 
-    private String message;
     private String className;
+    private String message;
 
     @SuppressWarnings("unused")
     private ServerResponseException() {

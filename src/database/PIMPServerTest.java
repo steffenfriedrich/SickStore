@@ -22,12 +22,56 @@ import database.messages.exception.DatabaseException;
  */
 public class PIMPServerTest extends TestCase {
 
-    private PIMPServer server1;
-    private PIMPServer server2;
-    private PIMPServer server3;
     private PIMPClient c1;
     private PIMPClient c2;
     private PIMPClient c3;
+    private PIMPServer server1;
+    private PIMPServer server2;
+    private PIMPServer server3;
+
+    private void checkClientStainless(Version insert, PIMPClient writer,
+            String key) throws DatabaseException {
+        Version copyC1 = null;
+        Version copyC2 = null;
+        Version copyC3 = null;
+
+        long start = -1;
+        long delayC1 = -1;
+        long delayC2 = -1;
+        long delayC3 = -1;
+        long timeout = 1000;
+
+        writer.insert("", key, insert);
+        start = System.currentTimeMillis();
+        do {
+            if (!(copyC1 = c1.read("", key, null)).isNull() && delayC1 == -1) {
+                delayC1 = System.currentTimeMillis() - start;
+            }
+            if (!(copyC2 = c2.read("", key, null)).isNull() && delayC2 == -1) {
+                delayC2 = System.currentTimeMillis() - start;
+            }
+            if (!(copyC3 = c3.read("", key, null)).isNull() && delayC3 == -1) {
+                delayC3 = System.currentTimeMillis() - start;
+            }
+        } while (System.currentTimeMillis() - start < timeout
+                && (delayC1 == -1 || delayC2 == -1 || delayC3 == -1));
+
+        assertEquals(insert, copyC1);
+        assertEquals(insert, copyC2);
+        assertEquals(insert, copyC3);
+
+        System.out.println("writer: " + writer);
+        System.out.println("delay client 1:\t" + delayC1);
+        System.out.println("delay client 2:\t" + delayC2);
+        System.out.println("delay client 3:\t" + delayC3);
+        assertTrue(delayC1 < 50 && c1 == writer || 450 < delayC1
+                && delayC1 < 550);
+        assertTrue(delayC2 < 50 && c2 == writer || 450 < delayC2
+                && delayC2 < 550);
+        assertTrue(delayC3 < 50 && c3 == writer || 450 < delayC3
+                && delayC3 < 550);
+
+    }
 
     /**
      * @throws java.lang.Exception
@@ -160,50 +204,6 @@ public class PIMPServerTest extends TestCase {
         assertEquals(bob, copies3.get(0));
         assertEquals(mike, copies3.get(1));
         assertEquals(2, copies3.size());
-    }
-
-    private void checkClientStainless(Version insert, PIMPClient writer,
-            String key) throws DatabaseException {
-        Version copyC1 = null;
-        Version copyC2 = null;
-        Version copyC3 = null;
-
-        long start = -1;
-        long delayC1 = -1;
-        long delayC2 = -1;
-        long delayC3 = -1;
-        long timeout = 1000;
-
-        writer.insert("", key, insert);
-        start = System.currentTimeMillis();
-        do {
-            if (!(copyC1 = c1.read("", key, null)).isNull() && delayC1 == -1) {
-                delayC1 = System.currentTimeMillis() - start;
-            }
-            if (!(copyC2 = c2.read("", key, null)).isNull() && delayC2 == -1) {
-                delayC2 = System.currentTimeMillis() - start;
-            }
-            if (!(copyC3 = c3.read("", key, null)).isNull() && delayC3 == -1) {
-                delayC3 = System.currentTimeMillis() - start;
-            }
-        } while (System.currentTimeMillis() - start < timeout
-                && (delayC1 == -1 || delayC2 == -1 || delayC3 == -1));
-
-        assertEquals(insert, copyC1);
-        assertEquals(insert, copyC2);
-        assertEquals(insert, copyC3);
-
-        System.out.println("writer: " + writer);
-        System.out.println("delay client 1:\t" + delayC1);
-        System.out.println("delay client 2:\t" + delayC2);
-        System.out.println("delay client 3:\t" + delayC3);
-        assertTrue(delayC1 < 50 && c1 == writer || 450 < delayC1
-                && delayC1 < 550);
-        assertTrue(delayC2 < 50 && c2 == writer || 450 < delayC2
-                && delayC2 < 550);
-        assertTrue(delayC3 < 50 && c3 == writer || 450 < delayC3
-                && delayC3 < 550);
-
     }
 
 }

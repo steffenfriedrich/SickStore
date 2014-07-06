@@ -21,6 +21,31 @@ import database.messages.exception.DatabaseException;
 
 // This class is a convenient place to keep things common to both the client and server.
 public class Participant {
+    /**
+     * 
+     * @param c
+     *            a class
+     * @return all classes that are part of the same package as <code>c</code>
+     * @throws IOException
+     */
+    private static Set<Class<? extends Object>> getClassesInPackageOf(Class<?> c)
+            throws IOException {
+        String pack = c.getPackage().getName();
+        final ClassLoader loader = Thread.currentThread()
+                .getContextClassLoader();
+
+        Set<Class<? extends Object>> allClasses = new HashSet<Class<? extends Object>>();
+
+        for (final ClassPath.ClassInfo info : ClassPath.from(loader)
+                .getTopLevelClasses()) {
+            if (info.getName().startsWith(pack)) {
+                final Class<?> clazz = info.load();
+                allClasses.add(clazz);
+            }
+        }
+        return allClasses;
+    }
+
     // This registers objects that are going to be sent over the network.
     static public void register(EndPoint endPoint) throws IOException {
         Set<Class<?>> classes = new HashSet<Class<?>>();
@@ -51,30 +76,5 @@ public class Participant {
         for (Class<?> c : classes) {
             kryo.register(c);
         }
-    }
-
-    /**
-     * 
-     * @param c
-     *            a class
-     * @return all classes that are part of the same package as <code>c</code>
-     * @throws IOException
-     */
-    private static Set<Class<? extends Object>> getClassesInPackageOf(Class<?> c)
-            throws IOException {
-        String pack = c.getPackage().getName();
-        final ClassLoader loader = Thread.currentThread()
-                .getContextClassLoader();
-
-        Set<Class<? extends Object>> allClasses = new HashSet<Class<? extends Object>>();
-
-        for (final ClassPath.ClassInfo info : ClassPath.from(loader)
-                .getTopLevelClasses()) {
-            if (info.getName().startsWith(pack)) {
-                final Class<?> clazz = info.load();
-                allClasses.add(clazz);
-            }
-        }
-        return allClasses;
     }
 }

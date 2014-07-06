@@ -4,19 +4,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ClientRequest {
 
+    protected static final AtomicLong counter = new AtomicLong();
+
+    protected Long id;
+
+    protected String key;
+
     /**
      * a timestamp indicating when the server received the request. Has to be
      * set by the receiving server
      */
     private long receivedAt = -1;
-
-    public long getReceivedAt() {
-        return receivedAt;
-    }
-
-    public void setReceivedAt(long receivedAt) {
-        this.receivedAt = receivedAt;
-    }
 
     /**
      * Indicates what server received the request. Has to be set by the
@@ -24,18 +22,7 @@ public class ClientRequest {
      */
     private int receivedBy = -1;
 
-    public int getReceivedBy() {
-        return receivedBy;
-    }
-
-    public void setReceivedBy(int receivedBy) {
-        this.receivedBy = receivedBy;
-    }
-
-    protected static final AtomicLong counter = new AtomicLong();
     protected String table;
-    protected String key;
-    protected Long id;
 
     public ClientRequest() {
         super();
@@ -52,15 +39,31 @@ public class ClientRequest {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getKey() {
         return key;
     }
 
+    public long getReceivedAt() {
+        return receivedAt;
+    }
+
+    public int getReceivedBy() {
+        return receivedBy;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public void setReceivedAt(long receivedAt) {
+        this.receivedAt = receivedAt;
+    }
+
+    public void setReceivedBy(int receivedBy) {
+        this.receivedBy = receivedBy;
     }
 }

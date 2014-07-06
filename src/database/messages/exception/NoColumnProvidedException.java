@@ -4,10 +4,10 @@ public class NoColumnProvidedException extends DatabaseException {
 
     private static final long serialVersionUID = 1L;
 
-    public NoColumnProvidedException(String string) {
-        super(string);
+    public NoColumnProvidedException() {
     }
 
-    public NoColumnProvidedException() {
+    public NoColumnProvidedException(String string) {
+        super(string);
     }
 }

@@ -27,8 +27,8 @@ import database.messages.exception.UpdateException;
  */
 public class PIMPClientTest extends TestCase {
 
-    private PIMPServer server;
     private PIMPClient c1;
+    private PIMPServer server;
 
     /**
      * @throws java.lang.Exception

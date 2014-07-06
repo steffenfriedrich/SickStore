@@ -6,20 +6,20 @@ public class DatabaseException extends Exception {
 
     private String message = null;
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
     public DatabaseException() {
         super();
     }
 
     public DatabaseException(String message) {
         this();
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
         this.message = message;
     }
 }

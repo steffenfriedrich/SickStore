@@ -9,10 +9,6 @@ public class ServerResponse {
     /** The request ID of the client request that triggered this response */
     protected Long clientRequestID;
 
-    public Long getClientRequestID() {
-        return clientRequestID;
-    }
-
     /** The request ID of the client request that triggered this response */
     protected Long id;
 
@@ -23,6 +19,10 @@ public class ServerResponse {
     public ServerResponse(long clientRequestID) {
         this.clientRequestID = clientRequestID;
         this.id = counter.incrementAndGet();
+    }
+
+    public Long getClientRequestID() {
+        return clientRequestID;
     }
 
     public Long getId() {

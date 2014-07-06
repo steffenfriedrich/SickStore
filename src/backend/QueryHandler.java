@@ -37,7 +37,8 @@ public class QueryHandler {
         instance = new QueryHandler();
     }
 
-    private QueryHandler() {
+    public static QueryHandler getInstance() {
+        return instance;
     }
 
     /** Generates server IDs, starting with 1 */
@@ -45,24 +46,124 @@ public class QueryHandler {
 
     protected final Set<Integer> servers = new HashSet<Integer>();
 
+    private StalenessGenerator staleness = new ConstantStaleness(0, 0);
+
+    private Store mediator = Store.getInstance();
+
+    private QueryHandler() {
+    }
+
     public synchronized Set<Integer> getServers() {
         return servers;
     }
-
-    private StalenessGenerator staleness = new ConstantStaleness(0, 0);
 
     public synchronized StalenessGenerator getStaleness() {
         return staleness;
     }
 
-    public synchronized void setStaleness(StalenessGenerator staleness) {
-        this.staleness = staleness;
+    private ServerResponseDelete process(ClientRequestDelete request)
+            throws NoKeyProvidedException, DeleteException {
+        int server = request.getReceivedBy();
+        String key = request.getKey();
+        long timestamp = request.getReceivedAt();
+        long clientRequestID = request.getId();
+        if (key == null) {
+            throw new NoKeyProvidedException(
+                    "Cannot process delete request; no key was provided.");
+        }
+
+        Map<Integer, Long> visibility = staleness.get(server, request);
+        Version version = new Version(server, visibility, true);
+        mediator.delete(server, key, version, timestamp);
+
+        ServerResponseDelete response = new ServerResponseDelete(
+                clientRequestID);
+        return response;
     }
 
-    private Store mediator = Store.getInstance();
+    private ServerResponseInsert process(ClientRequestInsert request)
+            throws NoKeyProvidedException, InsertException {
+        int server = request.getReceivedBy();
+        String key = request.getKey();
+        long timestamp = request.getReceivedAt();
+        long clientRequestID = request.getId();
+        Version version = request.getVersion();
+        if (key == null) {
+            throw new NoKeyProvidedException(
+                    "Cannot process get request; no key was provided.");
+        }
 
-    public static QueryHandler getInstance() {
-        return instance;
+        Map<Integer, Long> visibility = staleness.get(server, request);
+        version.setVisibility(visibility);
+        mediator.insert(server, key, version, timestamp);
+
+        ServerResponseInsert response = new ServerResponseInsert(
+                clientRequestID);
+        return response;
+    }
+
+    private ServerResponseRead process(ClientRequestRead request)
+            throws NoKeyProvidedException {
+
+        int server = request.getReceivedBy();
+        String key = request.getKey();
+        Set<String> columns = request.getFields();
+        long timestamp = request.getReceivedAt();
+        long clientRequestID = request.getId();
+        if (key == null) {
+            throw new NoKeyProvidedException(
+                    "Cannot process get request; no key was provided.");
+        }
+
+        Version version = mediator.get(server, key, columns, timestamp);
+        if (version == null) {
+            throw new NullPointerException("Version must not be null!");
+        }
+        ServerResponseRead response = new ServerResponseRead(clientRequestID,
+                version);
+        return response;
+    }
+
+    private ServerResponseScan process(ClientRequestScan request)
+            throws NoKeyProvidedException {
+        int server = request.getReceivedBy();
+        String key = request.getKey();
+        int range = request.getRecordcount();
+        boolean asc = request.isAscending();
+        Set<String> columns = request.getFields();
+        long timestamp = request.getReceivedAt();
+        long clientRequestID = request.getId();
+        if (key == null) {
+            throw new NoKeyProvidedException(
+                    "Cannot process get request; no key was provided.");
+        }
+
+        List<Version> versions = mediator.getRange(server, key, range, asc,
+                columns, timestamp);
+        ServerResponseScan response = new ServerResponseScan(clientRequestID,
+                versions);
+        return response;
+    }
+
+    private ServerResponseUpdate process(ClientRequestUpdate request)
+            throws NoKeyProvidedException, UpdateException {
+        int server = request.getReceivedBy();
+        String key = request.getKey();
+        long timestamp = request.getReceivedAt();
+        long clientRequestID = request.getId();
+        Version version = request.getVersion();
+        if (key == null) {
+            throw new NoKeyProvidedException(
+                    "Cannot process get request; no key was provided.");
+        }
+
+        Map<Integer, Long> visibility = staleness.get(server, request);
+        version.setVisibility(visibility);
+        mediator.update(server, key, version, timestamp);
+
+        ServerResponseUpdate response = new ServerResponseUpdate(
+                clientRequestID);
+        return response;
     }
 
     public synchronized ServerResponse processQuery(PIMPServer server,
@@ -103,114 +204,13 @@ public class QueryHandler {
         return response;
     }
 
-    private ServerResponseUpdate process(ClientRequestUpdate request)
-            throws NoKeyProvidedException, UpdateException {
-        int server = request.getReceivedBy();
-        String key = request.getKey();
-        long timestamp = request.getReceivedAt();
-        long clientRequestID = request.getId();
-        Version version = request.getVersion();
-        if (key == null) {
-            throw new NoKeyProvidedException(
-                    "Cannot process get request; no key was provided.");
-        }
-
-        Map<Integer, Long> visibility = staleness.get(server, request);
-        version.setVisibility(visibility);
-        mediator.update(server, key, version, timestamp);
-
-        ServerResponseUpdate response = new ServerResponseUpdate(
-                clientRequestID);
-        return response;
-    }
-
-    private ServerResponseInsert process(ClientRequestInsert request)
-            throws NoKeyProvidedException, InsertException {
-        int server = request.getReceivedBy();
-        String key = request.getKey();
-        long timestamp = request.getReceivedAt();
-        long clientRequestID = request.getId();
-        Version version = request.getVersion();
-        if (key == null) {
-            throw new NoKeyProvidedException(
-                    "Cannot process get request; no key was provided.");
-        }
-
-        Map<Integer, Long> visibility = staleness.get(server, request);
-        version.setVisibility(visibility);
-        mediator.insert(server, key, version, timestamp);
-
-        ServerResponseInsert response = new ServerResponseInsert(
-                clientRequestID);
-        return response;
-    }
-
-    private ServerResponseDelete process(ClientRequestDelete request)
-            throws NoKeyProvidedException, DeleteException {
-        int server = request.getReceivedBy();
-        String key = request.getKey();
-        long timestamp = request.getReceivedAt();
-        long clientRequestID = request.getId();
-        if (key == null) {
-            throw new NoKeyProvidedException(
-                    "Cannot process delete request; no key was provided.");
-        }
-
-        Map<Integer, Long> visibility = staleness.get(server, request);
-        Version version = new Version(server, visibility, true);
-        mediator.delete(server, key, version, timestamp);
-
-        ServerResponseDelete response = new ServerResponseDelete(
-                clientRequestID);
-        return response;
-    }
-
-    private ServerResponseScan process(ClientRequestScan request)
-            throws NoKeyProvidedException {
-        int server = request.getReceivedBy();
-        String key = request.getKey();
-        int range = request.getRecordcount();
-        boolean asc = request.isAscending();
-        Set<String> columns = request.getFields();
-        long timestamp = request.getReceivedAt();
-        long clientRequestID = request.getId();
-        if (key == null) {
-            throw new NoKeyProvidedException(
-                    "Cannot process get request; no key was provided.");
-        }
-
-        List<Version> versions = mediator.getRange(server, key, range, asc,
-                columns, timestamp);
-        ServerResponseScan response = new ServerResponseScan(clientRequestID,
-                versions);
-        return response;
-    }
-
-    private ServerResponseRead process(ClientRequestRead request)
-            throws NoKeyProvidedException {
-
-        int server = request.getReceivedBy();
-        String key = request.getKey();
-        Set<String> columns = request.getFields();
-        long timestamp = request.getReceivedAt();
-        long clientRequestID = request.getId();
-        if (key == null) {
-            throw new NoKeyProvidedException(
-                    "Cannot process get request; no key was provided.");
-        }
-
-        Version version = mediator.get(server, key, columns, timestamp);
-        if (version == null) {
-            throw new NullPointerException("Version must not be null!");
-        }
-        ServerResponseRead response = new ServerResponseRead(clientRequestID,
-                version);
-        return response;
-    }
-
     public synchronized int register(PIMPServer node) {
         int newServerID = IDGenerator.getAndIncrement();
         servers.add(newServerID);
         return newServerID;
+    }
+
+    public synchronized void setStaleness(StalenessGenerator staleness) {
+        this.staleness = staleness;
     }
 }

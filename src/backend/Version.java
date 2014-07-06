@@ -14,11 +14,13 @@ import database.PIMPServer;
  * 
  */
 public class Version {
-    /** indicates what server has written the version */
-    private int writtenBy;
+    /** a version representing the null value */
+    public static final Version NULL = new Version(-1, null, true);
 
     /** if true, there is no value under the given key in this version */
     private boolean isNull = false;
+
+    private TreeMap<String, Object> values = new TreeMap<String, Object>();
 
     /**
      * a map from server IDs to timestamps; indicates when the version is
@@ -26,15 +28,11 @@ public class Version {
      */
     private Map<Integer, Long> visibility;
 
-    public Map<Integer, Long> getVisibility() {
-        return visibility;
-    }
+    /** indicates what server has written the version */
+    private int writtenBy;
 
-    public int getWrittenBy() {
-        return writtenBy;
+    public Version() {
     }
-
-    private TreeMap<String, Object> values = new TreeMap<String, Object>();
 
     public Version(int writtenBy, Map<Integer, Long> visibility) {
         this(writtenBy, visibility, false);
@@ -47,18 +45,53 @@ public class Version {
         this.isNull = isNull;
     }
 
-    /** a version representing the null value */
-    public static final Version NULL = new Version(-1, null, true);
-
     public Version(PIMPServer server, Map<Integer, Long> visibility) {
         this(server.getID(), visibility);
     }
 
-    public Version() {
+    @Override
+    protected Version clone() throws CloneNotSupportedException {
+        return clone(null);
+    }
+
+    public Version clone(Set<String> columns) throws CloneNotSupportedException {
+        Version clone = new Version(writtenBy, visibility);
+
+        for (String column : values.keySet()) {
+            if (columns == null || columns.contains(column)) {
+                clone.put(column, get(column));
+            }
+        }
+        return clone;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Version) {
+            Version otherEntry = (Version) obj;
+            return values.equals(otherEntry.getValues());
+        }
+        return false;
     }
 
     public Object get(String column) {
         return values.get(column);
+    }
+
+    public synchronized Map<String, Object> getValues() {
+        return values;
+    }
+
+    public Map<Integer, Long> getVisibility() {
+        return visibility;
+    }
+
+    public int getWrittenBy() {
+        return writtenBy;
+    }
+
+    public boolean isNull() {
+        return getValues().isEmpty() || isNull;
     }
 
     /**
@@ -77,13 +110,8 @@ public class Version {
         }
     }
 
-    @Override
-    public String toString() {
-        return values.toString();
-    }
-
-    public synchronized Map<String, Object> getValues() {
-        return values;
+    public synchronized void remove(String column) {
+        put(column, null);
     }
 
     public synchronized void setValues(Map<String, Object> values) {
@@ -91,43 +119,12 @@ public class Version {
         this.values.putAll(values);
     }
 
-    public synchronized void remove(String column) {
-        put(column, null);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Version) {
-            Version otherEntry = (Version) obj;
-            return values.equals(otherEntry.getValues());
-        }
-        return false;
-    }
-
-    public boolean isNull() {
-        return getValues().isEmpty() || isNull;
-    }
-
     public void setVisibility(Map<Integer, Long> visibility) {
         this.visibility = visibility;
     }
 
-    public Version clone(Set<String> columns) throws CloneNotSupportedException {
-        Version clone = new Version(writtenBy, visibility);
-
-        for (String column : values.keySet()) {
-            if (columns == null || columns.contains(column)) {
-                clone.put(column, get(column));
-            }
-        }
-        return clone;
-    }
-
     @Override
-    protected Version clone() throws CloneNotSupportedException {
-        return clone(null);
-    }
-
-    public static void main(String[] args) throws Exception {
+    public String toString() {
+        return values.toString();
     }
 }

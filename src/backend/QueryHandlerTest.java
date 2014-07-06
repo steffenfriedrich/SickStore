@@ -28,6 +28,115 @@ public class QueryHandlerTest extends TestCase {
     private PIMPServer server2;
     private PIMPServer server3;
 
+    private void checkClientStainless(Version insert, PIMPServer writer,
+            String key) throws Exception {
+        Version copyC1 = null;
+        Version copyC2 = null;
+        Version copyC3 = null;
+
+        long start = -1;
+        long delayC1 = -1;
+        long delayC2 = -1;
+        long delayC3 = -1;
+        long timeout = 1000;
+
+        insert(writer, "", key, insert);
+        start = System.currentTimeMillis();
+        do {
+            if (!(copyC1 = read(server1, "", key, null)).isNull()
+                    && delayC1 == -1) {
+                delayC1 = System.currentTimeMillis() - start;
+            }
+            if (!(copyC2 = read(server2, "", key, null)).isNull()
+                    && delayC2 == -1) {
+                delayC2 = System.currentTimeMillis() - start;
+            }
+            if (!(copyC3 = read(server3, "", key, null)).isNull()
+                    && delayC3 == -1) {
+                delayC3 = System.currentTimeMillis() - start;
+            }
+        } while (System.currentTimeMillis() - start < timeout
+                && (delayC1 == -1 || delayC2 == -1 || delayC3 == -1));
+
+        assertEquals(insert, copyC1);
+        assertEquals(insert, copyC2);
+        assertEquals(insert, copyC3);
+
+        System.out.println("writer: " + writer);
+        System.out.println("delay client 1:\t" + delayC1);
+        System.out.println("delay client 2:\t" + delayC2);
+        System.out.println("delay client 3:\t" + delayC3);
+        assertTrue(delayC1 < 50 && server1 == writer || 450 < delayC1
+                && delayC1 < 550);
+        assertTrue(delayC2 < 50 && server2 == writer || 450 < delayC2
+                && delayC2 < 550);
+        assertTrue(delayC3 < 50 && server3 == writer || 450 < delayC3
+                && delayC3 < 550);
+
+    }
+
+    private boolean delete(PIMPServer writer, String table, String key)
+            throws Exception {
+        ClientRequestDelete request = new ClientRequestDelete(table, key);
+        request.setReceivedAt(System.currentTimeMillis());
+        request.setReceivedBy(writer.getID());
+
+        ServerResponse response = QueryHandler.getInstance().processQuery(
+                writer, request);
+        if (response instanceof ServerResponseException) {
+            throw ((ServerResponseException) response).getException();
+        }
+        return response instanceof ServerResponseDelete;
+    }
+
+    private boolean insert(PIMPServer writer, String table, String key,
+            Version insert) throws Exception {
+        ClientRequestInsert request = new ClientRequestInsert(table, key,
+                insert);
+        request.setReceivedAt(System.currentTimeMillis());
+        request.setReceivedBy(writer.getID());
+
+        ServerResponse response = QueryHandler.getInstance().processQuery(
+                writer, request);
+        if (response instanceof ServerResponseException) {
+            throw ((ServerResponseException) response).getException();
+        }
+        return response instanceof ServerResponseInsert;
+    }
+
+    private Version read(PIMPServer writer, String table, String key,
+            Set<String> fields) throws Exception {
+        ClientRequestRead request = new ClientRequestRead(table, key, fields);
+        request.setReceivedAt(System.currentTimeMillis());
+        request.setReceivedBy(writer.getID());
+
+        ServerResponse response = QueryHandler.getInstance().processQuery(
+                writer, request);
+        if (response instanceof ServerResponseException) {
+            throw ((ServerResponseException) response).getException();
+        }
+        return ((ServerResponseRead) response).getVersion();
+    }
+
+    private List<Version> scan(PIMPServer writer, String table,
+            String startkey, int recordcount, Set<String> fields)
+            throws Exception {
+        ClientRequestScan request = new ClientRequestScan(table, startkey,
+                recordcount, fields, true);
+        request.setReceivedAt(System.currentTimeMillis());
+        request.setReceivedBy(writer.getID());
+
+        ServerResponse response = QueryHandler.getInstance().processQuery(
+                writer, request);
+        if (response instanceof ServerResponseException) {
+            throw ((ServerResponseException) response).getException();
+        }
+        if (response instanceof ServerResponseScan) {
+            return ((ServerResponseScan) response).getEntries();
+        }
+        return null;
+    }
+
     @Before
     public void setUp() throws Exception {
 
@@ -142,114 +251,5 @@ public class QueryHandlerTest extends TestCase {
         assertEquals(bob, copies3.get(0));
         assertEquals(mike, copies3.get(1));
         assertEquals(2, copies3.size());
-    }
-
-    private void checkClientStainless(Version insert, PIMPServer writer,
-            String key) throws Exception {
-        Version copyC1 = null;
-        Version copyC2 = null;
-        Version copyC3 = null;
-
-        long start = -1;
-        long delayC1 = -1;
-        long delayC2 = -1;
-        long delayC3 = -1;
-        long timeout = 1000;
-
-        insert(writer, "", key, insert);
-        start = System.currentTimeMillis();
-        do {
-            if (!(copyC1 = read(server1, "", key, null)).isNull()
-                    && delayC1 == -1) {
-                delayC1 = System.currentTimeMillis() - start;
-            }
-            if (!(copyC2 = read(server2, "", key, null)).isNull()
-                    && delayC2 == -1) {
-                delayC2 = System.currentTimeMillis() - start;
-            }
-            if (!(copyC3 = read(server3, "", key, null)).isNull()
-                    && delayC3 == -1) {
-                delayC3 = System.currentTimeMillis() - start;
-            }
-        } while (System.currentTimeMillis() - start < timeout
-                && (delayC1 == -1 || delayC2 == -1 || delayC3 == -1));
-
-        assertEquals(insert, copyC1);
-        assertEquals(insert, copyC2);
-        assertEquals(insert, copyC3);
-
-        System.out.println("writer: " + writer);
-        System.out.println("delay client 1:\t" + delayC1);
-        System.out.println("delay client 2:\t" + delayC2);
-        System.out.println("delay client 3:\t" + delayC3);
-        assertTrue(delayC1 < 50 && server1 == writer || 450 < delayC1
-                && delayC1 < 550);
-        assertTrue(delayC2 < 50 && server2 == writer || 450 < delayC2
-                && delayC2 < 550);
-        assertTrue(delayC3 < 50 && server3 == writer || 450 < delayC3
-                && delayC3 < 550);
-
-    }
-
-    private boolean delete(PIMPServer writer, String table, String key)
-            throws Exception {
-        ClientRequestDelete request = new ClientRequestDelete(table, key);
-        request.setReceivedAt(System.currentTimeMillis());
-        request.setReceivedBy(writer.getID());
-
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
-        if (response instanceof ServerResponseException) {
-            throw ((ServerResponseException) response).getException();
-        }
-        return response instanceof ServerResponseDelete;
-    }
-
-    private List<Version> scan(PIMPServer writer, String table,
-            String startkey, int recordcount, Set<String> fields)
-            throws Exception {
-        ClientRequestScan request = new ClientRequestScan(table, startkey,
-                recordcount, fields, true);
-        request.setReceivedAt(System.currentTimeMillis());
-        request.setReceivedBy(writer.getID());
-
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
-        if (response instanceof ServerResponseException) {
-            throw ((ServerResponseException) response).getException();
-        }
-        if (response instanceof ServerResponseScan) {
-            return ((ServerResponseScan) response).getEntries();
-        }
-        return null;
-    }
-
-    private boolean insert(PIMPServer writer, String table, String key,
-            Version insert) throws Exception {
-        ClientRequestInsert request = new ClientRequestInsert(table, key,
-                insert);
-        request.setReceivedAt(System.currentTimeMillis());
-        request.setReceivedBy(writer.getID());
-
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
-        if (response instanceof ServerResponseException) {
-            throw ((ServerResponseException) response).getException();
-        }
-        return response instanceof ServerResponseInsert;
-    }
-
-    private Version read(PIMPServer writer, String table, String key,
-            Set<String> fields) throws Exception {
-        ClientRequestRead request = new ClientRequestRead(table, key, fields);
-        request.setReceivedAt(System.currentTimeMillis());
-        request.setReceivedBy(writer.getID());
-
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
-        if (response instanceof ServerResponseException) {
-            throw ((ServerResponseException) response).getException();
-        }
-        return ((ServerResponseRead) response).getVersion();
     }
 }

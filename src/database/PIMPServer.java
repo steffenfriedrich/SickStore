@@ -13,10 +13,10 @@ import database.messages.ClientRequest;
 import database.messages.ServerResponse;
 
 public class PIMPServer extends Participant {
-    protected Server server;
+    private final int ID;
     private final PIMPServer node = this;
     private final int port;
-    private final int ID;
+    protected Server server;
 
     public PIMPServer(int port) throws IOException {
         // register server in database backend
@@ -29,6 +29,11 @@ public class PIMPServer extends Participant {
         super.register(server);
 
         server.addListener(new Listener() {
+            public void disconnected(Connection c) {
+                System.out.println("Server disconnected from connection "
+                        + c.getID());
+            }
+
             public void received(final Connection c, final Object object) {
                 if (!(object instanceof FrameworkMessage)) {
                     if (object instanceof ClientRequest) {
@@ -46,11 +51,6 @@ public class PIMPServer extends Participant {
                         };
                     }.start();
                 }
-            }
-
-            public void disconnected(Connection c) {
-                System.out.println("Server disconnected from connection "
-                        + c.getID());
             }
         });
         server.bind(this.port);

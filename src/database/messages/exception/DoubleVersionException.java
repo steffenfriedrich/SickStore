@@ -11,11 +11,11 @@ public class DoubleVersionException extends DatabaseException {
 
     private static final long serialVersionUID = 8026915664534414823L;
 
-    public DoubleVersionException(String string) {
-        super(string);
+    public DoubleVersionException() {
     }
 
-    public DoubleVersionException() {
+    public DoubleVersionException(String string) {
+        super(string);
     }
 
 }

@@ -3,33 +3,9 @@ package database.messages;
 import java.util.Set;
 
 public class ClientRequestScan extends ClientRequest {
-    private int recordcount;
-    private Set<String> fields;
     private boolean ascending = false;
-
-    public int getRecordcount() {
-        return recordcount;
-    }
-
-    public void setRecordcount(int recordcount) {
-        this.recordcount = recordcount;
-    }
-
-    public boolean isAscending() {
-        return ascending;
-    }
-
-    public void setAscending(boolean ascending) {
-        this.ascending = ascending;
-    }
-
-    public Set<String> getFields() {
-        return fields;
-    }
-
-    public void setFields(Set<String> fields) {
-        this.fields = fields;
-    }
+    private Set<String> fields;
+    private int recordcount;
 
     @SuppressWarnings("unused")
     private ClientRequestScan() {
@@ -41,5 +17,29 @@ public class ClientRequestScan extends ClientRequest {
         this.recordcount = recordcount;
         this.fields = fields;
         this.ascending = ascending;
+    }
+
+    public Set<String> getFields() {
+        return fields;
+    }
+
+    public int getRecordcount() {
+        return recordcount;
+    }
+
+    public boolean isAscending() {
+        return ascending;
+    }
+
+    public void setAscending(boolean ascending) {
+        this.ascending = ascending;
+    }
+
+    public void setFields(Set<String> fields) {
+        this.fields = fields;
+    }
+
+    public void setRecordcount(int recordcount) {
+        this.recordcount = recordcount;
     }
 }
