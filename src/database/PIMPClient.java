@@ -112,14 +112,17 @@ public class PIMPClient extends Participant {
         Participant.register(client);
 
         client.addListener(new Listener() {
+            @Override
             public void connected(Connection connection) {
                 System.out.println("Connected to server.");
             }
 
+            @Override
             public void disconnected(Connection c) {
                 System.out.println("Disconnected from server.");
             }
 
+            @Override
             public void received(Connection c, Object object) {
                 new ClientReceivedHandler(c, object, pimpclient).run();
             }

@@ -29,11 +29,13 @@ public class PIMPServer extends Participant {
         super.register(server);
 
         server.addListener(new Listener() {
+            @Override
             public void disconnected(Connection c) {
                 System.out.println("Server disconnected from connection "
                         + c.getID());
             }
 
+            @Override
             public void received(final Connection c, final Object object) {
                 if (!(object instanceof FrameworkMessage)) {
                     if (object instanceof ClientRequest) {
@@ -43,6 +45,7 @@ public class PIMPServer extends Participant {
                                 .currentTimeMillis());
                     }
                     new Thread() {
+                        @Override
                         public void run() {
                             ServerResponse response = QueryHandler
                                     .getInstance().processQuery(node, object);

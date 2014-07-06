@@ -137,6 +137,7 @@ public class QueryHandlerTest extends TestCase {
         return null;
     }
 
+    @Override
     @Before
     public void setUp() throws Exception {
 
@@ -149,6 +150,7 @@ public class QueryHandlerTest extends TestCase {
         server3 = new PIMPServer(tcpPort + 3);
     }
 
+    @Override
     @After
     public void tearDown() throws Exception {
         server1.shutdown();
