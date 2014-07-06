@@ -14,8 +14,6 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.minlog.Log;
 
-import database.handler.ClientConnectedHandler;
-import database.handler.ClientDisconnectedHandler;
 import database.handler.ClientReceivedHandler;
 import database.messages.ClientRequestDelete;
 import database.messages.ClientRequestInsert;
@@ -49,11 +47,11 @@ public class PIMPClient extends Participant {
             }
 
             public void disconnected(Connection c) {
-                new ClientDisconnectedHandler(c, pimpclient).run();
+                System.out.println("Disconnected from server.");
             }
 
             public void connected(Connection connection) {
-                new ClientConnectedHandler(connection, pimpclient).run();
+                System.out.println("Connected to server.");
             }
         });
     }

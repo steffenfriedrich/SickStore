@@ -15,13 +15,11 @@ import database.messages.ServerResponseScan;
 import database.messages.ServerResponseUpdate;
 
 public class ClientReceivedHandler extends Thread {
-    private Object object;
-    private Connection c;
+    private Object object; 
     private PIMPClient pimpclient;
 
     public ClientReceivedHandler(Connection c, Object object,
-            PIMPClient pimpclient) {
-        this.c = c;
+            PIMPClient pimpclient) { 
         this.object = object;
         this.pimpclient = pimpclient;
     }
