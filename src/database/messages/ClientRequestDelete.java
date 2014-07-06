@@ -2,6 +2,7 @@ package database.messages;
 
 public class ClientRequestDelete extends ClientRequest {
 
+    @SuppressWarnings("unused")
     private ClientRequestDelete() {
     }
 

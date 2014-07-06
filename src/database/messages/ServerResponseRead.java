@@ -5,6 +5,7 @@ import backend.Version;
 public class ServerResponseRead extends ServerResponse {
     private Version version;
 
+    @SuppressWarnings("unused")
     private ServerResponseRead() {
         super();
     }

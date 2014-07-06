@@ -16,6 +16,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import backend.Version;
+import database.messages.exception.DatabaseException;
+import database.messages.exception.DeleteException;
+import database.messages.exception.InsertException;
+import database.messages.exception.UpdateException;
 
 /**
  * @author Wolfram Wingerath
@@ -24,7 +28,7 @@ import backend.Version;
 public class PIMPClientTest extends TestCase {
 
     private PIMPServer server;
-    private PIMPClient c1;  
+    private PIMPClient c1;
 
     /**
      * @throws java.lang.Exception
@@ -40,7 +44,7 @@ public class PIMPClientTest extends TestCase {
         // Create and start server and clients
         server = new PIMPServer(tcpPort);
         c1 = new PIMPClient(timeout, host, tcpPort, "Client 1");
-        c1.connect(); 
+        c1.connect();
 
     }
 
@@ -49,12 +53,12 @@ public class PIMPClientTest extends TestCase {
      */
     @After
     public void tearDown() throws Exception {
-        c1.disconnect(); 
+        c1.disconnect();
         server.shutdown();
     }
 
     @Test
-    public void testAPI() throws Exception {
+    public void testAPI() throws Exception, DatabaseException {
         // Client 1: write something to the database
         Version bob = new Version();
         bob.put("name", "bob");
@@ -80,6 +84,26 @@ public class PIMPClientTest extends TestCase {
         john.put("name", "john");
         john.put("hair", "yellow");
         john.put("age", 21);
+        // test update
+        try {
+            c1.update("", "john", john);
+            assertTrue(false);
+        } catch (UpdateException e) {
+        }
+        // test insert
+        c1.insert("", "john", john);
+        try {
+            c1.insert("", "john", john);
+            assertTrue(false);
+        } catch (InsertException e) {
+        }
+        // test delete
+        c1.delete("", "john");
+        try {
+            c1.delete("", "john");
+            assertTrue(false);
+        } catch (DeleteException e) {
+        }
         c1.insert("", "john", john);
 
         Version adele = new Version();

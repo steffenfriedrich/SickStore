@@ -13,6 +13,7 @@ public class ClientRequestRead extends ClientRequest {
         this.fields = fields;
     }
 
+    @SuppressWarnings("unused")
     private ClientRequestRead() {
     }
 

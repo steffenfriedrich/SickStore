@@ -16,11 +16,9 @@ import junit.framework.TestSuite;
  *         Wingerath</a>
  * 
  */
-public class MyTests extends TestSuite
-{ 
-    
-    public static TestSuite suite() throws IOException
-    { 
+public class MyTests extends TestSuite {
+
+    public static TestSuite suite() throws IOException {
         MyTests suite = new MyTests();
         suite.setName("All tests");
         // $JUnit-BEGIN$
@@ -29,7 +27,6 @@ public class MyTests extends TestSuite
         // $JUnit-END$
         return suite;
     }
- 
 
     /**
      * <p>
@@ -42,11 +39,9 @@ public class MyTests extends TestSuite
      *            the <code>TestSuite</code> that "contains" the tests to be
      *            added
      */
-    private void addTests(TestSuite suite)
-    {
+    private void addTests(TestSuite suite) {
         Enumeration<Test> tests = suite.tests();
-        while (tests.hasMoreElements())
-        {
+        while (tests.hasMoreElements()) {
             this.addTest(tests.nextElement());
         }
     }

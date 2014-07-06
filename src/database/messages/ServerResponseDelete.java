@@ -2,6 +2,7 @@ package database.messages;
 
 public class ServerResponseDelete extends ServerResponse {
 
+    @SuppressWarnings("unused")
     private ServerResponseDelete() {
         super();
     }

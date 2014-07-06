@@ -8,9 +8,9 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
-import com.esotericsoftware.minlog.Log;
 
 import database.messages.ClientRequest;
+import database.messages.ServerResponse;
 
 public class PIMPServer extends Participant {
     protected Server server;
@@ -39,8 +39,10 @@ public class PIMPServer extends Participant {
                     }
                     new Thread() {
                         public void run() {
-                            QueryHandler.getInstance().processQuery(node, c,
-                                    object);
+                            ServerResponse response = QueryHandler
+                                    .getInstance().processQuery(node, object);
+
+                            node.send(c.getID(), response);
                         };
                     }.start();
                 }
@@ -63,39 +65,11 @@ public class PIMPServer extends Participant {
         server.sendToTCP(connectionID, object);
     }
 
-    public static void main(String[] args) throws Exception {
-        String host = "localhost";
-        int timeout = 120;
-        int tcpPort = 54555;
-
-        Log.set(Log.LEVEL_DEBUG);
-
-        final long t = System.currentTimeMillis();
-
-        // new Thread() {
-        // @Override
-        // public void run() {
-        // while (System.currentTimeMillis() < t + 2000) {
-        //
-        // }
-        //
-        // System.exit(-1);
-        // }
-        // }.start();
-
-        PIMPServer server = new PIMPServer(tcpPort);
-
-        PIMPClient c1 = new PIMPClient(timeout, host, tcpPort, "c1");
-        c1.connect();
-
-        PIMPClient c2 = new PIMPClient(timeout, host, tcpPort, "c2");
-        c2.connect();
-    }
-
     /**
      * Stops the server process.
      */
     public void shutdown() {
         server.stop();
     }
+
 }

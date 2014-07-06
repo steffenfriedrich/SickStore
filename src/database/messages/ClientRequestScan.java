@@ -31,6 +31,7 @@ public class ClientRequestScan extends ClientRequest {
         this.fields = fields;
     }
 
+    @SuppressWarnings("unused")
     private ClientRequestScan() {
     }
 

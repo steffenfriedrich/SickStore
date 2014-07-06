@@ -7,6 +7,7 @@ import backend.Version;
 public class ServerResponseScan extends ServerResponse {
     private List<Version> entries;
 
+    @SuppressWarnings("unused")
     private ServerResponseScan() {
         super();
     }

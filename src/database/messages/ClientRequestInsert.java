@@ -13,6 +13,7 @@ public class ClientRequestInsert extends ClientRequest {
         this.version = version;
     }
 
+    @SuppressWarnings("unused")
     private ClientRequestInsert() {
     }
 

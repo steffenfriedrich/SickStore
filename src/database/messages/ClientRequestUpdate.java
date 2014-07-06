@@ -13,6 +13,7 @@ public class ClientRequestUpdate extends ClientRequest {
         this.version = version;
     }
 
+    @SuppressWarnings("unused")
     private ClientRequestUpdate() {
     }
 

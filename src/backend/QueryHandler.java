@@ -8,9 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import backend.staleness.ConstantStaleness;
 import backend.staleness.StalenessGenerator;
-
-import com.esotericsoftware.kryonet.Connection;
-
 import database.PIMPServer;
 import database.messages.ClientRequest;
 import database.messages.ClientRequestDelete;
@@ -26,8 +23,11 @@ import database.messages.ServerResponseRead;
 import database.messages.ServerResponseScan;
 import database.messages.ServerResponseUpdate;
 import database.messages.exception.DatabaseException;
-import database.messages.exception.ExceptionNoKeyProvided;
-import database.messages.exception.ExceptionUnknownMessageType;
+import database.messages.exception.DeleteException;
+import database.messages.exception.InsertException;
+import database.messages.exception.NoKeyProvidedException;
+import database.messages.exception.UnknownMessageTypeException;
+import database.messages.exception.UpdateException;
 
 public class QueryHandler {
 
@@ -65,7 +65,8 @@ public class QueryHandler {
         return instance;
     }
 
-    public synchronized void processQuery(PIMPServer server, Connection c, Object request) {
+    public synchronized ServerResponse processQuery(PIMPServer server,
+            Object request) {
         Long id = -1l;
         ServerResponse response = null;
         try {
@@ -91,31 +92,32 @@ public class QueryHandler {
                 if (request instanceof ClientRequest) {
                     id = ((ClientRequest) request).getId();
                 }
-                throw new ExceptionUnknownMessageType(
+                throw new UnknownMessageTypeException(
                         "Cannot process request; unknown message type: "
                                 + request.getClass());
             }
         } catch (Exception e) {
             response = new ServerResponseException(id, e);
+            e.printStackTrace();
         }
-        server.send(c.getID(), response);
+        return response;
     }
 
     private ServerResponseUpdate process(ClientRequestUpdate request)
-            throws ExceptionNoKeyProvided {
+            throws NoKeyProvidedException, UpdateException {
         int server = request.getReceivedBy();
         String key = request.getKey();
         long timestamp = request.getReceivedAt();
         long clientRequestID = request.getId();
         Version version = request.getVersion();
         if (key == null) {
-            throw new ExceptionNoKeyProvided(
+            throw new NoKeyProvidedException(
                     "Cannot process get request; no key was provided.");
         }
 
         Map<Integer, Long> visibility = staleness.get(server, request);
         version.setVisibility(visibility);
-        mediator.put(key, version, timestamp);
+        mediator.update(server, key, version, timestamp);
 
         ServerResponseUpdate response = new ServerResponseUpdate(
                 clientRequestID);
@@ -123,20 +125,20 @@ public class QueryHandler {
     }
 
     private ServerResponseInsert process(ClientRequestInsert request)
-            throws ExceptionNoKeyProvided {
+            throws NoKeyProvidedException, InsertException {
         int server = request.getReceivedBy();
         String key = request.getKey();
         long timestamp = request.getReceivedAt();
         long clientRequestID = request.getId();
         Version version = request.getVersion();
         if (key == null) {
-            throw new ExceptionNoKeyProvided(
+            throw new NoKeyProvidedException(
                     "Cannot process get request; no key was provided.");
         }
 
         Map<Integer, Long> visibility = staleness.get(server, request);
         version.setVisibility(visibility);
-        mediator.put(key, version, timestamp);
+        mediator.insert(server, key, version, timestamp);
 
         ServerResponseInsert response = new ServerResponseInsert(
                 clientRequestID);
@@ -144,19 +146,19 @@ public class QueryHandler {
     }
 
     private ServerResponseDelete process(ClientRequestDelete request)
-            throws ExceptionNoKeyProvided {
+            throws NoKeyProvidedException, DeleteException {
         int server = request.getReceivedBy();
         String key = request.getKey();
         long timestamp = request.getReceivedAt();
         long clientRequestID = request.getId();
         if (key == null) {
-            throw new ExceptionNoKeyProvided(
+            throw new NoKeyProvidedException(
                     "Cannot process delete request; no key was provided.");
         }
 
         Map<Integer, Long> visibility = staleness.get(server, request);
-        Version version = new Version(server,  visibility, true);
-        mediator.put(key, version, timestamp);
+        Version version = new Version(server, visibility, true);
+        mediator.delete(server, key, version, timestamp);
 
         ServerResponseDelete response = new ServerResponseDelete(
                 clientRequestID);
@@ -164,7 +166,7 @@ public class QueryHandler {
     }
 
     private ServerResponseScan process(ClientRequestScan request)
-            throws ExceptionNoKeyProvided {
+            throws NoKeyProvidedException {
         int server = request.getReceivedBy();
         String key = request.getKey();
         int range = request.getRecordcount();
@@ -173,7 +175,7 @@ public class QueryHandler {
         long timestamp = request.getReceivedAt();
         long clientRequestID = request.getId();
         if (key == null) {
-            throw new ExceptionNoKeyProvided(
+            throw new NoKeyProvidedException(
                     "Cannot process get request; no key was provided.");
         }
 
@@ -185,7 +187,7 @@ public class QueryHandler {
     }
 
     private ServerResponseRead process(ClientRequestRead request)
-            throws ExceptionNoKeyProvided {
+            throws NoKeyProvidedException {
 
         int server = request.getReceivedBy();
         String key = request.getKey();
@@ -193,7 +195,7 @@ public class QueryHandler {
         long timestamp = request.getReceivedAt();
         long clientRequestID = request.getId();
         if (key == null) {
-            throw new ExceptionNoKeyProvided(
+            throw new NoKeyProvidedException(
                     "Cannot process get request; no key was provided.");
         }
 

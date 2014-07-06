@@ -1,22 +1,42 @@
 package database.messages;
 
+import database.messages.exception.DatabaseException;
+
 public class ServerResponseException extends ServerResponse {
-    public Exception getException() {
-        return exception;
-    }
 
-    public void setException(Exception exception) {
-        this.exception = exception;
-    }
+    private String message;
+    private String className;
 
-    private Exception exception;
-
+    @SuppressWarnings("unused")
     private ServerResponseException() {
         super();
     }
 
-    public ServerResponseException(long clientRequestID, Exception exception) {
+    public ServerResponseException(long clientRequestID, Exception e) {
         super(clientRequestID);
-        this.exception = exception;
+        this.message = e.getMessage();
+        this.className = e.getClass().getCanonicalName();
     }
+
+    /**
+     * 
+     * @return a database exception
+     */
+    public Exception getException() {
+        Object object = null;
+        try {
+            Class<?> c = null;
+            c = Class.forName(className);
+            object = c.newInstance();
+            ((DatabaseException) object).setMessage(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (object instanceof DatabaseException) {
+            return (DatabaseException) object;
+        } else {
+            return new Exception(message);
+        }
+    }
+
 }
