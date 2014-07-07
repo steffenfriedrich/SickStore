@@ -94,8 +94,7 @@ public class PIMPClientTest extends TestCase {
             assertTrue(false);
         } catch (UpdateException e) {
         }
-        // test insert
-        Store store = Store.getInstance();
+        // test insert 
         c1.insert("", "john", john);
         try {
             c1.insert("", "john", john);
