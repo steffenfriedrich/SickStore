@@ -212,6 +212,11 @@ public class Store {
         return values.lowerKey(key);
     }
 
+    @Override
+    public String toString() {
+        return values.toString();
+    }
+
     public void update(int server, String key, Version version)
             throws UpdateException {
         Version alreadyExisting = get(server, key, version.getWrittenAt());
@@ -222,11 +227,5 @@ public class Store {
         } else {
             insertOrUpdate(key, version);
         }
-    }
-    
-    
-    @Override
-    public String toString() { 
-        return values.toString();
     }
 }

@@ -143,8 +143,8 @@ public class Version {
     @Override
     public String toString() {
         if (isNull) {
-            return writtenAt+ ": null";
+            return writtenAt + ": null";
         }
-        return writtenAt+ ": "+values.toString();
+        return writtenAt + ": " + values.toString();
     }
 }

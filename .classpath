@@ -6,6 +6,8 @@
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.7.jar"/>
 	<classpathentry kind="lib" path="lib/kryonet-2.21-all.jar" sourcepath="lib/kryonet-kryonet-2.21.zip"/>
 	<classpathentry kind="lib" path="lib/reflections-0.9.9-RC1-uberjar.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar" sourcepath="C:/Users/Wolfram Wingerath/.m2/repository/commons-cli/commons-cli/1.2/commons-cli-1.2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.2-sources.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/reflections-0.9.5-sources.jar"/>
 	<classpathentry kind="lib" path="lib/guava-17.0.jar"/>
