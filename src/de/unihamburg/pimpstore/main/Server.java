@@ -11,7 +11,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import de.unihamburg.pimpstore.backend.QueryHandler;
-import de.unihamburg.pimpstore.backend.Store;
 import de.unihamburg.pimpstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.pimpstore.database.PIMPServer;
 
@@ -28,16 +27,19 @@ public class Server {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        args = " -p=55000,55001 -f=500ppp -o=0iii ggg".split(" ");
+//        args = " -p=55000,55001 -f=500 -o=,0 -h".split(" ");
+        // args = "   ".split(" ");
         parseArguments(args);
     }
 
+    // TODO wrap different staleness generators into the CLI
+
     private static void parseArguments(String[] args)
             throws IndexOutOfBoundsException, ParseException, IOException {
-        // TODO Auto-generated method stub
         CommandLineParser parser = new GnuParser();
         Options options = new Options();
 
+        // Create options
         Option portOpt = new Option(
                 "p",
                 "ports",
@@ -59,26 +61,41 @@ public class Server {
         ownReadsOpt.setType(0);
         options.addOption(ownReadsOpt);
 
+        Option helpOpt = new Option("h", "help", false,
+                "prints help and instructions");
+        helpOpt.setType(0);
+        options.addOption(helpOpt);
+
         CommandLine line = null;
         try {
             line = parser.parse(options, args);
         } catch (ParseException e) {
-            System.out.println("Unexpected exception:" + e.getMessage());
+            e.printStackTrace();
         }
 
-        boolean unrecognisedArguments = !line.getArgList().isEmpty();
-        if (line.getOptions().length == 0) {// automatically generate the help
-                                            // statement
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("PIMPStore Server", options);
-            return;
-        } else if (unrecognisedArguments) {
+        // print unrecognised arguments
+        boolean unrecognisedArguments = false;
+        for (Object argument : line.getArgList()) {
+            if (argument != null && !argument.equals("")) {
+                unrecognisedArguments = true;
+                break;
+            } 
+        }
+        if (unrecognisedArguments) {
             System.out.println("Unrecognised arguments:");
             for (Object argument : line.getArgList()) {
                 System.out.println("\t" + argument.toString());
             }
             System.out.println("Proceeding...");
         }
+        // print help if necessary
+        boolean showHelp = line.getOptions().length == 0
+                || line.hasOption(helpOpt.getOpt());
+        if (showHelp) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("PIMPStore Server", options);  
+            System.out.println();
+        } 
 
         String[] ports = ((String) checkOption(portOpt, "54000", line))
                 .split(",");
@@ -108,18 +125,20 @@ public class Server {
                 return (ReturnType) value;
             } catch (Exception e) {
                 System.out.println("Unexpected exception:" + e.getMessage());
-                System.out.println("Using default value for option \""
-                        + option.getOpt() + "\":\t" + defaultValue);
+                System.out.println("\tUsing default value:\t" + defaultValue);
                 return defaultValue;
             }
-        } 
-        System.out.println("Sorry, option \"" + option.getOpt()
-                + "\" was not set!");
+        }
+        System.out.println("WARNING: option \"" + option.getOpt()
+                + "\" was not set! Using default value:\t" + defaultValue);
         return (ReturnType) value;
     }
 
     private static void startServers(String[] ports, long foreignReads,
             long ownReads) throws IOException {
+        System.out.println();
+        System.out.println("Starting PIMP server...");
+        
         int p = -1;
         for (String port : ports) {
             p = Integer.parseInt(port);
@@ -128,9 +147,12 @@ public class Server {
         QueryHandler.getInstance().setStaleness(
                 new ConstantStaleness(foreignReads, ownReads));
 
-        Store store = Store.getInstance();
-        System.out.println(store);
-        QueryHandler handler = QueryHandler.getInstance();
-        System.out.println(handler);
+        // Some variables that give you a handle on the store and the server
+        // nodes during debugging
+        // Store store = Store.getInstance();
+        // System.out.println(store);
+        // QueryHandler handler = QueryHandler.getInstance();
+        // System.out.println(handler);
+        
     }
 }

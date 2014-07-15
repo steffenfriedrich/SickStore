@@ -37,7 +37,6 @@ public class ConstantStaleness implements StalenessGenerator {
      * @see de.unihamburg.pimpstore.backend.staleness.StalenessGenerator#get(int,
      *      de.unihamburg.pimpstore.database.messages.ClientRequest)
      */
-    @Override
     public Map<Integer, Long> get(int server, ClientRequest request) {
         QueryHandler handler = QueryHandler.getInstance();
         HashMap<Integer, Long> delay = new HashMap<Integer, Long>();

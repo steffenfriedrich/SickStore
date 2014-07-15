@@ -25,6 +25,11 @@ import de.unihamburg.pimpstore.database.messages.ServerResponseScan;
 import de.unihamburg.pimpstore.database.messages.ServerResponseUpdate;
 import de.unihamburg.pimpstore.database.messages.exception.DatabaseException;
 
+/**
+ * 
+ * @author Wolfram Wingerath
+ *
+ */
 public class PIMPClient extends Participant {
     private class ClientReceivedHandler extends Thread {
         private Object object;
