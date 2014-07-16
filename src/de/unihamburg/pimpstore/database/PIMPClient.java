@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 
 import de.unihamburg.pimpstore.backend.Version;
@@ -47,21 +48,21 @@ public class PIMPClient extends Participant {
             if (object instanceof ServerResponseDelete) {
                 ServerResponseDelete message = (ServerResponseDelete) object;
 
-                Long id = message.getId();
+                Long id = message.getClientRequestID();
 
                 pimpclient.outstandingRequests.put(id, true);
 
             } else if (object instanceof ServerResponseInsert) {
                 ServerResponseInsert message = (ServerResponseInsert) object;
 
-                Long id = message.getId();
+                Long id = message.getClientRequestID();
 
                 pimpclient.outstandingRequests.put(id, true);
 
             } else if (object instanceof ServerResponseRead) {
                 ServerResponseRead message = (ServerResponseRead) object;
 
-                Long id = message.getId();
+                Long id = message.getClientRequestID();
                 Version version = message.getVersion();
 
                 pimpclient.outstandingRequests.put(id, version);
@@ -69,7 +70,7 @@ public class PIMPClient extends Participant {
             } else if (object instanceof ServerResponseScan) {
                 ServerResponseScan message = (ServerResponseScan) object;
 
-                Long id = message.getId();
+                Long id = message.getClientRequestID();
                 List<Version> entries = message.getEntries();
 
                 pimpclient.outstandingRequests.put(id, entries);
@@ -77,18 +78,19 @@ public class PIMPClient extends Participant {
             } else if (object instanceof ServerResponseUpdate) {
                 ServerResponseUpdate message = (ServerResponseUpdate) object;
 
-                Long id = message.getId();
+                Long id = message.getClientRequestID();
 
                 pimpclient.outstandingRequests.put(id, true);
 
             } else if (object instanceof ServerResponseException) {
                 ServerResponseException message = (ServerResponseException) object;
 
-                Long id = message.getId();
+                Long id = message.getClientRequestID();
                 Exception exception = message.getException();
 
                 pimpclient.outstandingRequests.put(id, exception);
 
+            } else if (object instanceof FrameworkMessage) {
             } else {
                 System.out.println("connection " + pimpclient.client.getID()
                         + " received: " + object);
