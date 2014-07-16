@@ -70,7 +70,7 @@ public class Participant {
 
     // This registers objects that are going to be sent over the network.
     static public void register(EndPoint endPoint) throws IOException {
-        List<Class<?>> classes = new  ArrayList<Class<?>>();
+        List<Class<?>> classes = new ArrayList<Class<?>>();
 
         // register some primitives etc.
         classes.add(ArrayList.class);
@@ -89,8 +89,8 @@ public class Participant {
         classes.add(String.class);
         classes.add(String[].class);
         classes.add(TreeMap.class);
-        
-     // register messages
+
+        // register messages
         classes.add(ClientRequest.class);
         classes.add(ClientRequestDelete.class);
         classes.add(ClientRequestInsert.class);
@@ -135,30 +135,30 @@ public class Participant {
 
     private static void printClasses() throws IOException {
         List<String> classes = new ArrayList<String>();
-        
+
         System.out.println();
         System.out.println("// register messages");
         for (Class<? extends Object> c : getClassesInPackageOf(ClientRequest.class)) {
             classes.add("classes.add(" + c.getSimpleName() + ".class);");
-        } 
+        }
         Collections.sort(classes);
         for (String string : classes) {
             System.out.println(string);
         }
         classes.clear();
-        
+
         System.out.println();
         System.out.println("// register exceptions");
         for (Class<? extends Object> c : getClassesInPackageOf(DatabaseException.class)) {
             classes.add("classes.add(" + c.getSimpleName() + ".class);");
-        } 
+        }
         Collections.sort(classes);
         for (String string : classes) {
             System.out.println(string);
         }
-        classes.clear(); 
+        classes.clear();
     }
-    
+
     public static void main(String[] args) throws Exception {
         printClasses();
     }

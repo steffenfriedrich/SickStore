@@ -151,11 +151,13 @@ public class PIMPClient extends Participant {
     /**
      * Checks whether the client is connected to a server; if not, throws an
      * exception.
-     * @param message 
+     * 
+     * @param message
      * 
      * @throws NotConnectedException
      */
-    private void checkWhetherConnected(String message) throws NotConnectedException {
+    private void checkWhetherConnected(String message)
+            throws NotConnectedException {
         if (!client.isConnected()) {
             throw new NotConnectedException(message);
         }
