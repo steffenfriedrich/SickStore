@@ -16,6 +16,35 @@ import de.unihamburg.pimpstore.database.PIMPServer;
 
 public class Server {
 
+    @SuppressWarnings("unchecked")
+    private static <ReturnType extends Object> ReturnType checkOption(
+            Option option, ReturnType defaultValue, CommandLine line) {
+        Object value = defaultValue;
+        String string = null;
+        if (line.hasOption(option.getOpt())) {
+            try {
+                string = line.getOptionValue(option.getOpt());
+                if (defaultValue instanceof Integer) {
+                    value = Integer.parseInt(string);
+                } else if (defaultValue instanceof Long) {
+                    value = Long.parseLong(string);
+                } else if (defaultValue instanceof String[]) {
+                    value = Integer.parseInt(string);
+                }
+                return (ReturnType) value;
+            } catch (Exception e) {
+                System.out.println("Unexpected exception:" + e.getMessage());
+                System.out.println("\tUsing default value:\t" + defaultValue);
+                return defaultValue;
+            }
+        }
+        System.out.println("WARNING: option \"" + option.getOpt()
+                + "\" was not set! Using default value:\t" + defaultValue);
+        return (ReturnType) value;
+    }
+
+    // TODO wrap different staleness generators into the CLI
+
     /**
      * can be started with the following command
      * 
@@ -27,12 +56,10 @@ public class Server {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-//        args = " -p=55000,55001 -f=500 -o=,0 -h".split(" ");
+        // args = " -p=55000,55001 -f=500 -o=,0 -h".split(" ");
         // args = "   ".split(" ");
         parseArguments(args);
     }
-
-    // TODO wrap different staleness generators into the CLI
 
     private static void parseArguments(String[] args)
             throws IndexOutOfBoundsException, ParseException, IOException {
@@ -79,7 +106,7 @@ public class Server {
             if (argument != null && !argument.equals("")) {
                 unrecognisedArguments = true;
                 break;
-            } 
+            }
         }
         if (unrecognisedArguments) {
             System.out.println("Unrecognised arguments:");
@@ -93,9 +120,9 @@ public class Server {
                 || line.hasOption(helpOpt.getOpt());
         if (showHelp) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("PIMPStore Server", options);  
+            formatter.printHelp("PIMPStore Server", options);
             System.out.println();
-        } 
+        }
 
         String[] ports = ((String) checkOption(portOpt, "54000", line))
                 .split(",");
@@ -107,38 +134,11 @@ public class Server {
         startServers(ports, foreignReads, ownReads);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <ReturnType extends Object> ReturnType checkOption(
-            Option option, ReturnType defaultValue, CommandLine line) {
-        Object value = defaultValue;
-        String string = null;
-        if (line.hasOption(option.getOpt())) {
-            try {
-                string = line.getOptionValue(option.getOpt());
-                if (defaultValue instanceof Integer) {
-                    value = Integer.parseInt(string);
-                } else if (defaultValue instanceof Long) {
-                    value = Long.parseLong(string);
-                } else if (defaultValue instanceof String[]) {
-                    value = Integer.parseInt(string);
-                }
-                return (ReturnType) value;
-            } catch (Exception e) {
-                System.out.println("Unexpected exception:" + e.getMessage());
-                System.out.println("\tUsing default value:\t" + defaultValue);
-                return defaultValue;
-            }
-        }
-        System.out.println("WARNING: option \"" + option.getOpt()
-                + "\" was not set! Using default value:\t" + defaultValue);
-        return (ReturnType) value;
-    }
-
     private static void startServers(String[] ports, long foreignReads,
             long ownReads) throws IOException {
         System.out.println();
         System.out.println("Starting PIMP server...");
-        
+
         int p = -1;
         for (String port : ports) {
             p = Integer.parseInt(port);
@@ -153,6 +153,6 @@ public class Server {
         // System.out.println(store);
         // QueryHandler handler = QueryHandler.getInstance();
         // System.out.println(handler);
-        
+
     }
 }

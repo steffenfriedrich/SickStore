@@ -24,11 +24,12 @@ import de.unihamburg.pimpstore.database.messages.ServerResponseRead;
 import de.unihamburg.pimpstore.database.messages.ServerResponseScan;
 import de.unihamburg.pimpstore.database.messages.ServerResponseUpdate;
 import de.unihamburg.pimpstore.database.messages.exception.DatabaseException;
+import de.unihamburg.pimpstore.database.messages.exception.NotConnectedException;
 
 /**
  * 
  * @author Wolfram Wingerath
- *
+ * 
  */
 public class PIMPClient extends Participant {
     private class ClientReceivedHandler extends Thread {
@@ -147,6 +148,19 @@ public class PIMPClient extends Participant {
         this.name = name;
     }
 
+    /**
+     * Checks whether the client is connected to a server; if not, throws an
+     * exception.
+     * @param message 
+     * 
+     * @throws NotConnectedException
+     */
+    private void checkWhetherConnected(String message) throws NotConnectedException {
+        if (!client.isConnected()) {
+            throw new NotConnectedException(message);
+        }
+    }
+
     public void connect() throws IOException {
         client.connect(timeout, host, tcpPort);
     }
@@ -162,11 +176,14 @@ public class PIMPClient extends Participant {
      * @throws DatabaseException
      */
     public boolean delete(String table, String key) throws DatabaseException {
+        checkWhetherConnected("Cannot perform delete operation: not connected to server.");
+
         ClientRequestDelete request = new ClientRequestDelete(table, key);
         client.sendTCP(request);
 
         Object ack;
         do {
+            checkWhetherConnected("Connection dropped.");
             ack = outstandingRequests.get(request.getId());
         } while (ack == null);
 
@@ -196,12 +213,15 @@ public class PIMPClient extends Participant {
      */
     public boolean insert(String table, String key, Version values)
             throws DatabaseException {
+        checkWhetherConnected("Cannot perform insert operation: not connected to server.");
+
         ClientRequestInsert request = new ClientRequestInsert(table, key,
                 values);
         client.sendTCP(request);
 
         Object ack;
         do {
+            checkWhetherConnected("Connection dropped.");
             ack = outstandingRequests.get(request.getId());
         } while (ack == null);
 
@@ -226,11 +246,14 @@ public class PIMPClient extends Participant {
      */
     public Version read(String table, String key, Set<String> fields)
             throws DatabaseException {
+        checkWhetherConnected("Cannot perform read operation: not connected to server.");
+
         ClientRequestRead request = new ClientRequestRead(table, key, fields);
         client.sendTCP(request);
 
         Object ack;
         do {
+            checkWhetherConnected("Connection dropped.");
             ack = outstandingRequests.get(request.getId());
         } while (ack == null);
 
@@ -266,12 +289,15 @@ public class PIMPClient extends Participant {
      */
     public List<Version> scan(String table, String startkey, int recordcount,
             Set<String> fields, boolean ascending) throws DatabaseException {
+        checkWhetherConnected("Cannot perform scan operation: not connected to server.");
+
         ClientRequestScan request = new ClientRequestScan(table, startkey,
                 recordcount, fields, ascending);
         client.sendTCP(request);
 
         Object ack;
         do {
+            checkWhetherConnected("Connection dropped.");
             ack = outstandingRequests.get(request.getId());
         } while (ack == null);
 
@@ -314,12 +340,15 @@ public class PIMPClient extends Participant {
      */
     public boolean update(String table, String key, Version values)
             throws DatabaseException {
+        checkWhetherConnected("Cannot perform update operation: not connected to server.");
+
         ClientRequestUpdate request = new ClientRequestUpdate(table, key,
                 values);
         client.sendTCP(request);
 
         Object ack;
         do {
+            checkWhetherConnected("Connection dropped.");
             ack = outstandingRequests.get(request.getId());
         } while (ack == null);
 

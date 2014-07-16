@@ -3,6 +3,7 @@
  */
 package de.unihamburg.pimpstore.backend;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -27,7 +28,7 @@ public class Version {
      * a map from server IDs to timestamps; indicates when the version is
      * visible for what server
      */
-    private Map<Integer, Long> visibility;
+    private Map<Integer, Long> visibility = new HashMap<Integer, Long>();
 
     /**
      * server timestamp at which this version was written. Default value is the
@@ -49,7 +50,11 @@ public class Version {
     public Version(int writtenBy, Map<Integer, Long> visibility, boolean isNull) {
         this();
         this.writtenBy = writtenBy;
-        this.visibility = visibility;
+        if (visibility == null) {
+            visibility = null;
+        } else {
+            this.visibility.putAll(visibility);
+        }
         this.isNull = isNull;
     }
 
