@@ -173,6 +173,7 @@ public class QueryHandler {
         ServerResponse response = null;
         try {
             if (request instanceof ClientRequest) {
+                id = ((ClientRequest) request).getId();
                 int activeServer = ((ClientRequest) request).getReceivedBy();
                 if (activeServer != server.getID()) {
                     throw new DatabaseException(
@@ -191,9 +192,6 @@ public class QueryHandler {
             } else if (request instanceof ClientRequestUpdate) {
                 response = process((ClientRequestUpdate) request);
             } else {
-                if (request instanceof ClientRequest) {
-                    id = ((ClientRequest) request).getId();
-                }
                 throw new UnknownMessageTypeException(
                         "Cannot process request; unknown message type: "
                                 + request.getClass());
@@ -209,6 +207,15 @@ public class QueryHandler {
         int newServerID = IDGenerator.getAndIncrement();
         servers.add(newServerID);
         return newServerID;
+    }
+
+    public synchronized int deregister(PIMPServer node) {
+        if (node == null) {
+            throw new NullPointerException("server must not be null!");
+        }
+        int id = node.getID();
+        servers.remove(id);
+        return id;
     }
 
     public synchronized void setStaleness(StalenessGenerator staleness) {

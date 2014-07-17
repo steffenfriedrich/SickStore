@@ -25,7 +25,7 @@ public class ServerResponse {
         return clientRequestID;
     }
 
-    public Long getIdq() {
+    public Long getId() {
         return id;
     }
 }

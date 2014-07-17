@@ -41,7 +41,7 @@ public class PIMPClientTest extends TestCase {
         // specify connection parameters
         String host = "localhost";
         int timeout = 120;
-        int tcpPort = 54555;
+        int tcpPort = 54999;
 
         // Create and start server and clients
         server = new PIMPServer(tcpPort);
