@@ -36,22 +36,25 @@ public class PIMPServer extends Participant {
 
             @Override
             public void received(final Connection c, final Object object) {
-                if (!(object instanceof FrameworkMessage)) {
-                    if (object instanceof ClientRequest) {
-                        // Mark the request as received by this server
-                        ((ClientRequest) object).setReceivedBy(node.getID());
-                        ((ClientRequest) object).setReceivedAt(System
-                                .currentTimeMillis());
-                    }
-                    // new Thread() {
-                    // @Override
-                    // public void run() {
-                    ServerResponse response = QueryHandler.getInstance()
-                            .processQuery(node, object);
+                synchronized (c) { 
+                    if (!(object instanceof FrameworkMessage)) {
+                        if (object instanceof ClientRequest) {
+                            // Mark the request as received by this server
+                            ((ClientRequest) object).setReceivedBy(node.getID());
+                            ((ClientRequest) object).setReceivedAt(System
+                                    .currentTimeMillis());
+                        }
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                ServerResponse response = QueryHandler
+                                        .getInstance().processQuery(node,
+                                                object);
 
-                    node.send(c.getID(), response);
-                    // };
-                    // }.start();
+                                node.send(c.getID(), response);
+                            };
+                        }.start();
+                    }
                 }
             }
         });
