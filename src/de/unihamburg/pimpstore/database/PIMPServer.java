@@ -43,15 +43,15 @@ public class PIMPServer extends Participant {
                         ((ClientRequest) object).setReceivedAt(System
                                 .currentTimeMillis());
                     }
-//                    new Thread() {
-//                        @Override
-//                        public void run() {
-                            ServerResponse response = QueryHandler
-                                    .getInstance().processQuery(node, object);
+                    // new Thread() {
+                    // @Override
+                    // public void run() {
+                    ServerResponse response = QueryHandler.getInstance()
+                            .processQuery(node, object);
 
-                            node.send(c.getID(), response);
-//                        };
-//                    }.start();
+                    node.send(c.getID(), response);
+                    // };
+                    // }.start();
                 }
             }
         });

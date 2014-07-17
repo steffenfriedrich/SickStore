@@ -68,6 +68,36 @@ public class Participant {
         return allClasses;
     }
 
+    public static void main(String[] args) throws Exception {
+        printClasses();
+    }
+
+    private static void printClasses() throws IOException {
+        List<String> classes = new ArrayList<String>();
+
+        System.out.println();
+        System.out.println("// register messages");
+        for (Class<? extends Object> c : getClassesInPackageOf(ClientRequest.class)) {
+            classes.add("classes.add(" + c.getSimpleName() + ".class);");
+        }
+        Collections.sort(classes);
+        for (String string : classes) {
+            System.out.println(string);
+        }
+        classes.clear();
+
+        System.out.println();
+        System.out.println("// register exceptions");
+        for (Class<? extends Object> c : getClassesInPackageOf(DatabaseException.class)) {
+            classes.add("classes.add(" + c.getSimpleName() + ".class);");
+        }
+        Collections.sort(classes);
+        for (String string : classes) {
+            System.out.println(string);
+        }
+        classes.clear();
+    }
+
     // This registers objects that are going to be sent over the network.
     static public void register(EndPoint endPoint) throws IOException {
         List<Class<?>> classes = new ArrayList<Class<?>>();
@@ -131,35 +161,5 @@ public class Participant {
         for (Class<?> c : classes) {
             kryo.register(c);
         }
-    }
-
-    private static void printClasses() throws IOException {
-        List<String> classes = new ArrayList<String>();
-
-        System.out.println();
-        System.out.println("// register messages");
-        for (Class<? extends Object> c : getClassesInPackageOf(ClientRequest.class)) {
-            classes.add("classes.add(" + c.getSimpleName() + ".class);");
-        }
-        Collections.sort(classes);
-        for (String string : classes) {
-            System.out.println(string);
-        }
-        classes.clear();
-
-        System.out.println();
-        System.out.println("// register exceptions");
-        for (Class<? extends Object> c : getClassesInPackageOf(DatabaseException.class)) {
-            classes.add("classes.add(" + c.getSimpleName() + ".class);");
-        }
-        Collections.sort(classes);
-        for (String string : classes) {
-            System.out.println(string);
-        }
-        classes.clear();
-    }
-
-    public static void main(String[] args) throws Exception {
-        printClasses();
     }
 }
