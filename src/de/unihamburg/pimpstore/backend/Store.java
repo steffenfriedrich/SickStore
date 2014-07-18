@@ -46,6 +46,7 @@ public class Store {
      */
     public void clear() {
         values.clear();
+        System.gc();
     }
 
     public void delete(int server, String key, Map<Integer, Long> visibility,
