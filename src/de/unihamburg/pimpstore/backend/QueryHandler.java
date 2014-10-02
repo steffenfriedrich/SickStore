@@ -33,8 +33,6 @@ import de.unihamburg.pimpstore.database.messages.exception.UnknownMessageTypeExc
 import de.unihamburg.pimpstore.database.messages.exception.UpdateException;
 
 public class QueryHandler {
-    private static final Logger logStaleness = LoggerFactory
-            .getLogger("logStaleness");
 
     private final static QueryHandler instance;
 
@@ -201,9 +199,6 @@ public class QueryHandler {
                         "Cannot process request; unknown message type: "
                                 + request.getClass());
             }
-            
-
-            logStaleness.info("[staleness] ");
         } catch (Exception e) {
             response = new ServerResponseException(id, e);
             e.printStackTrace();

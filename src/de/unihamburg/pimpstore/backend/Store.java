@@ -33,7 +33,7 @@ public class Store {
     static {
         instance = new Store();
     }
-    
+
     private static final Logger logStaleness = LoggerFactory
             .getLogger("logStaleness");
 
@@ -79,22 +79,28 @@ public class Store {
 
         VersionSet versions = getVersionSet(key);
         Version version = Version.NULL;
+        Version versionMostRecent = Version.NULL;
 
         // find the version that was up-to-date (most recent) at the given
         // timestamp
         if (versions != null) {
+            versionMostRecent = versions.get(0);
             for (int i = 0; i < versions.size(); i++) {
                 version = versions.get(i);
-                if (isVisible(server, timestamp, version)) {
-
-                    
-
-                    logStaleness.info("[staleness] " + );
+                if (visibleSince(server, version) <= timestamp) {
                     break;
                 } else {
                     version = Version.NULL;
                 }
             }
+        }
+        
+        
+        if (version == versionMostRecent) {
+            logStaleness.info("[staleness in ms] |0");
+        } else {
+            logStaleness.info("[staleness in ms] |"
+                    + (versionMostRecent.getWrittenAt() - timestamp));
         }
 
         if (!version.isNull()) {
@@ -198,16 +204,16 @@ public class Store {
      * @param version
      * @return
      */
-    public boolean isVisible(int server, long readTimestamp, Version version) {
+    public long visibleSince(int server, Version version) {
         Map<Integer, Long> stalenessWindows = version.getVisibility();
         long writeTimestamp = version.getWrittenAt();
         Long staleness = stalenessWindows.get(server);
         if (staleness == null) {
-            return false;
+            return -1l;
         } else {
             long visibleSince = writeTimestamp + staleness;
 
-            return visibleSince <= readTimestamp;
+            return visibleSince;
         }
     }
 
