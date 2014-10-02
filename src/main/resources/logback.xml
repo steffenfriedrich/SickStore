@@ -25,7 +25,7 @@
 
 	<appender name="PIMPSTORE-FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>logs/nosqlmark.log</file>
+		<file>logs/pimpstore.log</file>
 		<encoder>
 			<pattern>%date{ISO8601} | %-5level | %msg%n</pattern>
 		</encoder>
@@ -39,7 +39,7 @@
 		</triggeringPolicy>
 	</appender>
 
-	<appender name="MEASURE-FILE"
+	<appender name="MEASUREMENTS-FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>logs/pimpstore-measurements.log</file>
 		<encoder>
@@ -56,8 +56,8 @@
 		</triggeringPolicy>
 	</appender>
 
-	<logger name="measure" level="info" additivity="false">
-		<appender-ref ref="METRICS-FILE" />
+	<logger name="measurements" level="info" additivity="false">
+		<appender-ref ref="MEASUREMENTS-FILE" />
 	</logger>
 
 	<logger name="pimpstore" level="debug" additivity="false">

@@ -9,13 +9,17 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.unihamburg.pimpstore.backend.QueryHandler;
 import de.unihamburg.pimpstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.pimpstore.database.PIMPServer;
 
 public class Server {
-
+	static final Logger log = LoggerFactory.getLogger("pimpstore");
+	static final Logger measure = LoggerFactory.getLogger("measurements");
+	
     @SuppressWarnings("unchecked")
     private static <ReturnType extends Object> ReturnType checkOption(
             Option option, ReturnType defaultValue, CommandLine line) {
@@ -138,14 +142,15 @@ public class Server {
 
     private static void startServers(String[] ports, long foreignReads,
             long ownReads) throws IOException {
-        System.out.println();
-        System.out.println("Starting PIMP server...");
 
+        log.info("Starting PIMP server...");
+        measure.info("some measurement");
+        
         int p = -1;
         for (String port : ports) {
             p = Integer.parseInt(port);
             new PIMPServer(p);
-            System.out.println("... on port " + port);
+            log.info("... on port " + port);
         }
         QueryHandler.getInstance().setStaleness(
                 new ConstantStaleness(foreignReads, ownReads));
