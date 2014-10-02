@@ -34,8 +34,10 @@ public class Store {
         instance = new Store();
     }
 
-    private static final Logger logStaleness = LoggerFactory
-            .getLogger("logStaleness");
+    private static final Logger logStalenessTime = LoggerFactory
+            .getLogger("logStalenessTime");
+    private static final Logger logStalenessVersions = LoggerFactory
+            .getLogger("logStalenessVersions");
 
     public static Store getInstance() {
         return instance;
@@ -80,7 +82,6 @@ public class Store {
         VersionSet versions = getVersionSet(key);
         Version version = Version.NULL;
         Version versionMostRecent = Version.NULL;
-        
 
         // find the version that was up-to-date (most recent) at the given
         // timestamp
@@ -89,19 +90,18 @@ public class Store {
             for (int i = 0; i < versions.size(); i++) {
                 version = versions.get(i);
                 if (visibleSince(server, version) <= timestamp) {
-                    logStaleness.info("[staleness in versions] |"+i);
+                    logStalenessVersions.info("[staleness in versions] |" + i);
                     break;
                 } else {
                     version = Version.NULL;
                 }
             }
         }
-        
-        
+
         if (version == versionMostRecent) {
-            logStaleness.info("[staleness in ms] |0");
+            logStalenessTime.info("[staleness in ms] |0");
         } else {
-            logStaleness.info("[staleness in ms] |"
+            logStalenessTime.info("[staleness in ms] |"
                     + (versionMostRecent.getWrittenAt() - timestamp));
         }
 
