@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.unihamburg.pimpstore.database.messages.exception.DeleteException;
 import de.unihamburg.pimpstore.database.messages.exception.InsertException;
 import de.unihamburg.pimpstore.database.messages.exception.UpdateException;
@@ -30,6 +33,9 @@ public class Store {
     static {
         instance = new Store();
     }
+    
+    private static final Logger logStaleness = LoggerFactory
+            .getLogger("logStaleness");
 
     public static Store getInstance() {
         return instance;
@@ -80,6 +86,10 @@ public class Store {
             for (int i = 0; i < versions.size(); i++) {
                 version = versions.get(i);
                 if (isVisible(server, timestamp, version)) {
+
+                    
+
+                    logStaleness.info("[staleness] " + );
                     break;
                 } else {
                     version = Version.NULL;

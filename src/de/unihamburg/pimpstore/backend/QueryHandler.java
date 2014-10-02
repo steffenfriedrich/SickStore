@@ -6,6 +6,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.unihamburg.pimpstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.pimpstore.backend.staleness.StalenessGenerator;
 import de.unihamburg.pimpstore.database.PIMPServer;
@@ -30,6 +33,8 @@ import de.unihamburg.pimpstore.database.messages.exception.UnknownMessageTypeExc
 import de.unihamburg.pimpstore.database.messages.exception.UpdateException;
 
 public class QueryHandler {
+    private static final Logger logStaleness = LoggerFactory
+            .getLogger("logStaleness");
 
     private final static QueryHandler instance;
 
@@ -196,6 +201,9 @@ public class QueryHandler {
                         "Cannot process request; unknown message type: "
                                 + request.getClass());
             }
+            
+
+            logStaleness.info("[staleness] ");
         } catch (Exception e) {
             response = new ServerResponseException(id, e);
             e.printStackTrace();

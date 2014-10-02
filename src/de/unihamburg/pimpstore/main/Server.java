@@ -17,9 +17,8 @@ import de.unihamburg.pimpstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.pimpstore.database.PIMPServer;
 
 public class Server {
-	static final Logger log = LoggerFactory.getLogger("pimpstore");
-	static final Logger measure = LoggerFactory.getLogger("measurements");
-	
+    private static final Logger log = LoggerFactory.getLogger("pimpstore");
+
     @SuppressWarnings("unchecked")
     private static <ReturnType extends Object> ReturnType checkOption(
             Option option, ReturnType defaultValue, CommandLine line) {
@@ -144,8 +143,7 @@ public class Server {
             long ownReads) throws IOException {
 
         log.info("Starting PIMP server...");
-        measure.info("some measurement");
-        
+
         int p = -1;
         for (String port : ports) {
             p = Integer.parseInt(port);
