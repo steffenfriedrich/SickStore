@@ -28,6 +28,8 @@ public class Server {
                     value = Integer.parseInt(string);
                 } else if (defaultValue instanceof Long) {
                     value = Long.parseLong(string);
+                } else if (defaultValue instanceof String) {
+                    value = string;
                 } else if (defaultValue instanceof String[]) {
                     value = Integer.parseInt(string);
                 }
@@ -143,6 +145,7 @@ public class Server {
         for (String port : ports) {
             p = Integer.parseInt(port);
             new PIMPServer(p);
+            System.out.println("... on port " + port);
         }
         QueryHandler.getInstance().setStaleness(
                 new ConstantStaleness(foreignReads, ownReads));
