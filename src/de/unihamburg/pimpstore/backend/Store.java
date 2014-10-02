@@ -80,6 +80,7 @@ public class Store {
         VersionSet versions = getVersionSet(key);
         Version version = Version.NULL;
         Version versionMostRecent = Version.NULL;
+        
 
         // find the version that was up-to-date (most recent) at the given
         // timestamp
@@ -88,6 +89,7 @@ public class Store {
             for (int i = 0; i < versions.size(); i++) {
                 version = versions.get(i);
                 if (visibleSince(server, version) <= timestamp) {
+                    logStaleness.info("[staleness in versions] |"+i);
                     break;
                 } else {
                     version = Version.NULL;
