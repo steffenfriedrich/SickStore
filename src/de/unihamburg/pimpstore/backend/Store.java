@@ -100,7 +100,7 @@ public class Store {
         	logMeasure.info("staleness in ms;0");
         } else {
         	logMeasure.info("staleness in ms;"
-                    + (versionMostRecent.getWrittenAt() - timestamp));
+                    + (timestamp - versionMostRecent.getWrittenAt()));
         }
 
         if (!version.isNull()) {
