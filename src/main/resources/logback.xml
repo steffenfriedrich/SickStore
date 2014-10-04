@@ -2,7 +2,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%date{ISO8601} | %-5level | %msg%n</pattern>
+            <pattern>%date{ISO8601} | %-5level | %logger{36} | %msg%n</pattern>
         </encoder>
     </appender>
     
@@ -43,20 +43,21 @@
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>logs/pimpstore-measurements.log</file>
 		<encoder>
-			<pattern>%date{ISO8601} | %-5level | %msg%n</pattern>
+			<pattern>%date{ISO8601};%msg%n</pattern>
 		</encoder>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/nosqlmark-metrics-%d{yyyy-MM-dd}.log
+			<fileNamePattern>logs/pimpstore-measurements-%d{yyyy-MM-dd}.log
 			</fileNamePattern>
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<triggeringPolicy
 			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-			<maxFileSize>100MB</maxFileSize>
+			<maxFileSize>10MB</maxFileSize>
 		</triggeringPolicy>
 	</appender>
 
 	<logger name="measurements" level="info" additivity="false">
+		<appender-ref ref="STDOUT"/>
 		<appender-ref ref="MEASUREMENTS-FILE" />
 	</logger>
 
