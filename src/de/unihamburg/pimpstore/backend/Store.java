@@ -34,8 +34,7 @@ public class Store {
         instance = new Store();
     }
 
-    private static final Logger logMeasurement = LoggerFactory
-            .getLogger("measurements");
+    private static final Logger logMeasure = LoggerFactory.getLogger("measurements");
 
 
     public static Store getInstance() {
@@ -89,7 +88,7 @@ public class Store {
             for (int i = 0; i < versions.size(); i++) {
                 version = versions.get(i);
                 if (visibleSince(server, version) <= timestamp) {
-                	logMeasurement.info("staleness in versions;" + i);
+                	logMeasure.info("staleness in versions;" + i);
                     break;
                 } else {
                     version = Version.NULL;
@@ -98,9 +97,9 @@ public class Store {
         }
 
         if (version == versionMostRecent) {
-        	logMeasurement.info("staleness in ms;0");
+        	logMeasure.info("staleness in ms;0");
         } else {
-        	logMeasurement.info("staleness in ms;"
+        	logMeasure.info("staleness in ms;"
                     + (versionMostRecent.getWrittenAt() - timestamp));
         }
 
