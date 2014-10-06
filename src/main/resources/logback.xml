@@ -24,7 +24,6 @@
 
 	<appender name="MEASUREMENTS-FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>logs/pimpstore-measurements.log</file>
 		<encoder>
 			<pattern>%date{ISO8601};%msg%n</pattern>
 		</encoder>
