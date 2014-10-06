@@ -6,23 +6,6 @@
         </encoder>
     </appender>
     
-	<appender name="FILE"
-		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>logs/system.log</file>
-		<encoder>
-			<pattern>%date{ISO8601} | %-5level | %msg%n
-			</pattern>
-		</encoder>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/system-%d{yyyy-MM-dd}.log</fileNamePattern>
-			<maxHistory>30</maxHistory>
-		</rollingPolicy>
-		<triggeringPolicy
-			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-			<maxFileSize>100MB</maxFileSize>
-		</triggeringPolicy>
-	</appender>
-
 	<appender name="PIMPSTORE-FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>logs/pimpstore.log</file>
@@ -46,14 +29,10 @@
 			<pattern>%date{ISO8601};%msg%n</pattern>
 		</encoder>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/pimpstore-measurements-%d{yyyy-MM-dd}.log
+			<fileNamePattern>logs/pimpstore-measurements-%d{yyyyMMdd}_%d{HHmmss,aux}.log
 			</fileNamePattern>
-			<maxHistory>30</maxHistory>
+			<TimeBasedFileNamingAndTriggeringPolicy class="de.unihamburg.pimpstore.logging.StartupTimeBasedTriggeringPolicy" />
 		</rollingPolicy>
-		<triggeringPolicy
-			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-			<maxFileSize>10MB</maxFileSize>
-		</triggeringPolicy>
 	</appender>
 
 	<logger name="measurements" level="info" additivity="false">

@@ -88,7 +88,7 @@ public class Store {
             for (int i = 0; i < versions.size(); i++) {
                 version = versions.get(i);
                 if (visibleSince(server, version) <= timestamp) {
-                	logMeasure.info("staleness in versions;" + i);
+                	logMeasure.info("key;"+ key + ";staleness in versions;" + i);
                     break;
                 } else {
                     version = Version.NULL;
@@ -97,9 +97,9 @@ public class Store {
         }
 
         if (version == versionMostRecent) {
-        	logMeasure.info("staleness in ms;0");
+        	logMeasure.info("key;"+ key + ";staleness in ms;0");
         } else {
-        	logMeasure.info("staleness in ms;"
+        	logMeasure.info("key;"+ key + ";staleness in ms;"
                     + (timestamp - versionMostRecent.getWrittenAt()));
         }
 
