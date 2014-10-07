@@ -28,14 +28,14 @@
 			<pattern>%date{ISO8601};%msg%n</pattern>
 		</encoder>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/pimpstore-measurements-%d{yyyyMMdd}_%d{HHmmss,aux}.log
+			<fileNamePattern>logs/pimpstore-measurements-%d{yyyyMMdd}_%d{HHmmss,aux}.csv
 			</fileNamePattern>
 			<TimeBasedFileNamingAndTriggeringPolicy class="de.unihamburg.pimpstore.logging.StartupTimeBasedTriggeringPolicy" />
 		</rollingPolicy>
 	</appender>
 
 	<logger name="measurements" level="info" additivity="false">
-		<appender-ref ref="STDOUT"/>
+<!-- 		<appender-ref ref="STDOUT"/> -->
 		<appender-ref ref="MEASUREMENTS-FILE" />
 	</logger>
 
