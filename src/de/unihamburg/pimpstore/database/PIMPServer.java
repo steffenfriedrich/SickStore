@@ -22,16 +22,12 @@ public class PIMPServer extends Participant {
     private final int port;
     protected Server server;
 
-    
     public PIMPServer(int port) throws IOException {
         // register server in database backend
         ID = QueryHandler.getInstance().register(node);
         this.port = port;
         server = new Server();
-        
-        // to measure requests per second
-        final Meter requests = de.unihamburg.pimpstore.main.Server.metrics.meter("requests");
-        
+
         // For consistency, the classes to be sent over the network are
         // registered by the same method for both the client and server.
         super.register(server);
@@ -52,8 +48,6 @@ public class PIMPServer extends Participant {
                             ((ClientRequest) object).setReceivedBy(node.getID());
                             ((ClientRequest) object).setReceivedAt(System
                                     .currentTimeMillis());
-                            // metrics measures “requests per second”
-                            requests.mark();
                         }
                         // new Thread() {
                         // @Override

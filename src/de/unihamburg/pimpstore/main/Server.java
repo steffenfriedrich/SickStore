@@ -23,12 +23,6 @@ import de.unihamburg.pimpstore.database.PIMPServer;
 
 public class Server {
     private static final Logger log = LoggerFactory.getLogger("pimpstore");
-    public static final MetricRegistry metrics = new MetricRegistry();
-    final static Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
-            .outputTo(LoggerFactory.getLogger("pimpstore"))
-            .convertRatesTo(TimeUnit.SECONDS)
-            .convertDurationsTo(TimeUnit.MILLISECONDS)
-            .build();
     
     @SuppressWarnings("unchecked")
     private static <ReturnType extends Object> ReturnType checkOption(
@@ -154,7 +148,6 @@ public class Server {
             long ownReads) throws IOException {
 
         log.info("Starting PIMP server...");
-        reporter.start(1, TimeUnit.SECONDS);
         
         int p = -1;
         for (String port : ports) {
