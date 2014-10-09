@@ -57,11 +57,16 @@ public class QueryHandler {
 
 	private StalenessGenerator staleness = new ConstantStaleness(0, 0);
 
-	private MetricRegistry metrics = null;
-	private Slf4jReporter reporter = null;
+	private final MetricRegistry metrics = new MetricRegistry();
+	private final Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+			.outputTo(LoggerFactory.getLogger("metrics"))
+			.convertRatesTo(TimeUnit.SECONDS)
+			.convertDurationsTo(TimeUnit.MILLISECONDS).build();
 	private Meter requests = null;
+	private Meter requestsInsert = null;
 
 	private QueryHandler() {
+
 	}
 
 	public synchronized Set<Integer> getServers() {
@@ -193,23 +198,20 @@ public class QueryHandler {
 
 				// metrics measures “requests per second”
 				if (requests == null) {
-					metrics = new MetricRegistry();
+					reporter.start(5, TimeUnit.SECONDS);
 					requests = metrics.meter("requests");
-					reporter = Slf4jReporter.forRegistry(metrics)
-							.outputTo(LoggerFactory.getLogger("pimpstore"))
-							.convertRatesTo(TimeUnit.SECONDS)
-							.convertDurationsTo(TimeUnit.MILLISECONDS).build();
-
-					reporter.start(10, TimeUnit.SECONDS);
-				} else {
-					requests.mark();
-				}
+				} 
+				requests.mark();
 			}
 
 			if (request instanceof ClientRequestDelete) {
 				response = process((ClientRequestDelete) request);
 			} else if (request instanceof ClientRequestInsert) {
 				response = process((ClientRequestInsert) request);
+				if (requestsInsert == null) {
+					requestsInsert = metrics.meter("requestsInsert");
+				}
+				requestsInsert.mark();
 			} else if (request instanceof ClientRequestRead) {
 				response = process((ClientRequestRead) request);
 			} else if (request instanceof ClientRequestScan) {
