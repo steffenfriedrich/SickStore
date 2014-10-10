@@ -35,8 +35,15 @@ public class PIMPServer extends Participant {
         server.addListener(new Listener() {
             @Override
             public void disconnected(Connection c) {
+                QueryHandler.getInstance().decrementAndGetClientCount();
                 System.out.println("Server disconnected from connection "
                         + c.getID());
+            }
+            
+            @Override
+            public void connected(Connection connection) {
+                QueryHandler.getInstance().incrementAndGetClientCount();
+                super.connected(connection);
             }
 
             @Override

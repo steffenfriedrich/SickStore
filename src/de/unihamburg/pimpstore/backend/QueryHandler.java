@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Meter;
@@ -50,7 +51,11 @@ public class QueryHandler {
 
 	/** Generates server IDs, starting with 1 */
 	private final AtomicInteger IDGenerator = new AtomicInteger(1);
-
+	
+	/** the overall number of clients connected to the entirety of all Pimpstore servers */
+    private final AtomicInteger clientCount = new AtomicInteger(0);
+    
+    
 	private Store mediator = Store.getInstance();
 
 	protected final Set<Integer> servers = new HashSet<Integer>();
@@ -58,13 +63,15 @@ public class QueryHandler {
 	private StalenessGenerator staleness = new ConstantStaleness(0, 0);
 
 	private final MetricRegistry metrics = new MetricRegistry();
-	private final Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
-			.outputTo(LoggerFactory.getLogger("metrics"))
-			.convertRatesTo(TimeUnit.SECONDS)
-			.convertDurationsTo(TimeUnit.MILLISECONDS).build();
+    private static final Logger logMetrics = LoggerFactory.getLogger("metrics");
+	private Slf4jReporter reporter = null;
 	private Meter requests = null;
 	private Meter requestsInsert = null;
-
+	private Meter requestsDelete = null;
+	private Meter requestsRead= null;
+	private Meter requestsScan= null;
+	private Meter requestsUpdate= null;
+	
 	private QueryHandler() {
 
 	}
@@ -131,7 +138,7 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
-		Version version = mediator.get(server, key, columns, timestamp);
+		Version version = mediator.get(server, key, columns, timestamp, true);
 		if (version == null) {
 			throw new NullPointerException("Version must not be null!");
 		}
@@ -198,7 +205,7 @@ public class QueryHandler {
 
 				// metrics measures “requests per second”
 				if (requests == null) {
-					reporter.start(5, TimeUnit.SECONDS);
+					initMetricReporter();
 					requests = metrics.meter("requests");
 				} 
 				requests.mark();
@@ -207,17 +214,29 @@ public class QueryHandler {
 			if (request instanceof ClientRequestDelete) {
 				response = process((ClientRequestDelete) request);
 			} else if (request instanceof ClientRequestInsert) {
-				response = process((ClientRequestInsert) request);
 				if (requestsInsert == null) {
 					requestsInsert = metrics.meter("requestsInsert");
 				}
+				response = process((ClientRequestInsert) request);
 				requestsInsert.mark();
 			} else if (request instanceof ClientRequestRead) {
+				if (requestsRead == null) {
+					requestsRead = metrics.meter("requestsRead");
+				}
 				response = process((ClientRequestRead) request);
+				requestsRead.mark();
 			} else if (request instanceof ClientRequestScan) {
+				if (requestsScan == null) {
+					requestsScan = metrics.meter("requestsScan");
+				}
 				response = process((ClientRequestScan) request);
+				requestsScan.mark();
 			} else if (request instanceof ClientRequestUpdate) {
+				if (requestsUpdate == null) {
+					requestsUpdate = metrics.meter("requestsUpdate");
+				}
 				response = process((ClientRequestUpdate) request);
+				requestsUpdate.mark();
 			} else {
 				throw new UnknownMessageTypeException(
 						"Cannot process request; unknown message type: "
@@ -248,4 +267,45 @@ public class QueryHandler {
 	public synchronized void setStaleness(StalenessGenerator staleness) {
 		this.staleness = staleness;
 	}
+	
+	public int incrementAndGetClientCount() {
+        clientCount.incrementAndGet();
+        resetMetersIfIdle();
+        return clientCount.get();
+    }
+
+    public int decrementAndGetClientCount() {
+        clientCount.decrementAndGet();
+        resetMetersIfIdle();
+        return clientCount.get();
+    }
+
+    /**
+     * Calls {@link #resetMetres()}, if there are no clients connected to
+     * Pimpstore
+     */
+    public void resetMetersIfIdle() {
+        if (clientCount.get() == 0) {
+            resetMeters();
+        }
+    }
+
+    public void resetMeters() {
+    	reporter.stop();
+    	logMetrics.info("reporter stopped");
+    	for (String name : metrics.getMetrics().keySet()) {
+			metrics.remove(name);
+		}
+    	requests = null;
+    	requestsInsert = null;
+    }
+    
+    public void initMetricReporter() {
+		reporter = Slf4jReporter.forRegistry(metrics)
+		.outputTo(LoggerFactory.getLogger("metrics"))
+		.convertRatesTo(TimeUnit.SECONDS)
+		.convertDurationsTo(TimeUnit.MILLISECONDS).build();
+		reporter.start(5, TimeUnit.SECONDS);
+    	logMetrics.info("reporter started");
+    }
 }

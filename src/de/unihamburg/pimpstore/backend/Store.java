@@ -57,7 +57,7 @@ public class Store {
 
 	public void delete(int server, String key, Map<Integer, Long> visibility,
 			long timestamp) throws DeleteException {
-		Version alreadyExisting = get(server, key, timestamp);
+		Version alreadyExisting = get(server, key, timestamp, false);
 		if (alreadyExisting.isNull()) {
 			throw new DeleteException(
 					"Value cannot be deleted, because there is no value under key \""
@@ -67,12 +67,13 @@ public class Store {
 		}
 	}
 
-	public synchronized Version get(int server, String key, long timestamp) {
-		return get(server, key, (Set<String>) null, timestamp);
+	public synchronized Version get(int server, String key, long timestamp,
+			boolean logStaleness) {
+		return get(server, key, (Set<String>) null, timestamp, logStaleness);
 	}
 
 	public synchronized Version get(int server, String key,
-			Set<String> columns, long timestamp) {
+			Set<String> columns, long timestamp, boolean logStaleness) {
 		if (key == null) {
 			throw new NullPointerException("Key must not be null!");
 		}
@@ -84,7 +85,7 @@ public class Store {
 		// find the version that was up-to-date (most recent) at the given
 		// timestamp
 		if (versions != null) {
-			versionMostRecent = versions.get(0);			
+			versionMostRecent = versions.get(0);
 			for (int i = 0; i < versions.size(); i++) {
 				version = versions.get(i);
 				if (visibleSince(server, version) <= timestamp) {
@@ -96,15 +97,27 @@ public class Store {
 			}
 		}
 
-		if (version == versionMostRecent) {
-			logMeasure.info("key;" + key + ";most recent version;"
-					+ versionMostRecent.getWrittenAt() + ";staleness in versions;"
-					+ versionStaleness + ";staleness in ms;0");
-		} else {
-			logMeasure.info("key;" + key + ";most recent version;"
-					+ versionMostRecent.getWrittenAt() + ";staleness in versions;"
-					+ versionStaleness + ";staleness in ms;"
-					+ (timestamp - versionMostRecent.getWrittenAt()));
+		// log staleness informations for ClientRequestRead only
+		if (logStaleness) {
+			if (version == versionMostRecent) {
+				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
+				logMeasure.info("key;" + key + ";most recent version;"
+						+ versionMostRecent.getWrittenAt()
+						+ ";staleness in versions;" + versionStaleness
+						+ ";staleness in ms;0" + ";read-after-write lag;"
+						+ timeSinceLastUpdate);
+
+			} else {
+				logMeasure.info("key;"
+						+ key
+						+ ";most recent version;"
+						+ versionMostRecent.getWrittenAt()
+						+ ";staleness in versions;"
+						+ versionStaleness
+						+ ";staleness in ms;"
+						+ (timestamp - versionMostRecent.getWrittenAt()
+								+ ";read-after-write lag;" + -1));
+			}
 		}
 
 		if (!version.isNull()) {
@@ -118,13 +131,13 @@ public class Store {
 	}
 
 	public synchronized Version get(int server, String key, String column,
-			long timestamp) {
+			long timestamp, boolean logStaleness) {
 		if (column == null) {
 			throw new IllegalArgumentException("Column must not be null!");
 		}
 		Set<String> columns = new HashSet<String>();
 		columns.add(column);
-		return get(server, key, columns, timestamp);
+		return get(server, key, columns, timestamp, logStaleness);
 	}
 
 	public synchronized List<Version> getRange(int server, String key,
@@ -142,7 +155,7 @@ public class Store {
 		Version version = null;
 
 		do {
-			version = get(server, nextKey, columns, timestamp);
+			version = get(server, nextKey, columns, timestamp, true);
 			if (!version.isNull()) {
 				versions.add(version);
 			}
@@ -172,7 +185,7 @@ public class Store {
 	public void insert(int server, String key, Version version)
 			throws InsertException {
 		long timestamp = version.getWrittenAt();
-		Version alreadyExisting = get(server, key, timestamp);
+		Version alreadyExisting = get(server, key, timestamp, false);
 		if (alreadyExisting.isNull()) {
 			insertOrUpdate(key, version);
 		} else {
@@ -240,7 +253,8 @@ public class Store {
 
 	public void update(int server, String key, Version version)
 			throws UpdateException {
-		Version alreadyExisting = get(server, key, version.getWrittenAt());
+		Version alreadyExisting = get(server, key, version.getWrittenAt(),
+				false);
 		if (alreadyExisting.isNull()) {
 			throw new UpdateException(
 					"Value cannot be updated, because there is no value under key \""
