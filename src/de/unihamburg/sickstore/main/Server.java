@@ -2,6 +2,9 @@ package de.unihamburg.sickstore.main;
 
 import java.io.IOException;
 
+import de.unihamburg.sickstore.backend.Store;
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -143,15 +146,14 @@ public class Server {
             long ownReads) throws IOException {
 
         log.info("Starting Sick server...");
-        
+
         int p = -1;
         for (String port : ports) {
             p = Integer.parseInt(port);
             new SickServer(p);
             log.info("... on port " + port);
         }
-        QueryHandler.getInstance().setStaleness(
-                new ConstantStaleness(foreignReads, ownReads));
+        QueryHandler.getInstance().setStaleness(new ConstantStaleness(foreignReads, ownReads));
 
         // Some variables that give you a handle on the store and the server
         // nodes during debugging

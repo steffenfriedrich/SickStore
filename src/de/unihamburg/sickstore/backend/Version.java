@@ -17,7 +17,7 @@ import de.unihamburg.sickstore.database.SickServer;
 public class Version {
 
     /** a version representing the initial null value */
-    public static final Version NULL = new Version(-1, null, true);
+    public static final Version NULL = new Version(-1, -1, null, true);
 
     /** if true, there is no value under the given key in this version */
     private boolean isNull = false;
@@ -31,11 +31,9 @@ public class Version {
     private Map<Integer, Long> visibility = new HashMap<Integer, Long>();
 
     /**
-     * server timestamp at which this version was written. Default value is the
-     * current system time. Value <code>Long.MIN_VALUE</code> indicates this
-     * value was initially there
+     * server timestamp at which this version was written. This value always has to be set.
      */
-    private long writtenAt = System.currentTimeMillis();
+    private long writtenAt = -1;
 
     /** indicates what server has written the version */
     private int writtenBy;
@@ -44,22 +42,20 @@ public class Version {
     }
 
     public Version(int writtenBy, long writtenAt, Map<Integer, Long> visibility) {
-        this(writtenBy, visibility, false);
+        this(writtenBy, writtenAt, visibility, false);
     }
 
-    public Version(int writtenBy, Map<Integer, Long> visibility, boolean isNull) {
+    public Version(int writtenBy, long writtenAt, Map<Integer, Long> visibility, boolean isNull) {
         this();
         this.writtenBy = writtenBy;
-        if (visibility == null) {
-            visibility = null;
-        } else {
+        if (visibility != null) {
             this.visibility.putAll(visibility);
         }
         this.isNull = isNull;
+        this.writtenAt = writtenAt;
     }
 
-    public Version(SickServer server, long writtenAt,
-            Map<Integer, Long> visibility) {
+    public Version(SickServer server, long writtenAt, Map<Integer, Long> visibility) {
         this(server.getID(), writtenAt, visibility);
     }
 
@@ -101,6 +97,10 @@ public class Version {
     }
 
     public long getWrittenAt() {
+        if (writtenAt == -1) {
+            throw new RuntimeException("writtenAt not set");
+        }
+
         return writtenAt;
     }
 

@@ -88,27 +88,31 @@ public class SickClientTest extends TestCase {
         john.put("name", "john");
         john.put("hair", "yellow");
         john.put("age", 21);
+
         // test update
         try {
             c1.update("", "john", john);
-            assertTrue(false);
+            fail("Update was expected to fail but succeed");
         } catch (UpdateException e) {
         }
+
         // test insert
         c1.insert("", "john", john);
         try {
             c1.insert("", "john", john);
-            assertTrue(false);
+            fail("Duplicate insert was expected to fail but succeed");
         } catch (InsertException e) {
         }
+
         // test delete
         c1.delete("", "john");
         try {
             Thread.sleep(5);
             c1.delete("", "john");
-            assertTrue(false);
+            fail("Duplicate delete was expected to fail but succeed");
         } catch (DeleteException e) {
         }
+
         c1.insert("", "john", john);
 
         Version adele = new Version();

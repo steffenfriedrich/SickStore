@@ -5,6 +5,8 @@ package de.unihamburg.sickstore.database;
 
 import java.util.List;
 
+import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import junit.framework.TestCase;
 
 import org.junit.After;
@@ -22,6 +24,8 @@ import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
  * 
  */
 public class SickServerTest extends TestCase {
+
+    private TimeHandler timeHandler;
 
     private SickClient c1;
     private SickClient c2;
@@ -43,20 +47,28 @@ public class SickServerTest extends TestCase {
         long timeout = 1000;
 
         writer.insert("", key, insert);
-        start = System.currentTimeMillis();
+
+        // Measure time until the write is visible on the other nodes.
+        start = timeHandler.getCurrentTime();
         do {
             if (!(copyC1 = c1.read("", key, null)).isNull() && delayC1 == -1) {
-                delayC1 = System.currentTimeMillis() - start;
+                delayC1 = timeHandler.getCurrentTime() - start;
             }
             if (!(copyC2 = c2.read("", key, null)).isNull() && delayC2 == -1) {
-                delayC2 = System.currentTimeMillis() - start;
+                delayC2 = timeHandler.getCurrentTime() - start;
             }
             if (!(copyC3 = c3.read("", key, null)).isNull() && delayC3 == -1) {
-                delayC3 = System.currentTimeMillis() - start;
+                delayC3 = timeHandler.getCurrentTime() - start;
             }
-        } while (System.currentTimeMillis() - start < timeout
+
+            if (timeHandler instanceof FakeTimeHandler) {
+                ((FakeTimeHandler) timeHandler).increaseTime(10);
+            }
+        // as long as not every item has been read and the timeout is not reached
+        } while (timeHandler.getCurrentTime() - start < timeout
                 && (delayC1 == -1 || delayC2 == -1 || delayC3 == -1));
 
+        // assert that the data item was read from every node
         assertEquals(insert, copyC1);
         assertEquals(insert, copyC2);
         assertEquals(insert, copyC3);
@@ -65,13 +77,15 @@ public class SickServerTest extends TestCase {
         System.out.println("delay client 1:\t" + delayC1);
         System.out.println("delay client 2:\t" + delayC2);
         System.out.println("delay client 3:\t" + delayC3);
-        assertTrue(delayC1 < 50 && c1 == writer || 450 < delayC1
-                && delayC1 < 550);
-        assertTrue(delayC2 < 50 && c2 == writer || 450 < delayC2
-                && delayC2 < 550);
-        assertTrue(delayC3 < 50 && c3 == writer || 450 < delayC3
-                && delayC3 < 550);
 
+        // assert that the writer has a read delay of under 50
+        // and that readers have a delay of around 500 (which is expected)
+        assertTrue(delayC1 < 50 && c1 == writer ||
+                450 < delayC1 && delayC1 < 550);
+        assertTrue(delayC2 < 50 && c2 == writer ||
+                450 < delayC2 && delayC2 < 550);
+        assertTrue(delayC3 < 50 && c3 == writer ||
+                450 < delayC3 && delayC3 < 550);
     }
 
     /**
@@ -83,13 +97,17 @@ public class SickServerTest extends TestCase {
 
         // specify connection parameters
         String host = "localhost";
-        int timeout = 120;
+        int timeout = 12000;
         int tcpPort = 54000;
 
+        timeHandler = new FakeTimeHandler();
+        Store.getInstance().setTimeHandler(timeHandler);
+        QueryHandler.getInstance().setTimeHandler(timeHandler);
+
         // Create and start server and clients
-        server1 = new SickServer(tcpPort + 1);
-        server2 = new SickServer(tcpPort + 2);
-        server3 = new SickServer(tcpPort + 3);
+        server1 = new SickServer(tcpPort + 1, timeHandler);
+        server2 = new SickServer(tcpPort + 2, timeHandler);
+        server3 = new SickServer(tcpPort + 3, timeHandler);
         c1 = new SickClient(timeout, host, tcpPort + 1, "Client 1");
         c1.connect();
         c2 = new SickClient(timeout, host, tcpPort + 2, "Client 2");
@@ -180,23 +198,26 @@ public class SickServerTest extends TestCase {
 
         // remove something and do the same scan again
         assertTrue(c2.delete("", "john"));
-        // c2 should see the consequence immediately
+        // c2 should see the consequence immediately, c1 and c3 delayed
         copies1 = c1.scan("", "bob", 2, null);
         copies2 = c2.scan("", "bob", 2, null);
         copies3 = c3.scan("", "bob", 2, null);
+
+        assertEquals(2, copies2.size());
         assertEquals(bob, copies2.get(0));
         assertEquals(mike, copies2.get(1));
-        assertEquals(2, copies2.size());
 
+        // c1 and c3 still sees the old entries
+        assertEquals(2, copies1.size());
         assertEquals(bob, copies1.get(0));
         assertEquals(john, copies1.get(1));
-        assertEquals(2, copies1.size());
 
+        assertEquals(2, copies3.size());
         assertEquals(bob, copies3.get(0));
         assertEquals(john, copies3.get(1));
-        assertEquals(2, copies3.size());
 
-        Thread.sleep(600);
+        timeHandler.sleep(600);
+
         // c2 and c3 should see the consequence immediately not immediately
         // (after about 500 ms)
         copies1 = c1.scan("", "bob", 2, null);

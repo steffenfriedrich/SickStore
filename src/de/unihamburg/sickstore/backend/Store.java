@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,8 @@ public class Store {
 	private static final Logger logMeasure = LoggerFactory
 			.getLogger("measurements");
 
+	private TimeHandler timeHandler = new SystemTimeHandler();
+
 	public static Store getInstance() {
 		return instance;
 	}
@@ -63,7 +67,7 @@ public class Store {
 					"Value cannot be deleted, because there is no value under key \""
 							+ key + "\".");
 		} else {
-			insertOrUpdate(key, new Version(server, visibility, true));
+			insertOrUpdate(key, new Version(server, timeHandler.getCurrentTime(), visibility, true));
 		}
 	}
 
@@ -272,5 +276,13 @@ public class Store {
 		} else {
 			insertOrUpdate(key, version);
 		}
+	}
+
+	public void setTimeHandler(TimeHandler timeHandler) {
+		this.timeHandler = timeHandler;
+	}
+
+	public TimeHandler getTimeHandler() {
+		return timeHandler;
 	}
 }

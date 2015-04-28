@@ -8,6 +8,8 @@ import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
@@ -15,12 +17,19 @@ public class SickServer extends Participant {
     private final int ID;
     private final SickServer node = this;
     private final int port;
+
+    protected TimeHandler timeHandler;
     protected Server server;
 
     public SickServer(int port) throws IOException {
+        this(port, new SystemTimeHandler());
+    }
+
+    public SickServer(int port, final TimeHandler timeHandler) throws IOException {
         // register server in database backend
         ID = QueryHandler.getInstance().register(node);
         this.port = port;
+        this.timeHandler = timeHandler;
         server = new Server();
 
         // For consistency, the classes to be sent over the network are
@@ -48,8 +57,9 @@ public class SickServer extends Participant {
                         if (object instanceof ClientRequest) {
                             // Mark the request as received by this server
                             ((ClientRequest) object).setReceivedBy(node.getID());
-                            ((ClientRequest) object).setReceivedAt(System
-                                    .currentTimeMillis());
+                            ((ClientRequest) object).setReceivedAt(
+                                    timeHandler.getCurrentTime()
+                            );
                         }
                         // new Thread() {
                         // @Override

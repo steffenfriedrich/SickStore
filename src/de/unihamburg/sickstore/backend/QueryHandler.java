@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,8 @@ public class QueryHandler {
 	static {
 		instance = new QueryHandler();
 	}
+
+	private TimeHandler timeHandler = new SystemTimeHandler();
 
 	public static QueryHandler getInstance() {
 		return instance;
@@ -314,13 +318,15 @@ public class QueryHandler {
     }
 
     public void resetMeters() {
-    	reporter.stop();
-    	logMetrics.info("reporter stopped");
-    	for (String name : metrics.getMetrics().keySet()) {
-			metrics.remove(name);
+		if (reporter != null) {
+			reporter.stop();
+			logMetrics.info("reporter stopped");
+			for (String name : metrics.getMetrics().keySet()) {
+				metrics.remove(name);
+			}
+			requests = null;
+			requestsInsert = null;
 		}
-    	requests = null;
-    	requestsInsert = null;
     }
     
     public void initMetricReporter() {
@@ -331,4 +337,12 @@ public class QueryHandler {
 		reporter.start(5, TimeUnit.SECONDS);
     	logMetrics.info("reporter started");
     }
+
+	public void setTimeHandler(TimeHandler timeHandler) {
+		this.timeHandler = timeHandler;
+	}
+
+	public TimeHandler getTimeHandler() {
+		return timeHandler;
+	}
 }
