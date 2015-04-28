@@ -72,6 +72,16 @@ public class Store {
 		return get(server, key, (Set<String>) null, timestamp, logStaleness);
 	}
 
+	/**
+	 * Get a data item.
+	 *
+	 * @param server          the id of the reading server
+	 * @param key             the requested key
+	 * @param columns         set which cointans only specific columns to read
+	 * @param timestamp	      time at which the request is executed
+	 * @param logStaleness    to log or not to log staleness?
+	 * @return
+	 */
 	public synchronized Version get(int server, String key,
 			Set<String> columns, long timestamp, boolean logStaleness) {
 		if (key == null) {
@@ -200,7 +210,6 @@ public class Store {
 	 * 
 	 * @param key
 	 * @param value
-	 * @param timestamp
 	 */
 	public synchronized void insertOrUpdate(String key, Version value) {
 		VersionSet entrySet = values.get(key);
@@ -214,10 +223,10 @@ public class Store {
 	}
 
 	/**
+	 * Calculates the timestamp when a server can see a specific version.
 	 * 
 	 * @param server
 	 *            a server ID
-	 * @param readTimestamp
 	 * @param version
 	 * @return
 	 */
@@ -225,6 +234,7 @@ public class Store {
 		Map<Integer, Long> stalenessWindows = version.getVisibility();
 		long writeTimestamp = version.getWrittenAt();
 		Long staleness = stalenessWindows.get(server);
+
 		if (staleness == null) {
 			return -1l;
 		} else {

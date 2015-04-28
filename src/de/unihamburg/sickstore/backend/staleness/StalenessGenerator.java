@@ -6,6 +6,5 @@ import de.unihamburg.sickstore.database.messages.ClientRequest;
 
 public interface StalenessGenerator {
 
-    public abstract Map<Integer, Long> get(int server, ClientRequest request);
-
+    Map<Integer, Long> get(int server, ClientRequest request);
 }

@@ -73,7 +73,6 @@ public class QueryHandler {
 	private Meter requestsUpdate= null;
 	
 	private QueryHandler() {
-
 	}
 
 	public synchronized Set<Integer> getServers() {
@@ -84,6 +83,9 @@ public class QueryHandler {
 		return staleness;
 	}
 
+	/**
+	 * Handles delete request.
+	 */
 	private ServerResponseDelete process(ClientRequestDelete request)
 			throws NoKeyProvidedException, DeleteException {
 		int server = request.getReceivedBy();
@@ -103,6 +105,9 @@ public class QueryHandler {
 		return response;
 	}
 
+	/**
+	 * Handles insert request.
+	 */
 	private ServerResponseInsert process(ClientRequestInsert request)
 			throws NoKeyProvidedException, InsertException {
 		int server = request.getReceivedBy();
@@ -110,6 +115,7 @@ public class QueryHandler {
 		long timestamp = request.getReceivedAt();
 		long clientRequestID = request.getId();
 		Version version = request.getVersion();
+
 		if (key == null) {
 			throw new NoKeyProvidedException(
 					"Cannot process get request; no key was provided.");
@@ -125,6 +131,9 @@ public class QueryHandler {
 		return response;
 	}
 
+	/**
+	 * Handles read request.
+	 */
 	private ServerResponseRead process(ClientRequestRead request)
 			throws NoKeyProvidedException {
 
@@ -147,6 +156,9 @@ public class QueryHandler {
 		return response;
 	}
 
+	/**
+	 * Handles scan request.
+	 */
 	private ServerResponseScan process(ClientRequestScan request)
 			throws NoKeyProvidedException {
 		int server = request.getReceivedBy();
@@ -168,6 +180,9 @@ public class QueryHandler {
 		return response;
 	}
 
+	/**
+	 * Handles update request.
+	 */
 	private ServerResponseUpdate process(ClientRequestUpdate request)
 			throws NoKeyProvidedException, UpdateException {
 		int server = request.getReceivedBy();
@@ -190,6 +205,9 @@ public class QueryHandler {
 		return response;
 	}
 
+	/**
+	 * Processes an incoming query.
+	 */
 	public synchronized ServerResponse processQuery(SickServer server,
 			Object request) {
 		Long id = -1l;
@@ -212,26 +230,31 @@ public class QueryHandler {
 			}
 
 			if (request instanceof ClientRequestDelete) {
+				// delete request
 				response = process((ClientRequestDelete) request);
 			} else if (request instanceof ClientRequestInsert) {
+				// insert request
 				if (requestsInsert == null) {
 					requestsInsert = metrics.meter("requestsInsert");
 				}
 				response = process((ClientRequestInsert) request);
 				requestsInsert.mark();
 			} else if (request instanceof ClientRequestRead) {
+				// read request
 				if (requestsRead == null) {
 					requestsRead = metrics.meter("requestsRead");
 				}
 				response = process((ClientRequestRead) request);
 				requestsRead.mark();
 			} else if (request instanceof ClientRequestScan) {
+				// scan request
 				if (requestsScan == null) {
 					requestsScan = metrics.meter("requestsScan");
 				}
 				response = process((ClientRequestScan) request);
 				requestsScan.mark();
 			} else if (request instanceof ClientRequestUpdate) {
+				// update request
 				if (requestsUpdate == null) {
 					requestsUpdate = metrics.meter("requestsUpdate");
 				}

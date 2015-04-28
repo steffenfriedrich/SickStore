@@ -3,6 +3,7 @@ package de.unihamburg.sickstore.backend;
 import java.util.List;
 import java.util.Set;
 
+import de.unihamburg.sickstore.database.messages.*;
 import junit.framework.TestCase;
 
 import org.junit.After;
@@ -11,16 +12,7 @@ import org.junit.Test;
 
 import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.database.SickServer;
-import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
-import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
-import de.unihamburg.sickstore.database.messages.ClientRequestRead;
-import de.unihamburg.sickstore.database.messages.ClientRequestScan;
-import de.unihamburg.sickstore.database.messages.ServerResponse;
-import de.unihamburg.sickstore.database.messages.ServerResponseDelete;
-import de.unihamburg.sickstore.database.messages.ServerResponseException;
-import de.unihamburg.sickstore.database.messages.ServerResponseInsert;
-import de.unihamburg.sickstore.database.messages.ServerResponseRead;
-import de.unihamburg.sickstore.database.messages.ServerResponseScan;
+
 
 public class QueryHandlerTest extends TestCase {
 
@@ -28,6 +20,15 @@ public class QueryHandlerTest extends TestCase {
     private SickServer server2;
     private SickServer server3;
 
+    /**
+     * Inserts a data item on a specific server and measures the time until
+     * it becomes visible for the other servers.
+     *
+     * @param insert
+     * @param writer
+     * @param key
+     * @throws Exception
+     */
     private void checkClientStainless(Version insert, SickServer writer,
             String key) throws Exception {
         Version copyC1 = null;
@@ -75,54 +76,78 @@ public class QueryHandlerTest extends TestCase {
 
     }
 
+    /**
+     * Sends a delete request.
+     */
     private boolean delete(SickServer writer, String table, String key)
             throws Exception {
         ClientRequestDelete request = new ClientRequestDelete(table, key);
-        request.setReceivedAt(System.currentTimeMillis());
-        request.setReceivedBy(writer.getID());
 
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
-        if (response instanceof ServerResponseException) {
-            throw ((ServerResponseException) response).getException();
-        }
+        ServerResponse response = sendRequest(writer, request);
+
         return response instanceof ServerResponseDelete;
     }
 
+    /**
+     * Sends a insert request.
+     */
     private boolean insert(SickServer writer, String table, String key,
             Version insert) throws Exception {
         ClientRequestInsert request = new ClientRequestInsert(table, key,
                 insert);
-        request.setReceivedAt(System.currentTimeMillis());
-        request.setReceivedBy(writer.getID());
 
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
-        if (response instanceof ServerResponseException) {
-            throw ((ServerResponseException) response).getException();
-        }
+        ServerResponse response = sendRequest(writer, request);
+
         return response instanceof ServerResponseInsert;
     }
 
+    /**
+     * Sends a read request.
+     */
     private Version read(SickServer writer, String table, String key,
             Set<String> fields) throws Exception {
         ClientRequestRead request = new ClientRequestRead(table, key, fields);
-        request.setReceivedAt(System.currentTimeMillis());
-        request.setReceivedBy(writer.getID());
 
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
-        if (response instanceof ServerResponseException) {
-            throw ((ServerResponseException) response).getException();
-        }
+        ServerResponse response = sendRequest(writer, request);
+
         return ((ServerResponseRead) response).getVersion();
     }
 
+    /**
+     * Sends a scan request.
+     *
+     * @param writer
+     * @param table
+     * @param startkey        start the scan at this key
+     * @param recordcount     the number of records to read
+     * @param fields          read only a specific set of columns
+     * @return a list with all found data items.
+     */
     private List<Version> scan(SickServer writer, String table,
             String startkey, int recordcount, Set<String> fields)
             throws Exception {
         ClientRequestScan request = new ClientRequestScan(table, startkey,
                 recordcount, fields, true);
+
+        ServerResponse response = sendRequest(writer, request);
+
+        if (response instanceof ServerResponseScan) {
+            return ((ServerResponseScan) response).getEntries();
+        }
+        return null;
+    }
+
+    /**
+     * Send a specific request to the server
+     *
+     * @param writer
+     * @param request
+     * @return
+     * @throws Exception
+     */
+    private ServerResponse sendRequest(SickServer writer, ClientRequest request)
+        throws Exception {
+
         request.setReceivedAt(System.currentTimeMillis());
         request.setReceivedBy(writer.getID());
 
@@ -131,10 +156,8 @@ public class QueryHandlerTest extends TestCase {
         if (response instanceof ServerResponseException) {
             throw ((ServerResponseException) response).getException();
         }
-        if (response instanceof ServerResponseScan) {
-            return ((ServerResponseScan) response).getEntries();
-        }
-        return null;
+
+        return response;
     }
 
     @Override

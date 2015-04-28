@@ -34,7 +34,7 @@ public class SickServer extends Participant {
                 System.out.println("Server disconnected from connection "
                         + c.getID());
             }
-            
+
             @Override
             public void connected(Connection connection) {
                 QueryHandler.getInstance().incrementAndGetClientCount();

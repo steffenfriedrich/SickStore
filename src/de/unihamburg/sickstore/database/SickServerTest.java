@@ -209,5 +209,4 @@ public class SickServerTest extends TestCase {
         assertEquals(mike, copies3.get(1));
         assertEquals(2, copies3.size());
     }
-
 }
