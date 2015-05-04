@@ -26,6 +26,8 @@ import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 public class SickServerTest extends TestCase {
 
     private TimeHandler timeHandler;
+    private Store store;
+    private QueryHandler queryHandler;
 
     private SickClient c1;
     private SickClient c2;
@@ -33,6 +35,52 @@ public class SickServerTest extends TestCase {
     private SickServer server1;
     private SickServer server2;
     private SickServer server3;
+
+    /**
+     * @throws java.lang.Exception
+     */
+    @Override
+    @Before
+    public void setUp() throws Exception {
+
+        // init store and query handler
+        timeHandler = new FakeTimeHandler();
+        store = new Store(timeHandler);
+        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), timeHandler);
+
+        // specify connection parameters
+        String host = "localhost";
+        int timeout = 12000;
+        int tcpPort = 54000;
+
+        // Create and start server and clients
+        server1 = new SickServer(tcpPort + 1, queryHandler, timeHandler);
+        server2 = new SickServer(tcpPort + 2, queryHandler, timeHandler);
+        server3 = new SickServer(tcpPort + 3, queryHandler, timeHandler);
+
+        // Connect clients
+        c1 = new SickClient(timeout, host, tcpPort + 1, "Client 1");
+        c1.connect();
+        c2 = new SickClient(timeout, host, tcpPort + 2, "Client 2");
+        c2.connect();
+        c3 = new SickClient(timeout, host, tcpPort + 3, "Client 3");
+        c3.connect();
+    }
+
+    /**
+     * @throws java.lang.Exception
+     */
+    @Override
+    @After
+    public void tearDown() throws Exception {
+        c1.disconnect();
+        c2.disconnect();
+        c3.disconnect();
+        server1.shutdown();
+        server2.shutdown();
+        server3.shutdown();
+        store.clear();
+    }
 
     private void checkClientStainless(Version insert, SickClient writer,
             String key) throws DatabaseException {
@@ -80,63 +128,13 @@ public class SickServerTest extends TestCase {
 
         // assert that the writer has a read delay of under 50
         // and that readers have a delay of around 500 (which is expected)
-        assertTrue(delayC1 < 50 && c1 == writer ||
-                450 < delayC1 && delayC1 < 550);
-        assertTrue(delayC2 < 50 && c2 == writer ||
-                450 < delayC2 && delayC2 < 550);
-        assertTrue(delayC3 < 50 && c3 == writer ||
-                450 < delayC3 && delayC3 < 550);
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @Override
-    @Before
-    public void setUp() throws Exception {
-
-        // specify connection parameters
-        String host = "localhost";
-        int timeout = 12000;
-        int tcpPort = 54000;
-
-        timeHandler = new FakeTimeHandler();
-        Store.getInstance().setTimeHandler(timeHandler);
-        QueryHandler.getInstance().setTimeHandler(timeHandler);
-
-        // Create and start server and clients
-        server1 = new SickServer(tcpPort + 1, timeHandler);
-        server2 = new SickServer(tcpPort + 2, timeHandler);
-        server3 = new SickServer(tcpPort + 3, timeHandler);
-        c1 = new SickClient(timeout, host, tcpPort + 1, "Client 1");
-        c1.connect();
-        c2 = new SickClient(timeout, host, tcpPort + 2, "Client 2");
-        c2.connect();
-        c3 = new SickClient(timeout, host, tcpPort + 3, "Client 3");
-        c3.connect();
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @Override
-    @After
-    public void tearDown() throws Exception {
-        c1.disconnect();
-        c2.disconnect();
-        c3.disconnect();
-        server1.shutdown();
-        server2.shutdown();
-        server3.shutdown();
-        Store.getInstance().clear();
+        assertTrue((delayC1 < 50 && c1 == writer) || (450 < delayC1 && delayC1 < 550));
+        assertTrue((delayC2 < 50 && c2 == writer) || (450 < delayC2 && delayC2 < 550));
+        assertTrue((delayC3 < 50 && c3 == writer) || (450 < delayC3 && delayC3 < 550));
     }
 
     @Test
     public void testStaleness() throws Exception, DatabaseException {
-
-        // Specify staleness parameters
-        QueryHandler.getInstance().setStaleness(new ConstantStaleness(500, 0));
-
         // create some data objects
         Version bob = new Version();
         bob.put("name", "bob");

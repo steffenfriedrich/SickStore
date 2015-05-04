@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,24 +29,16 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
  * 
  */
 public class Store {
-	private final static Store instance;
-
-	static {
-		instance = new Store();
-	}
 
 	private static final Logger logMeasure = LoggerFactory
 			.getLogger("measurements");
 
-	private TimeHandler timeHandler = new SystemTimeHandler();
-
-	public static Store getInstance() {
-		return instance;
-	}
+	private TimeHandler timeHandler;
 
 	private TreeMap<String, VersionSet> values = new TreeMap<String, VersionSet>();
 
-	private Store() {
+	public Store(TimeHandler timeHandler) {
+		this.timeHandler = timeHandler;
 	}
 
 	/**

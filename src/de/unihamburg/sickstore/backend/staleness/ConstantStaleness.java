@@ -5,6 +5,7 @@ package de.unihamburg.sickstore.backend.staleness;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
@@ -34,18 +35,16 @@ public class ConstantStaleness implements StalenessGenerator {
     }
 
     /**
-     * @see de.unihamburg.sickstore.backend.staleness.StalenessGenerator#get(int,
-     *      de.unihamburg.sickstore.database.messages.ClientRequest)
+     * @see de.unihamburg.sickstore.backend.staleness.StalenessGenerator#get(Set, int, ClientRequest) 
      */
-    public Map<Integer, Long> get(int server, ClientRequest request) {
-        QueryHandler handler = QueryHandler.getInstance();
+    public Map<Integer, Long> get(Set<Integer> servers, int readingServer, ClientRequest request) {
         HashMap<Integer, Long> delay = new HashMap<Integer, Long>();
 
-        for (Integer s : handler.getServers()) {
-            if (s == server) {
-                delay.put(s, ownReads);
+        for (Integer server : servers) {
+            if (server == readingServer) {
+                delay.put(server, ownReads);
             } else {
-                delay.put(s, foreignReads);
+                delay.put(server, foreignReads);
             }
         }
 

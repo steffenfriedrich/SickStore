@@ -3,6 +3,8 @@ package de.unihamburg.sickstore.backend;
 import java.util.List;
 import java.util.Set;
 
+import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.messages.*;
 import junit.framework.TestCase;
 
@@ -17,8 +19,38 @@ import de.unihamburg.sickstore.database.SickServer;
 public class QueryHandlerTest extends TestCase {
 
     private SickServer server1;
-    private SickServer server2;
     private SickServer server3;
+    private SickServer server2;
+
+    private TimeHandler timeHandler;
+    private Store store;
+    private QueryHandler queryHandler;
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        // init store and query handler
+        timeHandler = new FakeTimeHandler();
+        store = new Store(timeHandler);
+        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), timeHandler);
+
+        // specify connection parameters
+        int tcpPort = 54000;
+
+        // Create and start server and clients
+        server1 = new SickServer(tcpPort + 1, queryHandler, timeHandler);
+        server2 = new SickServer(tcpPort + 2, queryHandler, timeHandler);
+        server3 = new SickServer(tcpPort + 3, queryHandler, timeHandler);
+    }
+
+    @Override
+    @After
+    public void tearDown() throws Exception {
+        server1.shutdown();
+        server2.shutdown();
+        server3.shutdown();
+        store.clear();
+    }
 
     /**
      * Inserts a data item on a specific server and measures the time until
@@ -42,21 +74,22 @@ public class QueryHandlerTest extends TestCase {
         long timeout = 1000;
 
         insert(writer, "", key, insert);
-        start = System.currentTimeMillis();
+        start = timeHandler.getCurrentTime();
         do {
-            if (!(copyC1 = read(server1, "", key, null)).isNull()
-                    && delayC1 == -1) {
-                delayC1 = System.currentTimeMillis() - start;
+            if (!(copyC1 = read(server1, "", key, null)).isNull() && delayC1 == -1) {
+                delayC1 = timeHandler.getCurrentTime() - start;
             }
-            if (!(copyC2 = read(server2, "", key, null)).isNull()
-                    && delayC2 == -1) {
-                delayC2 = System.currentTimeMillis() - start;
+            if (!(copyC2 = read(server2, "", key, null)).isNull() && delayC2 == -1) {
+                delayC2 = timeHandler.getCurrentTime() - start;
             }
-            if (!(copyC3 = read(server3, "", key, null)).isNull()
-                    && delayC3 == -1) {
-                delayC3 = System.currentTimeMillis() - start;
+            if (!(copyC3 = read(server3, "", key, null)).isNull() && delayC3 == -1) {
+                delayC3 = timeHandler.getCurrentTime() - start;
             }
-        } while (System.currentTimeMillis() - start < timeout
+
+            if (timeHandler instanceof FakeTimeHandler) {
+                ((FakeTimeHandler) timeHandler).increaseTime(10);
+            }
+        } while (timeHandler.getCurrentTime() - start < timeout
                 && (delayC1 == -1 || delayC2 == -1 || delayC3 == -1));
 
         assertEquals(insert, copyC1);
@@ -67,12 +100,9 @@ public class QueryHandlerTest extends TestCase {
         System.out.println("delay client 1:\t" + delayC1);
         System.out.println("delay client 2:\t" + delayC2);
         System.out.println("delay client 3:\t" + delayC3);
-        assertTrue(delayC1 < 50 && server1 == writer || 450 < delayC1
-                && delayC1 < 550);
-        assertTrue(delayC2 < 50 && server2 == writer || 450 < delayC2
-                && delayC2 < 550);
-        assertTrue(delayC3 < 50 && server3 == writer || 450 < delayC3
-                && delayC3 < 550);
+        assertTrue((delayC1 < 50 && server1 == writer) || (450 < delayC1 && delayC1 < 550));
+        assertTrue((delayC2 < 50 && server2 == writer) || (450 < delayC2 && delayC2 < 550));
+        assertTrue((delayC3 < 50 && server3 == writer) || (450 < delayC3 && delayC3 < 550));
 
     }
 
@@ -148,11 +178,10 @@ public class QueryHandlerTest extends TestCase {
     private ServerResponse sendRequest(SickServer writer, ClientRequest request)
         throws Exception {
 
-        request.setReceivedAt(System.currentTimeMillis());
+        request.setReceivedAt(timeHandler.getCurrentTime());
         request.setReceivedBy(writer.getID());
 
-        ServerResponse response = QueryHandler.getInstance().processQuery(
-                writer, request);
+        ServerResponse response = queryHandler.processQuery(writer, request);
         if (response instanceof ServerResponseException) {
             throw ((ServerResponseException) response).getException();
         }
@@ -160,33 +189,9 @@ public class QueryHandlerTest extends TestCase {
         return response;
     }
 
-    @Override
-    @Before
-    public void setUp() throws Exception {
-
-        // specify connection parameters
-        int tcpPort = 54000;
-
-        // Create and start server and clients
-        server1 = new SickServer(tcpPort + 1);
-        server2 = new SickServer(tcpPort + 2);
-        server3 = new SickServer(tcpPort + 3);
-    }
-
-    @Override
-    @After
-    public void tearDown() throws Exception {
-        server1.shutdown();
-        server2.shutdown();
-        server3.shutdown();
-        Store.getInstance().clear();
-    }
-
     @Test
     public void testStaleness() throws Exception {
         // TODO implement test
-        // Specify staleness parameters
-        QueryHandler.getInstance().setStaleness(new ConstantStaleness(500, 0));
 
         // create some data objects
         Version bob = new Version();
@@ -265,7 +270,7 @@ public class QueryHandlerTest extends TestCase {
         assertEquals(john, copies3.get(1));
         assertEquals(2, copies3.size());
 
-        Thread.sleep(600);
+        timeHandler.sleep(600);
         // c2 and c3 should see the consequence immediately not immediately
         // (after about 500 ms)
         copies1 = scan(server1, "", "bob", 2, null);

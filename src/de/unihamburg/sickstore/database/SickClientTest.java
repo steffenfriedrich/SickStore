@@ -9,6 +9,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.unihamburg.sickstore.backend.QueryHandler;
+import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
+import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import junit.framework.TestCase;
 
 import org.junit.After;
@@ -31,23 +36,29 @@ public class SickClientTest extends TestCase {
     private SickClient c1;
     private SickServer server;
 
+    private TimeHandler timeHandler;
+    private Store store;
+    private QueryHandler queryHandler;
+
     /**
      * @throws java.lang.Exception
      */
     @Override
     @Before
     public void setUp() throws Exception {
+        timeHandler = new FakeTimeHandler();
+        store = new Store(timeHandler);
+        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), timeHandler);
 
         // specify connection parameters
         String host = "localhost";
-        int timeout = 120;
+        int timeout = 1200;
         int tcpPort = 54999;
 
         // Create and start server and clients
-        server = new SickServer(tcpPort);
+        server = new SickServer(tcpPort, queryHandler, timeHandler);
         c1 = new SickClient(timeout, host, tcpPort, "Client 1");
         c1.connect();
-
     }
 
     /**
@@ -58,7 +69,7 @@ public class SickClientTest extends TestCase {
     public void tearDown() throws Exception {
         c1.disconnect();
         server.shutdown();
-        Store.getInstance().clear();
+        store.clear();
     }
 
     @Test
@@ -107,7 +118,7 @@ public class SickClientTest extends TestCase {
         // test delete
         c1.delete("", "john");
         try {
-            Thread.sleep(5);
+            timeHandler.sleep(5);
             c1.delete("", "john");
             fail("Duplicate delete was expected to fail but succeed");
         } catch (DeleteException e) {

@@ -147,13 +147,19 @@ public class Server {
 
         log.info("Starting Sick server...");
 
+        TimeHandler timeHandler = new SystemTimeHandler();
+        QueryHandler queryHandler = new QueryHandler(
+                new Store(timeHandler),
+                new ConstantStaleness(foreignReads, ownReads),
+                timeHandler
+        );
+
         int p = -1;
         for (String port : ports) {
             p = Integer.parseInt(port);
-            new SickServer(p);
+            new SickServer(p, queryHandler, timeHandler);
             log.info("... on port " + port);
         }
-        QueryHandler.getInstance().setStaleness(new ConstantStaleness(foreignReads, ownReads));
 
         // Some variables that give you a handle on the store and the server
         // nodes during debugging
@@ -161,6 +167,5 @@ public class Server {
         // System.out.println(store);
         // QueryHandler handler = QueryHandler.getInstance();
         // System.out.println(handler);
-
     }
 }

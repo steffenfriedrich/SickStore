@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 
-import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.database.SickServer;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
@@ -41,17 +39,7 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
 
 public class QueryHandler {
 
-	private final static QueryHandler instance;
-
-	static {
-		instance = new QueryHandler();
-	}
-
-	private TimeHandler timeHandler = new SystemTimeHandler();
-
-	public static QueryHandler getInstance() {
-		return instance;
-	}
+	private TimeHandler timeHandler;
 
 	/** Generates server IDs, starting with 1 */
 	private final AtomicInteger IDGenerator = new AtomicInteger(1);
@@ -60,11 +48,11 @@ public class QueryHandler {
     private final AtomicInteger clientCount = new AtomicInteger(0);
     
     
-	private Store mediator = Store.getInstance();
+	private Store mediator;
 
 	protected final Set<Integer> servers = new HashSet<Integer>();
 
-	private StalenessGenerator staleness = new ConstantStaleness(0, 0);
+	private StalenessGenerator staleness;
 
 	private final MetricRegistry metrics = new MetricRegistry();
     private static final Logger logMetrics = LoggerFactory.getLogger("metrics");
@@ -76,7 +64,10 @@ public class QueryHandler {
 	private Meter requestsScan= null;
 	private Meter requestsUpdate= null;
 	
-	private QueryHandler() {
+	public QueryHandler(Store mediator, StalenessGenerator staleness, TimeHandler timeHandler) {
+		this.mediator = mediator;
+		this.timeHandler = timeHandler;
+		this.staleness = staleness;
 	}
 
 	public synchronized Set<Integer> getServers() {
@@ -101,7 +92,7 @@ public class QueryHandler {
 					"Cannot process delete request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(server, request);
+		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
 		mediator.delete(server, key, visibility, timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(
@@ -125,7 +116,7 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(server, request);
+		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.insert(server, key, version);
@@ -199,7 +190,7 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(server, request);
+		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.update(server, key, version);
