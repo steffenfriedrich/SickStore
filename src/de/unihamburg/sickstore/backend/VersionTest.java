@@ -6,12 +6,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
-public class VersionTest extends TestCase {
+public class VersionTest {
 
     @Test
     public void testClone() throws CloneNotSupportedException {

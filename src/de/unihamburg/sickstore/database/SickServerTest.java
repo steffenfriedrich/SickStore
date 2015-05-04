@@ -6,28 +6,22 @@ package de.unihamburg.sickstore.database;
 import java.util.List;
 
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
-import de.unihamburg.sickstore.backend.timer.TimeHandler;
-import junit.framework.TestCase;
 
+import de.unihamburg.sickstore.test.SickstoreTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import de.unihamburg.sickstore.backend.QueryHandler;
-import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.Version;
-import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 
 /**
  * @author Wolfram Wingerath
  * 
  */
-public class SickServerTest extends TestCase {
-
-    private TimeHandler timeHandler;
-    private Store store;
-    private QueryHandler queryHandler;
+public class SickServerTest extends SickstoreTestCase {
 
     private SickClient c1;
     private SickClient c2;
@@ -39,15 +33,8 @@ public class SickServerTest extends TestCase {
     /**
      * @throws java.lang.Exception
      */
-    @Override
     @Before
     public void setUp() throws Exception {
-
-        // init store and query handler
-        timeHandler = new FakeTimeHandler();
-        store = new Store(timeHandler);
-        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), timeHandler);
-
         // specify connection parameters
         String host = "localhost";
         int timeout = 12000;
@@ -73,7 +60,6 @@ public class SickServerTest extends TestCase {
     /**
      * @throws java.lang.Exception
      */
-    @Override
     @After
     public void tearDown() throws Exception {
         c1.disconnect();

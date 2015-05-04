@@ -1,6 +1,3 @@
-/**
- * 
- */
 package de.unihamburg.sickstore.database;
 
 import static org.junit.Assert.assertNotEquals;
@@ -12,13 +9,16 @@ import java.util.Set;
 import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
-import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
-import junit.framework.TestCase;
 
+import de.unihamburg.sickstore.test.SickstoreTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotSame;
 
 import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.Version;
@@ -31,25 +31,16 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
  * @author Wolfram Wingerath
  * 
  */
-public class SickClientTest extends TestCase {
+public class SickClientTest extends SickstoreTestCase{
 
     private SickClient c1;
     private SickServer server;
 
-    private TimeHandler timeHandler;
-    private Store store;
-    private QueryHandler queryHandler;
-
     /**
      * @throws java.lang.Exception
      */
-    @Override
     @Before
     public void setUp() throws Exception {
-        timeHandler = new FakeTimeHandler();
-        store = new Store(timeHandler);
-        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), timeHandler);
-
         // specify connection parameters
         String host = "localhost";
         int timeout = 1200;
@@ -66,7 +57,6 @@ public class SickClientTest extends TestCase {
     /**
      * @throws java.lang.Exception
      */
-    @Override
     @After
     public void tearDown() throws Exception {
         c1.disconnect();

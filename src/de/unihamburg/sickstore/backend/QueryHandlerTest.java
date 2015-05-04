@@ -4,36 +4,25 @@ import java.util.List;
 import java.util.Set;
 
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
-import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.messages.*;
-import junit.framework.TestCase;
+import de.unihamburg.sickstore.test.SickstoreTestCase;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.database.SickServer;
 
-
-public class QueryHandlerTest extends TestCase {
+public class QueryHandlerTest extends SickstoreTestCase {
 
     private SickServer server1;
     private SickServer server3;
     private SickServer server2;
 
-    private TimeHandler timeHandler;
-    private Store store;
-    private QueryHandler queryHandler;
-
-    @Override
     @Before
     public void setUp() throws Exception {
-        // init store and query handler
-        timeHandler = new FakeTimeHandler();
-        store = new Store(timeHandler);
-        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), timeHandler);
-
         // specify connection parameters
         int tcpPort = 54000;
 
@@ -43,7 +32,6 @@ public class QueryHandlerTest extends TestCase {
         server3 = new SickServer(tcpPort + 3, queryHandler, timeHandler);
     }
 
-    @Override
     @After
     public void tearDown() throws Exception {
         server1.shutdown();

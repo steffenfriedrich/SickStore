@@ -1,16 +1,12 @@
 package de.unihamburg.sickstore.database;
 
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+        SickClientTest.class,
+        SickServerTest.class
+})
 public class AllTests {
-
-    public static TestSuite suite() {
-        TestSuite suite = new TestSuite("Database tests");
-        // $JUnit-BEGIN$
-        suite.addTestSuite(SickClientTest.class);
-        suite.addTestSuite(SickServerTest.class);
-        // $JUnit-END$
-        return suite;
-    }
-
 }

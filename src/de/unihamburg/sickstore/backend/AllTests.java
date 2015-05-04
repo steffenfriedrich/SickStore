@@ -1,16 +1,9 @@
 package de.unihamburg.sickstore.backend;
 
-import junit.framework.TestSuite;
+import org.junit.runners.Suite;
+import org.junit.runner.RunWith;
 
+@RunWith(Suite.class)
+@Suite.SuiteClasses({VersionTest.class, QueryHandlerTest.class})
 public class AllTests {
-
-    public static TestSuite suite() {
-        TestSuite suite = new TestSuite("Backend tests");
-        // $JUnit-BEGIN$
-        suite.addTestSuite(VersionTest.class);
-        suite.addTestSuite(QueryHandlerTest.class);
-        // $JUnit-END$
-        return suite;
-    }
-
 }
