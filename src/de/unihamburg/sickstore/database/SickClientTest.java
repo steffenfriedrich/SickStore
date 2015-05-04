@@ -57,6 +57,8 @@ public class SickClientTest extends TestCase {
 
         // Create and start server and clients
         server = new SickServer(tcpPort, queryHandler, timeHandler);
+        server.start();
+
         c1 = new SickClient(timeout, host, tcpPort, "Client 1");
         c1.connect();
     }

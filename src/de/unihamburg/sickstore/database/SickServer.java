@@ -23,24 +23,20 @@ public class SickServer extends Participant {
 
     protected Server server;
 
-    public SickServer(int port, final QueryHandler queryHandler, final TimeHandler timeHandler) throws IOException {
-
+    public SickServer(int port, final QueryHandler queryHandler, final TimeHandler timeHandler) {
         this.queryHandler = queryHandler;
         this.timeHandler = timeHandler;
 
-        // register server in database backend
-        ID = queryHandler.register(node);
         this.port = port;
 
-        server = new Server();
-
-        // For consistency, the classes to be sent over the network are
-        // registered by the same method for both the client and server.
-        super.register(server);
-
-        init();
+        // register server in database backend
+        ID = queryHandler.register(node);
     }
 
+    /**
+     *
+     * @return the Server's ID
+     */
     public int getID() {
         return ID;
     }
@@ -50,10 +46,26 @@ public class SickServer extends Participant {
     }
 
     /**
+     * Start the server process.
+     */
+    public void start() throws IOException {
+        server = new Server();
+
+        // For consistency, the classes to be sent over the network are
+        // registered by the same method for both the client and server.
+        super.register(server);
+
+        initServer();
+    }
+
+    /**
      * Stops the server process.
      */
     public void shutdown() {
-        server.stop();
+        if (server != null) {
+            server.stop();
+        }
+
         queryHandler.deregister(node);
     }
 
@@ -62,7 +74,7 @@ public class SickServer extends Participant {
      *
      * @throws IOException
      */
-    private void init() throws IOException  {
+    private void initServer() throws IOException  {
         server.addListener(new Listener() {
             @Override
             public void disconnected(Connection c) {
@@ -100,6 +112,7 @@ public class SickServer extends Participant {
                 }
             }
         });
+
         server.bind(this.port);
         server.start();
     }

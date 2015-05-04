@@ -157,7 +157,9 @@ public class Server {
         int p = -1;
         for (String port : ports) {
             p = Integer.parseInt(port);
-            new SickServer(p, queryHandler, timeHandler);
+            SickServer server = new SickServer(p, queryHandler, timeHandler);
+            server.start();
+
             log.info("... on port " + port);
         }
 

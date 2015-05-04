@@ -88,15 +88,13 @@ public class QueryHandler {
 		long timestamp = request.getReceivedAt();
 		long clientRequestID = request.getId();
 		if (key == null) {
-			throw new NoKeyProvidedException(
-					"Cannot process delete request; no key was provided.");
+			throw new NoKeyProvidedException("Cannot process delete request; no key was provided.");
 		}
 
 		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
 		mediator.delete(server, key, visibility, timestamp);
 
-		ServerResponseDelete response = new ServerResponseDelete(
-				clientRequestID);
+		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
 		return response;
 	}
 
@@ -121,8 +119,7 @@ public class QueryHandler {
 		version.setWrittenAt(timestamp);
 		mediator.insert(server, key, version);
 
-		ServerResponseInsert response = new ServerResponseInsert(
-				clientRequestID);
+		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
 		return response;
 	}
 
@@ -138,16 +135,14 @@ public class QueryHandler {
 		long timestamp = request.getReceivedAt();
 		long clientRequestID = request.getId();
 		if (key == null) {
-			throw new NoKeyProvidedException(
-					"Cannot process get request; no key was provided.");
+			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
 		Version version = mediator.get(server, key, columns, timestamp, true);
 		if (version == null) {
 			throw new NullPointerException("Version must not be null!");
 		}
-		ServerResponseRead response = new ServerResponseRead(clientRequestID,
-				version);
+		ServerResponseRead response = new ServerResponseRead(clientRequestID, version);
 		return response;
 	}
 
@@ -168,10 +163,8 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
-		List<Version> versions = mediator.getRange(server, key, range, asc,
-				columns, timestamp);
-		ServerResponseScan response = new ServerResponseScan(clientRequestID,
-				versions);
+		List<Version> versions = mediator.getRange(server, key, range, asc, columns, timestamp);
+		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
 		return response;
 	}
 
@@ -186,8 +179,7 @@ public class QueryHandler {
 		long clientRequestID = request.getId();
 		Version version = request.getVersion();
 		if (key == null) {
-			throw new NoKeyProvidedException(
-					"Cannot process get request; no key was provided.");
+			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
 		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
@@ -195,8 +187,7 @@ public class QueryHandler {
 		version.setWrittenAt(timestamp);
 		mediator.update(server, key, version);
 
-		ServerResponseUpdate response = new ServerResponseUpdate(
-				clientRequestID);
+		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
 		return response;
 	}
 

@@ -55,8 +55,11 @@ public class SickServerTest extends TestCase {
 
         // Create and start server and clients
         server1 = new SickServer(tcpPort + 1, queryHandler, timeHandler);
+        server1.start();
         server2 = new SickServer(tcpPort + 2, queryHandler, timeHandler);
+        server2.start();
         server3 = new SickServer(tcpPort + 3, queryHandler, timeHandler);
+        server3.start();
 
         // Connect clients
         c1 = new SickClient(timeout, host, tcpPort + 1, "Client 1");
