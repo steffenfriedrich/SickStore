@@ -62,20 +62,24 @@ public class Store {
 		}
 	}
 
-	public synchronized Version get(int server, String key, long timestamp,
-			boolean logStaleness) {
+	/**
+	 * Get a data item with all columns.
+	 *
+	 * @see Store#get(int, String, Set, long, boolean)
+	 */
+	public synchronized Version get(int server, String key, long timestamp, boolean logStaleness) {
 		return get(server, key, (Set<String>) null, timestamp, logStaleness);
 	}
 
 	/**
-	 * Get a data item.
+	 * Get a data item and only read the specific columns (or null for all).
 	 *
-	 * @param server          the id of the reading server
+	 * @param server          the responseId of the reading server
 	 * @param key             the requested key
-	 * @param columns         set which cointans only specific columns to read
+	 * @param columns         set which cointans only specific columns to read (or null to read all)
 	 * @param timestamp	      time at which the request is executed
 	 * @param logStaleness    to log or not to log staleness?
-	 * @return
+	 * @return the read version
 	 */
 	public synchronized Version get(int server, String key,
 			Set<String> columns, long timestamp, boolean logStaleness) {
@@ -135,16 +139,34 @@ public class Store {
 		return Version.NULL;
 	}
 
+	/**
+	 * Get a specific data item but only with the value of a single column.
+	 *
+	 * @see Store#get(int, String, Set, long, boolean)
+	 */
 	public synchronized Version get(int server, String key, String column,
 			long timestamp, boolean logStaleness) {
 		if (column == null) {
 			throw new IllegalArgumentException("Column must not be null!");
 		}
+
 		Set<String> columns = new HashSet<String>();
 		columns.add(column);
+
 		return get(server, key, columns, timestamp, logStaleness);
 	}
 
+	/**
+	 * Read a range of data items.
+	 *
+	 * @param server
+	 * @param key
+	 * @param range
+	 * @param asc
+	 * @param columns
+	 * @param timestamp
+	 * @return
+	 */
 	public synchronized List<Version> getRange(int server, String key,
 			int range, boolean asc, Set<String> columns, long timestamp) {
 		if (key == null) {
@@ -178,8 +200,7 @@ public class Store {
 	/**
 	 * Returns the least key strictly greater than the given key, or null if
 	 * there is no such key.
-	 * 
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
@@ -267,13 +288,5 @@ public class Store {
 		} else {
 			insertOrUpdate(key, version);
 		}
-	}
-
-	public void setTimeHandler(TimeHandler timeHandler) {
-		this.timeHandler = timeHandler;
-	}
-
-	public TimeHandler getTimeHandler() {
-		return timeHandler;
 	}
 }

@@ -25,17 +25,18 @@ public class Version {
     private TreeMap<String, Object> values = new TreeMap<String, Object>();
 
     /**
-     * a map from server IDs to timestamps; indicates when the version is
+     * A map from server IDs to timestamps; indicates when the version is
      * visible for what server
      */
     private Map<Integer, Long> visibility = new HashMap<Integer, Long>();
 
     /**
-     * server timestamp at which this version was written. This value always has to be set.
+     * Server timestamp at which this version was written.
+     * This value always has to be set this item is written
      */
     private long writtenAt = -1;
 
-    /** indicates what server has written the version */
+    /** indicates what server has written the version and owns the data */
     private int writtenBy;
 
     public Version() {
@@ -53,10 +54,6 @@ public class Version {
         }
         this.isNull = isNull;
         this.writtenAt = writtenAt;
-    }
-
-    public Version(SickServer server, long writtenAt, Map<Integer, Long> visibility) {
-        this(server.getID(), writtenAt, visibility);
     }
 
     @Override

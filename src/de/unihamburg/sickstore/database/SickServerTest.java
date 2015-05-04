@@ -49,11 +49,11 @@ public class SickServerTest extends SickstoreTestCase {
         server3.start();
 
         // Connect clients
-        c1 = new SickClient(timeout, host, tcpPort + 1, "Client 1");
+        c1 = new SickClient(timeout, host, tcpPort + 1, "Client 1", timeHandler);
         c1.connect();
-        c2 = new SickClient(timeout, host, tcpPort + 2, "Client 2");
+        c2 = new SickClient(timeout, host, tcpPort + 2, "Client 2", timeHandler);
         c2.connect();
-        c3 = new SickClient(timeout, host, tcpPort + 3, "Client 3");
+        c3 = new SickClient(timeout, host, tcpPort + 3, "Client 3", timeHandler);
         c3.connect();
     }
 

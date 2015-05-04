@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertNotSame;
 
-import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import de.unihamburg.sickstore.database.messages.exception.DeleteException;
@@ -50,7 +49,7 @@ public class SickClientTest extends SickstoreTestCase{
         server = new SickServer(tcpPort, queryHandler, timeHandler);
         server.start();
 
-        c1 = new SickClient(timeout, host, tcpPort, "Client 1");
+        c1 = new SickClient(timeout, host, tcpPort, "Client 1", timeHandler);
         c1.connect();
     }
 

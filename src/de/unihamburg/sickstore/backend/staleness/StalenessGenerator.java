@@ -10,7 +10,7 @@ public interface StalenessGenerator {
     /**
      *
      * @param servers a set with all server ids
-     * @param readingServer the reading server's id
+     * @param readingServer the reading server's responseId
      * @param request
      * @return a Map of Server to Delay
      */

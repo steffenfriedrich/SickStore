@@ -13,17 +13,9 @@ import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 
 import de.unihamburg.sickstore.backend.Version;
-import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
-import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
-import de.unihamburg.sickstore.database.messages.ClientRequestRead;
-import de.unihamburg.sickstore.database.messages.ClientRequestScan;
-import de.unihamburg.sickstore.database.messages.ClientRequestUpdate;
-import de.unihamburg.sickstore.database.messages.ServerResponseDelete;
-import de.unihamburg.sickstore.database.messages.ServerResponseException;
-import de.unihamburg.sickstore.database.messages.ServerResponseInsert;
-import de.unihamburg.sickstore.database.messages.ServerResponseRead;
-import de.unihamburg.sickstore.database.messages.ServerResponseScan;
-import de.unihamburg.sickstore.database.messages.ServerResponseUpdate;
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import de.unihamburg.sickstore.database.messages.exception.NotConnectedException;
 
@@ -34,19 +26,51 @@ import de.unihamburg.sickstore.database.messages.exception.NotConnectedException
  */
 public class SickClient extends Participant {
 
-    public Client client;
+    private int timeout;
     private String host;
+    private int tcpPort;
     private String name;
+
     /** stores outstanding requests by their identifiers (keys) */
     public final Map<Long, Object> outstandingRequests = new ConcurrentHashMap<Long, Object>();
 
     private final SickClient sickclient = this;
+    public Client client;
+    private TimeHandler timeHandler;
 
-    private int tcpPort;
+    /**
+     * Default constructuro to connect the client to a server.
+     *
+     * @param timeout
+     * @param host
+     * @param tcpPort
+     * @throws IOException
+     */
+    public SickClient(int timeout, String host, int tcpPort) throws IOException {
+        this(timeout, host, tcpPort, null, new SystemTimeHandler());
+    }
 
-    private int timeout;
+    /**
+     * Default internal constructur, which is only used for testing.
+     *
+     * @param timeout
+     * @param host
+     * @param tcpPort
+     * @param name
+     * @throws IOException
+     */
+    SickClient(int timeout, String host, int tcpPort, String name, TimeHandler timeHandler)
+            throws IOException {
+        this.timeout = timeout;
+        this.host = host;
+        this.tcpPort = tcpPort;
+        this.name = name;
+        this.timeHandler = timeHandler;
 
-    public SickClient() throws IOException {
+        initConnection();
+    }
+
+    private void initConnection() throws IOException {
         client = new Client();
         client.start();
 
@@ -67,28 +91,21 @@ public class SickClient extends Participant {
 
             @Override
             public void received(Connection c, Object object) {
-                if (object instanceof ServerResponseDelete) {
-                    ServerResponseDelete message = (ServerResponseDelete) object;
+                if (object instanceof ServerResponse) {
+                    // Wait some time if the response wants us to wait
+                    ServerResponse response = (ServerResponse) object;
+                    if (response.getWaitTimeout() > 0) {
+                        sickclient.timeHandler.sleep(response.getWaitTimeout());
+                    }
+                }
 
-                    Long id = message.getClientRequestID();
-
-                    sickclient.outstandingRequests.put(id, true);
-
-                } else if (object instanceof ServerResponseInsert) {
-                    ServerResponseInsert message = (ServerResponseInsert) object;
-
-                    Long id = message.getClientRequestID();
-
-                    sickclient.outstandingRequests.put(id, true);
-
-                } else if (object instanceof ServerResponseRead) {
+                if (object instanceof ServerResponseRead) {
                     ServerResponseRead message = (ServerResponseRead) object;
 
                     Long id = message.getClientRequestID();
                     Version version = message.getVersion();
 
                     sickclient.outstandingRequests.put(id, version);
-
                 } else if (object instanceof ServerResponseScan) {
                     ServerResponseScan message = (ServerResponseScan) object;
 
@@ -96,14 +113,6 @@ public class SickClient extends Participant {
                     List<Version> entries = message.getEntries();
 
                     sickclient.outstandingRequests.put(id, entries);
-
-                } else if (object instanceof ServerResponseUpdate) {
-                    ServerResponseUpdate message = (ServerResponseUpdate) object;
-
-                    Long id = message.getClientRequestID();
-
-                    sickclient.outstandingRequests.put(id, true);
-
                 } else if (object instanceof ServerResponseException) {
                     ServerResponseException message = (ServerResponseException) object;
 
@@ -111,7 +120,11 @@ public class SickClient extends Participant {
                     Exception exception = message.getException();
 
                     sickclient.outstandingRequests.put(id, exception);
+                } else if (object instanceof ServerResponse) {
+                    ServerResponse message = (ServerResponse) object;
+                    Long id = message.getClientRequestID();
 
+                    sickclient.outstandingRequests.put(id, true);
                 } else if (object instanceof FrameworkMessage) {
                 } else {
                     System.out.println("connection "
@@ -120,20 +133,6 @@ public class SickClient extends Participant {
                 }
             }
         });
-    }
-
-    public SickClient(int timeout, String host, int tcpPort) throws IOException {
-        this(timeout, host, tcpPort, null);
-    }
-
-    public SickClient(int timeout, String host, int tcpPort, String name)
-            throws IOException {
-        this();
-
-        this.timeout = timeout;
-        this.host = host;
-        this.tcpPort = tcpPort;
-        this.name = name;
     }
 
     /**
