@@ -24,6 +24,7 @@ public class VersionTest {
         visibility.put(2, 102l);
         // create a version object and set some values
         Version version = new Version();
+        version.setVisibility(visibility);
         version.put("name", "Bob");
         version.put("age", "25");
 
@@ -36,7 +37,7 @@ public class VersionTest {
         assertNotSame(version, clone);
         assertNotEquals(version, clone);
         assertEquals(version.getVisibility(), clone.getVisibility());
-        assertNotSame(version.getVisibility(), clone.getValues());
+        assertNotSame(version.getVisibility(), clone.getVisibility());
         assertEquals(version.getWrittenBy(), clone.getWrittenBy());
         assertEquals(version.get("name"), clone.get("name"));
         assertSame(version.get("name"), clone.get("name"));
