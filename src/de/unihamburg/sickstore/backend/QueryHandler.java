@@ -91,7 +91,7 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process delete request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
+		Map<Integer, Long> visibility = staleness.get(getServers(), request);
 		mediator.delete(server, key, visibility, timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
@@ -114,7 +114,7 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
+		Map<Integer, Long> visibility = staleness.get(getServers(), request);
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.insert(server, key, version);
@@ -182,7 +182,7 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(getServers(), server, request);
+		Map<Integer, Long> visibility = staleness.get(getServers(), request);
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.update(server, key, version);
@@ -194,8 +194,7 @@ public class QueryHandler {
 	/**
 	 * Processes an incoming query.
 	 */
-	public synchronized ServerResponse processQuery(SickServer server,
-			Object request) {
+	public synchronized ServerResponse processQuery(SickServer server, Object request) {
 		Long id = -1l;
 		ServerResponse response = null;
 		try {
@@ -258,12 +257,24 @@ public class QueryHandler {
 		return response;
 	}
 
+	/**
+	 * Registers a new server node.
+	 *
+	 * @param node
+	 * @return the id of the server
+	 */
 	public synchronized int register(SickServer node) {
 		int newServerID = IDGenerator.getAndIncrement();
 		servers.add(newServerID);
 		return newServerID;
 	}
 
+	/**
+	 * Deregister a server and remove it from the server list.
+	 *
+	 * @param node
+	 * @return the removed node's id
+	 */
 	public synchronized int deregister(SickServer node) {
 		if (node == null) {
 			throw new NullPointerException("server must not be null!");
@@ -276,13 +287,23 @@ public class QueryHandler {
 	public synchronized void setStaleness(StalenessGenerator staleness) {
 		this.staleness = staleness;
 	}
-	
+
+	/**
+	 * Increment the number of connection clients and return the current number.
+	 *
+	 * @return number of connected clients
+	 */
 	public int incrementAndGetClientCount() {
         clientCount.incrementAndGet();
         resetMetersIfIdle();
         return clientCount.get();
     }
 
+	/**
+	 * Decrement the number of connection clients and return the current number.
+	 *
+	 * @return number of connected clients
+	 */
     public int decrementAndGetClientCount() {
         clientCount.decrementAndGet();
         resetMetersIfIdle();

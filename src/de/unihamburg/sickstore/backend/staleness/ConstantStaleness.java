@@ -35,13 +35,13 @@ public class ConstantStaleness implements StalenessGenerator {
     }
 
     /**
-     * @see de.unihamburg.sickstore.backend.staleness.StalenessGenerator#get(Set, int, ClientRequest) 
+     * @see de.unihamburg.sickstore.backend.staleness.StalenessGenerator#get(Set, ClientRequest)
      */
-    public Map<Integer, Long> get(Set<Integer> servers, int readingServer, ClientRequest request) {
+    public Map<Integer, Long> get(Set<Integer> servers, ClientRequest request) {
         HashMap<Integer, Long> delay = new HashMap<Integer, Long>();
 
         for (Integer server : servers) {
-            if (server == readingServer) {
+            if (server == request.getReceivedBy()) {
                 delay.put(server, ownReads);
             } else {
                 delay.put(server, foreignReads);
