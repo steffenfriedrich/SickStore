@@ -3,10 +3,10 @@
 	http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni-hamburg.informatik.nosqlmark</groupId>
-	<artifactId>pimpstore</artifactId>
+	<artifactId>sickstore</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0</version>
-	<name>pimpstore</name>
+	<name>sickstore</name>
 
 	<properties>
 		<jdk.version>1.6</jdk.version>
@@ -64,7 +64,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>de.unihamburg.pimpstore.main.Server</mainClass>
+							<mainClass>de.unihamburg.sickstore.main.Server</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -74,7 +74,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>de.unihamburg.pimpstore.main.Server</mainClass>
+							<mainClass>de.unihamburg.sickstore.main.Server</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
