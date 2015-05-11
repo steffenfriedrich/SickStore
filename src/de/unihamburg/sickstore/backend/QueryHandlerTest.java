@@ -1,5 +1,6 @@
 package de.unihamburg.sickstore.backend;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -275,7 +276,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
 
     @Test
     public void testDelayGenerator() throws Exception{
-        queryHandler.setReplicationDelayGenerator(new MongoDbReplicationDelay(100));
+        queryHandler.setReplicationDelayGenerator(new MongoDbReplicationDelay(100, 2, new HashMap<Integer[], Long>()));
 
         // create some data objects
         Version bob = new Version();
@@ -283,9 +284,9 @@ public class QueryHandlerTest extends SickstoreTestCase {
         bob.put("hair", "brown");
         bob.put("age", 25);
 
+        // minAcknowledgements > 0, but no custom delays -> return default delay (100)
         ClientRequestInsert request = new ClientRequestInsert("", "bob", bob);
         ServerResponse response = sendRequest(server1, request);
-
         assertEquals((Long) 100l, response.getWaitTimeout());
     }
 }

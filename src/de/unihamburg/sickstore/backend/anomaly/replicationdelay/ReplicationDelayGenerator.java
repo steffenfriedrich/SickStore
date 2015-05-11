@@ -9,7 +9,7 @@ public interface ReplicationDelayGenerator {
      * Calculates the time a specific write request needs to complete
      * (the time delay until it would be finished).
      *
-     * @param servers    set with all server ids
+     * @param servers    set with all server ids the write is propagated to
      * @param request
      * @return the returned value describes how long the request should be delayed until
      *          the request is finished
