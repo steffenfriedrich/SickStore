@@ -2,7 +2,7 @@ package de.unihamburg.sickstore.database.messages;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ClientRequest {
+public abstract class ClientRequest {
 
     protected static final AtomicLong counter = new AtomicLong();
 

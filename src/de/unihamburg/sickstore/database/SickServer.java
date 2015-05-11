@@ -11,6 +11,8 @@ import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
+import de.unihamburg.sickstore.database.messages.ServerResponseException;
+import de.unihamburg.sickstore.database.messages.exception.UnknownMessageTypeException;
 
 public class SickServer extends Participant {
 
@@ -93,17 +95,22 @@ public class SickServer extends Participant {
             public void received(final Connection connection, final Object object) {
                 synchronized (connection) {
                     if (!(object instanceof FrameworkMessage)) {
-                        if (object instanceof ClientRequest) {
-                            // Mark the request as received by this server
-                            ((ClientRequest) object).setReceivedBy(node.getID());
-                            ((ClientRequest) object).setReceivedAt(timeHandler.getCurrentTime());
-                        }
-
                         // new Thread() {
                         // @Override
                         // public void run() {
-                        ServerResponse response = queryHandler
-                                .processQuery(node, object);
+
+                        ServerResponse response = null;
+
+                        if (object instanceof ClientRequest) {
+                            response = handleRequest((ClientRequest) object);
+                        } else {
+                            response = new ServerResponseException(
+                                -1,
+                                new UnknownMessageTypeException(
+                                    "Cannot process request; unknown message type: " + object.getClass()
+                                )
+                            );
+                        }
 
                         node.send(connection.getID(), response);
                         // };
@@ -115,5 +122,13 @@ public class SickServer extends Participant {
 
         server.bind(this.port);
         server.start();
+    }
+
+    protected ServerResponse handleRequest(ClientRequest request) {
+        // Mark the request as received by this server
+        request.setReceivedBy(node.getID());
+        request.setReceivedAt(timeHandler.getCurrentTime());
+
+        return queryHandler.processQuery(node, request);
     }
 }
