@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.unihamburg.sickstore.backend.anomaly.replicationdelay.ReplicationDelayGenerator;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,7 @@ public class QueryHandler {
 	protected final Set<Integer> servers = new HashSet<Integer>();
 
 	private StalenessGenerator staleness;
+	private ReplicationDelayGenerator replicationDelayGenerator;
 
 	private final MetricRegistry metrics = new MetricRegistry();
     private static final Logger logMetrics = LoggerFactory.getLogger("metrics");
@@ -63,11 +65,15 @@ public class QueryHandler {
 	private Meter requestsRead= null;
 	private Meter requestsScan= null;
 	private Meter requestsUpdate= null;
-	
-	public QueryHandler(Store mediator, StalenessGenerator staleness, TimeHandler timeHandler) {
+
+	public QueryHandler(Store mediator,
+						StalenessGenerator staleness,
+						ReplicationDelayGenerator replicationDelayGenerator,
+						TimeHandler timeHandler) {
 		this.mediator = mediator;
-		this.timeHandler = timeHandler;
 		this.staleness = staleness;
+		this.replicationDelayGenerator = replicationDelayGenerator;
+		this.timeHandler = timeHandler;
 	}
 
 	public synchronized Set<Integer> getServers() {
@@ -95,6 +101,10 @@ public class QueryHandler {
 		mediator.delete(server, key, visibility, timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
+
+		long delay = replicationDelayGenerator.calculateDelay(getServers(), request);
+		response.setWaitTimeout(delay);
+
 		return response;
 	}
 
@@ -120,6 +130,10 @@ public class QueryHandler {
 		mediator.insert(server, key, version);
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
+
+		long delay = replicationDelayGenerator.calculateDelay(getServers(), request);
+		response.setWaitTimeout(delay);
+
 		return response;
 	}
 
@@ -188,6 +202,10 @@ public class QueryHandler {
 		mediator.update(server, key, version);
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
+
+		long delay = replicationDelayGenerator.calculateDelay(getServers(), request);
+		response.setWaitTimeout(delay);
+
 		return response;
 	}
 
@@ -288,6 +306,14 @@ public class QueryHandler {
 		this.staleness = staleness;
 	}
 
+	public synchronized void setReplicationDelayGenerator(ReplicationDelayGenerator replicationDelayGenerator) {
+		this.replicationDelayGenerator = replicationDelayGenerator;
+	}
+
+	public synchronized void setTimeHandler(TimeHandler timeHandler) {
+		this.timeHandler = timeHandler;
+	}
+
 	/**
 	 * Increment the number of connection clients and return the current number.
 	 *
@@ -340,12 +366,4 @@ public class QueryHandler {
 		reporter.start(5, TimeUnit.SECONDS);
     	logMetrics.info("reporter started");
     }
-
-	public void setTimeHandler(TimeHandler timeHandler) {
-		this.timeHandler = timeHandler;
-	}
-
-	public TimeHandler getTimeHandler() {
-		return timeHandler;
-	}
 }

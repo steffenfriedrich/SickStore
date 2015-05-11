@@ -3,6 +3,7 @@ package de.unihamburg.sickstore.backend;
 import java.util.List;
 import java.util.Set;
 
+import de.unihamburg.sickstore.backend.anomaly.replicationdelay.MongoDbReplicationDelay;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.test.SickstoreTestCase;
@@ -270,5 +271,21 @@ public class QueryHandlerTest extends SickstoreTestCase {
         assertEquals(bob, copies3.get(0));
         assertEquals(mike, copies3.get(1));
         assertEquals(2, copies3.size());
+    }
+
+    @Test
+    public void testDelayGenerator() throws Exception{
+        queryHandler.setReplicationDelayGenerator(new MongoDbReplicationDelay(100));
+
+        // create some data objects
+        Version bob = new Version();
+        bob.put("name", "bob");
+        bob.put("hair", "brown");
+        bob.put("age", 25);
+
+        ClientRequestInsert request = new ClientRequestInsert("", "bob", bob);
+        ServerResponse response = sendRequest(server1, request);
+
+        assertEquals((Long) 100l, response.getWaitTimeout());
     }
 }

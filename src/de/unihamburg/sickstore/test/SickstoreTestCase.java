@@ -2,6 +2,7 @@ package de.unihamburg.sickstore.test;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.Store;
+import de.unihamburg.sickstore.backend.anomaly.replicationdelay.ZeroReplicationDelay;
 import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
@@ -18,6 +19,6 @@ public abstract class SickstoreTestCase {
         // init store and query handler
         timeHandler = new FakeTimeHandler();
         store = new Store(timeHandler);
-        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), timeHandler);
+        queryHandler = new QueryHandler(store, new ConstantStaleness(500, 0), new ZeroReplicationDelay(), timeHandler);
     }
 }

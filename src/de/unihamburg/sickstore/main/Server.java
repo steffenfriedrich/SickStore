@@ -3,6 +3,7 @@ package de.unihamburg.sickstore.main;
 import java.io.IOException;
 
 import de.unihamburg.sickstore.backend.Store;
+import de.unihamburg.sickstore.backend.anomaly.replicationdelay.MongoDbReplicationDelay;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.apache.commons.cli.CommandLine;
@@ -151,6 +152,7 @@ public class Server {
         QueryHandler queryHandler = new QueryHandler(
                 new Store(timeHandler),
                 new ConstantStaleness(foreignReads, ownReads),
+                new MongoDbReplicationDelay(100),
                 timeHandler
         );
 

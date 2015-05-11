@@ -30,7 +30,7 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
  * @author Wolfram Wingerath
  * 
  */
-public class SickClientTest extends SickstoreTestCase{
+public class SickClientTest extends SickstoreTestCase {
 
     private SickClient c1;
     private SickServer server;
@@ -209,5 +209,4 @@ public class SickClientTest extends SickstoreTestCase{
         assertEquals(1, copies.get(2).getValues().size());
         assertEquals(3, copies.size());
     }
-
 }
