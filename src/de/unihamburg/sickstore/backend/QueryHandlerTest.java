@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import de.unihamburg.sickstore.backend.anomaly.replicationdelay.MongoDbReplicationDelay;
+import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.test.SickstoreTestCase;
@@ -276,7 +276,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
 
     @Test
     public void testDelayGenerator() throws Exception{
-        queryHandler.setReplicationDelayGenerator(new MongoDbReplicationDelay(100, 2, new HashMap<Integer[], Long>()));
+        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100, 2, new HashMap<Integer[], Long>()));
 
         // create some data objects
         Version bob = new Version();

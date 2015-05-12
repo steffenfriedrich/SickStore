@@ -1,10 +1,13 @@
-package de.unihamburg.sickstore.backend.anomaly.replicationdelay;
+package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 
 import java.util.*;
 
-public class MongoDbReplicationDelay implements ReplicationDelayGenerator {
+/**
+ * This class calculates a delay for write request which is caused by a MongoDB-like replication.
+ */
+public class MongoDbClientDelay implements ClientDelayGenerator {
 
     /** time needed to contact a replica until the response arrives */
     private long defaultDelay;
@@ -20,7 +23,7 @@ public class MongoDbReplicationDelay implements ReplicationDelayGenerator {
      * @param defaultDelay time needed (in ms) to send data to a replica until the
      *                     response arrives
      */
-    public MongoDbReplicationDelay(long defaultDelay) {
+    public MongoDbClientDelay(long defaultDelay) {
         this.defaultDelay = defaultDelay;
     }
 
@@ -29,16 +32,16 @@ public class MongoDbReplicationDelay implements ReplicationDelayGenerator {
      * @param defaultDelay time needed (in ms) to send data to a replica until the
      *                     response arrives
      */
-    public MongoDbReplicationDelay(long defaultDelay,
-                                   int minAcknowledgements,
-                                   Map<Integer[], Long> customDelays) {
+    public MongoDbClientDelay(long defaultDelay,
+                              int minAcknowledgements,
+                              Map<Integer[], Long> customDelays) {
         this.defaultDelay = defaultDelay;
         this.minAcknowledgements = minAcknowledgements;
         this.customDelays = customDelays;
     }
 
     /**
-     * @see ReplicationDelayGenerator#calculateDelay(Set, ClientRequest)
+     * @see ClientDelayGenerator#calculateDelay(Set, ClientRequest)
      */
     @Override
     public long calculateDelay(Set<Integer> servers, ClientRequest request) {

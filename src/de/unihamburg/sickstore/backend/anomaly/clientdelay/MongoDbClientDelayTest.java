@@ -1,4 +1,4 @@
-package de.unihamburg.sickstore.backend.anomaly.replicationdelay;
+package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
@@ -12,11 +12,11 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
-public class MongoDbReplicationDelayTest {
+public class MongoDbClientDelayTest {
 
     @Test
     public void testDefaultDelay() {
-        MongoDbReplicationDelay delayGenerator = new MongoDbReplicationDelay(42l);
+        MongoDbClientDelay delayGenerator = new MongoDbClientDelay(42l);
 
         Set<Integer> servers = new HashSet<>();
         ClientRequest request = new ClientRequestInsert("", "example", new Version());
@@ -38,7 +38,7 @@ public class MongoDbReplicationDelayTest {
         Map<Integer[], Long> customDelays = new HashMap<>();
         customDelays.put(new Integer[] {1, 2}, 100l); // 100 ms delay from server 1 to server 2
 
-        MongoDbReplicationDelay delayGenerator = new MongoDbReplicationDelay(42l, 0, customDelays);
+        MongoDbClientDelay delayGenerator = new MongoDbClientDelay(42l, 0, customDelays);
 
         Set<Integer> servers = new HashSet<>();
         servers.add(1);

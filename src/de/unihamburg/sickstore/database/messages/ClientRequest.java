@@ -66,4 +66,15 @@ public abstract class ClientRequest {
     public void setReceivedBy(int receivedBy) {
         this.receivedBy = receivedBy;
     }
+
+    public boolean isReadRequest() {
+        return this instanceof ClientRequestRead ||
+            this instanceof ClientRequestScan;
+    }
+
+    public boolean isWriteRequest() {
+        return this instanceof ClientRequestDelete ||
+            this instanceof ClientRequestInsert ||
+            this instanceof ClientRequestUpdate;
+    }
 }

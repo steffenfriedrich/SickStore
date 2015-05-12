@@ -1,9 +1,9 @@
-package de.unihamburg.sickstore.backend.anomaly.replicationdelay;
+package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import java.util.Set;
 
-public interface ReplicationDelayGenerator {
+public interface ClientDelayGenerator {
 
     /**
      * Calculates the time a specific write request needs to complete

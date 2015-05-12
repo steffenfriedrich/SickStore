@@ -3,7 +3,9 @@ package de.unihamburg.sickstore.main;
 import java.io.IOException;
 
 import de.unihamburg.sickstore.backend.Store;
-import de.unihamburg.sickstore.backend.anomaly.replicationdelay.MongoDbReplicationDelay;
+import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
+import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
+import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.apache.commons.cli.CommandLine;
@@ -17,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
-import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
+import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.database.SickServer;
 
 public class Server {
@@ -148,11 +150,15 @@ public class Server {
 
         log.info("Starting Sick server...");
 
+        AnomalyGenerator anomalyGenerator = new BasicAnomalyGenerator(
+            new ConstantStaleness(foreignReads, ownReads),
+            new MongoDbClientDelay(100)
+        );
+
         TimeHandler timeHandler = new SystemTimeHandler();
         QueryHandler queryHandler = new QueryHandler(
                 new Store(timeHandler),
-                new ConstantStaleness(foreignReads, ownReads),
-                new MongoDbReplicationDelay(100),
+                anomalyGenerator,
                 timeHandler
         );
 

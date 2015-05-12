@@ -1,10 +1,10 @@
-package de.unihamburg.sickstore.backend.anomaly.replicationdelay;
+package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 
 import java.util.Set;
 
-public class ZeroReplicationDelay implements ReplicationDelayGenerator {
+public class ZeroClientDelay implements ClientDelayGenerator {
 
     @Override
     public long calculateDelay(Set<Integer> servers, ClientRequest request) {
