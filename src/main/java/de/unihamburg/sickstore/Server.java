@@ -1,4 +1,4 @@
-package de.unihamburg.sickstore.main;
+package de.unihamburg.sickstore;
 
 import java.io.IOException;
 
@@ -8,13 +8,7 @@ import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +68,7 @@ public class Server {
 
     private static void parseArguments(String[] args)
             throws IndexOutOfBoundsException, ParseException, IOException {
-        CommandLineParser parser = new GnuParser();
+        CommandLineParser parser = new DefaultParser();
         Options options = new Options();
 
         // Create options
@@ -90,18 +84,15 @@ public class Server {
                 "foreignReadStaleness",
                 true,
                 "the delay in milliseconds by which other servers' writes become visible to a server");
-        foreignReadsOpt.setType(0);
         options.addOption(foreignReadsOpt);
         options.addOption(portOpt);
 
         Option ownReadsOpt = new Option("o", "ownReadStaleness", true,
                 "the delay in milliseconds by which a server can observe its own writes");
-        ownReadsOpt.setType(0);
         options.addOption(ownReadsOpt);
 
         Option helpOpt = new Option("h", "help", false,
                 "prints help and instructions");
-        helpOpt.setType(0);
         options.addOption(helpOpt);
 
         CommandLine line = null;

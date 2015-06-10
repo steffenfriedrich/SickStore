@@ -7,7 +7,7 @@ import java.util.List;
 
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 
-import de.unihamburg.sickstore.test.SickstoreTestCase;
+import de.unihamburg.sickstore.SickstoreTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
