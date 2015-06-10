@@ -1,19 +1,9 @@
-# Created by http://www.gitignore.io
-
-### Java ###
-*.class
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.ear
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-
+.classpath
+.project
+.settings/
+target/
+project/target
+.cache
 
 ### Eclipse ###
 *.pydevproject
@@ -29,6 +19,9 @@ local.properties
 .settings/
 .loadpath
 
+# Eclipse Core
+.project
+
 # External tool builders
 .externalToolBuilders/
 
@@ -38,99 +31,30 @@ local.properties
 # CDT-specific
 .cproject
 
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
 # PDT-specific
 .buildpath
 
-# sbteclipse plugin 
+# sbteclipse plugin
 .target
 
 # TeXlipse plugin
 .texlipse
 
-
-### Windows ###
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
-
-# Folder config file
-Desktop.ini
-
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
-
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
-
-### LaTeX ###
-*.acn
-*.acr
-*.alg
-*.aux
-*.bbl
-*.blg
-*.dvi
-*.fdb_latexmk
-*.glg
-*.glo
-*.gls
-*.idx
-*.ilg
-*.ind
-*.ist
-*.lof
-*.log
-*.lot
-*.maf
-*.mtc
-*.mtc0
-*.nav
-*.nlo
-*.out
-*.pdfsync
-*.ps
-*.snm
-*.synctex.gz
-*.toc
-*.vrb
-*.xdy
-*.tdo
-
-### OSX ###
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Icon must end with two \r
-Icon
-
-
-# Thumbnails
-._*
-
-# Files that might appear on external disk
-.Spotlight-V100
-.Trashes
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
+# Logs
+logs/
+journal/
 
 ### Scala ###
 *.class
 *.log
 
 # sbt specific
-.cache/
-.history/
+.sbtserver
+.cache
+.history
 .lib/
 dist/*
 target/
@@ -139,7 +63,81 @@ src_managed/
 project/boot/
 project/plugins/project/
 
+# Play
+play-fork-run.sbt
+
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
 
+
+### Java ###
+*.class
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# virtual machine crash logs, see http://www.java.cm/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+target/
+lib_managed/
+src_managed/
+project/boot/
+.history
+.cache
+
+# Created by https://www.gitignore.io
+
+### Intellij ###
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
+
+*.iml
+
+## Directory-based project format:
+.idea/
+# if you remove the above rule, at least ignore the following:
+
+# User-specific stuff:
+# .idea/workspace.xml
+# .idea/tasks.xml
+# .idea/dictionaries
+
+# Sensitive or high-churn files:
+# .idea/dataSources.ids
+# .idea/dataSources.xml
+# .idea/sqlDataSources.xml
+# .idea/dynamic.xml
+# .idea/uiDesigner.xml
+
+# Gradle:
+# .idea/gradle.xml
+# .idea/libraries
+
+# Mongo Explorer plugin:
+# .idea/mongoSettings.xml
+
+## File-based project format:
+*.ipr
+*.iws
+
+## Plugin-specific files:
+
+# IntelliJ
+/out/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
