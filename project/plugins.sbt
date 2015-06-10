@@ -6,4 +6,4 @@ resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releas
 // The Play plugins
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.8")
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.11.2")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.13.0")
