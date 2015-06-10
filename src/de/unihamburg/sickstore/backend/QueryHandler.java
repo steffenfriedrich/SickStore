@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
+import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 
-import de.unihamburg.sickstore.backend.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.database.SickServer;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
@@ -52,7 +53,7 @@ public class QueryHandler {
 
 	protected final Set<Integer> servers = new HashSet<Integer>();
 
-	private StalenessGenerator staleness;
+	private AnomalyGenerator anomalyGenerator;
 
 	private final MetricRegistry metrics = new MetricRegistry();
     private static final Logger logMetrics = LoggerFactory.getLogger("metrics");
@@ -63,19 +64,17 @@ public class QueryHandler {
 	private Meter requestsRead= null;
 	private Meter requestsScan= null;
 	private Meter requestsUpdate= null;
-	
-	public QueryHandler(Store mediator, StalenessGenerator staleness, TimeHandler timeHandler) {
+
+	public QueryHandler(Store mediator,
+						AnomalyGenerator anomalyGenerator,
+						TimeHandler timeHandler) {
 		this.mediator = mediator;
+		this.anomalyGenerator = anomalyGenerator;
 		this.timeHandler = timeHandler;
-		this.staleness = staleness;
 	}
 
 	public synchronized Set<Integer> getServers() {
 		return servers;
-	}
-
-	public synchronized StalenessGenerator getStaleness() {
-		return staleness;
 	}
 
 	/**
@@ -91,10 +90,13 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process delete request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(getServers(), request);
+//		Map<Integer, Long> visibility = staleness.get(getServers(), request);
+		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
 		mediator.delete(server, key, visibility, timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
+		anomalyGenerator.handleResponse(response, request, getServers());
+
 		return response;
 	}
 
@@ -114,12 +116,15 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(getServers(), request);
+
+		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.insert(server, key, version);
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
+		anomalyGenerator.handleResponse(response, request, getServers());
+
 		return response;
 	}
 
@@ -142,7 +147,10 @@ public class QueryHandler {
 		if (version == null) {
 			throw new NullPointerException("Version must not be null!");
 		}
+
 		ServerResponseRead response = new ServerResponseRead(clientRequestID, version);
+		anomalyGenerator.handleResponse(response, request, getServers());
+
 		return response;
 	}
 
@@ -165,6 +173,8 @@ public class QueryHandler {
 
 		List<Version> versions = mediator.getRange(server, key, range, asc, columns, timestamp);
 		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
+		anomalyGenerator.handleResponse(response, request, getServers());
+
 		return response;
 	}
 
@@ -182,12 +192,14 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = staleness.get(getServers(), request);
+		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.update(server, key, version);
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
+		anomalyGenerator.handleResponse(response, request, getServers());
+
 		return response;
 	}
 
@@ -284,8 +296,8 @@ public class QueryHandler {
 		return id;
 	}
 
-	public synchronized void setStaleness(StalenessGenerator staleness) {
-		this.staleness = staleness;
+	public synchronized void setTimeHandler(TimeHandler timeHandler) {
+		this.timeHandler = timeHandler;
 	}
 
 	/**
@@ -340,12 +352,4 @@ public class QueryHandler {
 		reporter.start(5, TimeUnit.SECONDS);
     	logMetrics.info("reporter started");
     }
-
-	public void setTimeHandler(TimeHandler timeHandler) {
-		this.timeHandler = timeHandler;
-	}
-
-	public TimeHandler getTimeHandler() {
-		return timeHandler;
-	}
 }

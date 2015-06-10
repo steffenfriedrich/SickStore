@@ -17,7 +17,8 @@ import org.junit.runner.RunWith;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
     de.unihamburg.sickstore.backend.AllTests.class,
-    de.unihamburg.sickstore.database.AllTests.class
+    de.unihamburg.sickstore.database.AllTests.class,
+    de.unihamburg.sickstore.backend.anomaly.AllTests.class
 })
 public class SickStoreTests {
 }

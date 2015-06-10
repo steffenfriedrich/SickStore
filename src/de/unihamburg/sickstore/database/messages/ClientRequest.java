@@ -2,7 +2,7 @@ package de.unihamburg.sickstore.database.messages;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ClientRequest {
+public abstract class ClientRequest {
 
     protected static final AtomicLong counter = new AtomicLong();
 
@@ -65,5 +65,16 @@ public class ClientRequest {
 
     public void setReceivedBy(int receivedBy) {
         this.receivedBy = receivedBy;
+    }
+
+    public boolean isReadRequest() {
+        return this instanceof ClientRequestRead ||
+            this instanceof ClientRequestScan;
+    }
+
+    public boolean isWriteRequest() {
+        return this instanceof ClientRequestDelete ||
+            this instanceof ClientRequestInsert ||
+            this instanceof ClientRequestUpdate;
     }
 }

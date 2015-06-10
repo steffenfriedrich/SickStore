@@ -6,11 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.unihamburg.sickstore.backend.QueryHandler;
-import de.unihamburg.sickstore.backend.staleness.ConstantStaleness;
-import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
-import de.unihamburg.sickstore.backend.timer.TimeHandler;
-
 import de.unihamburg.sickstore.test.SickstoreTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -30,7 +25,7 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
  * @author Wolfram Wingerath
  * 
  */
-public class SickClientTest extends SickstoreTestCase{
+public class SickClientTest extends SickstoreTestCase {
 
     private SickClient c1;
     private SickServer server;
@@ -209,5 +204,4 @@ public class SickClientTest extends SickstoreTestCase{
         assertEquals(1, copies.get(2).getValues().size());
         assertEquals(3, copies.size());
     }
-
 }

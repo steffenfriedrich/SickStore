@@ -1,4 +1,4 @@
-package de.unihamburg.sickstore.backend.staleness;
+package de.unihamburg.sickstore.backend.anomaly.staleness;
 
 import java.util.Map;
 import java.util.Set;

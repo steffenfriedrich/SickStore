@@ -1,13 +1,13 @@
 /**
  * 
  */
-package de.unihamburg.sickstore.backend.staleness;
+package de.unihamburg.sickstore.backend.anomaly.staleness;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.unihamburg.sickstore.backend.QueryHandler;
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 
 /**
@@ -35,7 +35,7 @@ public class ConstantStaleness implements StalenessGenerator {
     }
 
     /**
-     * @see de.unihamburg.sickstore.backend.staleness.StalenessGenerator#get(Set, ClientRequest)
+     * @see StalenessGenerator#get(Set, ClientRequest)
      */
     public Map<Integer, Long> get(Set<Integer> servers, ClientRequest request) {
         HashMap<Integer, Long> delay = new HashMap<Integer, Long>();
