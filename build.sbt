@@ -1,5 +1,3 @@
-import AssemblyKeys._
-
 name := "sickstore"
 organization := "de.uni-hamburg"
 version := "1.0"
@@ -7,8 +5,6 @@ scalaVersion := "2.11.6"
 // Enables publishing to maven repo
 publishMavenStyle := true
 crossPaths := false
-
-assemblySettings
 
 libraryDependencies ++= Seq(
   "junit" % "junit" % "4.12" % "test",
