@@ -1,4 +1,4 @@
-package de.unihamburg.sickstore.test;
+package de.unihamburg.sickstore;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.Store;

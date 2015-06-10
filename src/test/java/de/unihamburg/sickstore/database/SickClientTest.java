@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.unihamburg.sickstore.test.SickstoreTestCase;
+import de.unihamburg.sickstore.SickstoreTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

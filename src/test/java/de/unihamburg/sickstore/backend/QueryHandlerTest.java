@@ -7,7 +7,7 @@ import java.util.Set;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.database.messages.*;
-import de.unihamburg.sickstore.test.SickstoreTestCase;
+import de.unihamburg.sickstore.SickstoreTestCase;
 
 import org.junit.After;
 import org.junit.Before;

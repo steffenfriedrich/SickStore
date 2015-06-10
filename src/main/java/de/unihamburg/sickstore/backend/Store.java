@@ -9,10 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 
 import de.unihamburg.sickstore.database.messages.exception.DeleteException;
 import de.unihamburg.sickstore.database.messages.exception.InsertException;
