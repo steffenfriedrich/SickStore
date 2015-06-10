@@ -16,11 +16,11 @@ libraryDependencies ++= Seq(
   "commons-cli" % "commons-cli" % "1.3",
   "com.google.guava" % "guava" % "18.0",
   "org.reflections" % "reflections" % "0.9.10",
-  "org.apache.logging.log4j" % "log4j-api" % "2.3",
+  "org.slf4j" % "slf4j-api" % "1.7.12",
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "io.dropwizard.metrics" % "metrics-core" % "3.1.2")
 
-mainClass in (Compile, run) := Some("de.unihamburg.sickstore.main.Server")
+mainClass in (Compile, run) := Some("de.unihamburg.sickstore.Server")
 
 /**
  * Scala Compiler Options If this project is only a subproject,
