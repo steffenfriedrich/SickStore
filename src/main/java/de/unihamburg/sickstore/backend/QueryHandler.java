@@ -218,7 +218,7 @@ public class QueryHandler {
 							"Inconsistent: Request is not handled by the server that received it...  This should not be possible...");
 				}
 
-				// metrics measures “requests per second”
+				// metrics measures "requests per second"
 				if (requests == null) {
 					initMetricReporter();
 					requests = metrics.meter("requests");
