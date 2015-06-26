@@ -2,13 +2,11 @@ package de.unihamburg.sickstore.backend;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
-import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
@@ -298,7 +296,7 @@ public class QueryHandler {
 		for (Node server : servers) {
 			if (server.getId() == id) {
 				servers.remove(server);
-				
+
 				break;
 			}
 		}

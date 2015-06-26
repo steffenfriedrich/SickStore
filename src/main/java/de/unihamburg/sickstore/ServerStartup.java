@@ -16,7 +16,7 @@ import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.database.SickServer;
 
-public class Server {
+public class ServerStartup {
     private static final Logger log = LoggerFactory.getLogger("sickstore");
     
     @SuppressWarnings("unchecked")
