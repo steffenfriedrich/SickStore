@@ -2,9 +2,7 @@ package de.unihamburg.sickstore;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.Store;
-import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
-import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
