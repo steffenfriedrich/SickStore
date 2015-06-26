@@ -2,6 +2,8 @@ package de.unihamburg.sickstore.backend.anomaly;
 
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
@@ -20,16 +22,16 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     }
 
     @Override
-    public Map<Integer, Long> getWriteVisibility(ClientRequest request, Set<Integer> servers) {
+    public StalenessMap getWriteVisibility(ClientRequest request, Set<Node> servers) {
         if (stalenessGenerator == null) {
-            return new HashMap<>();
+            return new StalenessMap();
         }
 
         return stalenessGenerator.get(servers, request);
     }
 
     @Override
-    public void handleResponse(ServerResponse response, ClientRequest request, Set<Integer> servers) {
+    public void handleResponse(ServerResponse response, ClientRequest request, Set<Node> servers) {
         if (request.isWriteRequest() && clientDelayGenerator != null) {
             long delay = clientDelayGenerator.calculateDelay(servers, request);
             response.setWaitTimeout(delay);

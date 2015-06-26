@@ -11,6 +11,8 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertNull;
 
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.database.Node;
 import org.junit.Test;
 
 public class VersionTest {
@@ -19,9 +21,9 @@ public class VersionTest {
     public void testClone() throws CloneNotSupportedException {
 
         // Create visibility map
-        Map<Integer, Long> visibility = new HashMap<Integer, Long>();
-        visibility.put(1, 100l);
-        visibility.put(2, 102l);
+        StalenessMap visibility = new StalenessMap();
+        visibility.put(new Node(1), 100l);
+        visibility.put(new Node(2), 102l);
         // create a version object and set some values
         Version version = new Version();
         version.setVisibility(visibility);

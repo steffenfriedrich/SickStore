@@ -1,5 +1,6 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 
 import java.util.*;
@@ -16,7 +17,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     private int minAcknowledgements;
 
     /** custom delays between two servers */
-    private Map<Integer[], Long> customDelays = new HashMap<>();
+    private Map<Node[], Long> customDelays = new HashMap<>();
 
     /**
      *
@@ -34,7 +35,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      */
     public MongoDbClientDelay(long defaultDelay,
                               int minAcknowledgements,
-                              Map<Integer[], Long> customDelays) {
+                              Map<Node[], Long> customDelays) {
         this.defaultDelay = defaultDelay;
         this.minAcknowledgements = minAcknowledgements;
         this.customDelays = customDelays;
@@ -44,7 +45,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      * @see ClientDelayGenerator#calculateDelay(Set, ClientRequest)
      */
     @Override
-    public long calculateDelay(Set<Integer> servers, ClientRequest request) {
+    public long calculateDelay(Set<Node> servers, ClientRequest request) {
         if (servers.size() == 1 || minAcknowledgements == 0) {
             // if there is only one server or it should not be waited for replica acknowledgements
             // there delay is zero
@@ -59,9 +60,9 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         Set<Long> delays = new TreeSet<>();
         long delay = 0;
 
-        for (Map.Entry<Integer[], Long> customDelay : customDelays.entrySet()) {
-            Integer[] delayBetween = customDelay.getKey();
-            if (delayBetween[0] == request.getReceivedBy()) {
+        for (Map.Entry<Node[], Long> customDelay : customDelays.entrySet()) {
+            Node[] delayBetween = customDelay.getKey();
+            if (delayBetween[0].getId() == request.getReceivedBy()) {
                 // there is custom delay between the server which received the request
                 // and another server
 
@@ -95,7 +96,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         this.minAcknowledgements = minAcknowledgements;
     }
 
-    public void setCustomDelays(Map<Integer[], Long> customDelays) {
+    public void setCustomDelays(Map<Node[], Long> customDelays) {
         this.customDelays = customDelays;
     }
 }

@@ -1,5 +1,6 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import java.util.Set;
 
@@ -14,5 +15,5 @@ public interface ClientDelayGenerator {
      * @return the returned value describes how long the request should be delayed until
      *          the request is finished
      */
-    long calculateDelay(Set<Integer> servers, ClientRequest request);
+    long calculateDelay(Set<Node> servers, ClientRequest request);
 }

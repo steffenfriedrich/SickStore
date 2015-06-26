@@ -1,5 +1,7 @@
 package de.unihamburg.sickstore.backend.anomaly;
 
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
@@ -15,7 +17,7 @@ public interface AnomalyGenerator {
      * @param servers       set of all server ids
      * @return map of ServerId to Delay (in ms)
      */
-    Map<Integer, Long> getWriteVisibility(ClientRequest request, Set<Integer> servers);
+    StalenessMap getWriteVisibility(ClientRequest request, Set<Node> servers);
 
     /**
      * Modify the response object to reflect anomalies.
@@ -23,5 +25,5 @@ public interface AnomalyGenerator {
      * @param response
      * @param request
      */
-    void handleResponse(ServerResponse response, ClientRequest request, Set<Integer> servers);
+    void handleResponse(ServerResponse response, ClientRequest request, Set<Node> servers);
 }

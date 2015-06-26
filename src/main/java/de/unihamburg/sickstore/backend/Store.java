@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.database.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
@@ -49,7 +52,7 @@ public class Store {
 		System.gc();
 	}
 
-	public void delete(int server, String key, Map<Integer, Long> visibility,
+	public void delete(int server, String key, StalenessMap visibility,
 			long timestamp) throws DeleteException {
 		Version alreadyExisting = get(server, key, timestamp, false);
 		if (alreadyExisting.isNull()) {
@@ -246,9 +249,9 @@ public class Store {
 	 * @return
 	 */
 	public long visibleSince(int server, Version version) {
-		Map<Integer, Long> stalenessWindows = version.getVisibility();
+		StalenessMap stalenessWindows = version.getVisibility();
 		long writeTimestamp = version.getWrittenAt();
-		Long staleness = stalenessWindows.get(server);
+		Long staleness = stalenessWindows.getByServerId(server);
 
 		if (staleness == null) {
 			return -1l;

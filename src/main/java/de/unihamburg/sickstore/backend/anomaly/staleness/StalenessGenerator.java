@@ -3,6 +3,7 @@ package de.unihamburg.sickstore.backend.anomaly.staleness;
 import java.util.Map;
 import java.util.Set;
 
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 
 public interface StalenessGenerator {
@@ -16,5 +17,5 @@ public interface StalenessGenerator {
      * @param request the change request
      * @return a Map of Server to Delay
      */
-    Map<Integer, Long> get(Set<Integer> servers, ClientRequest request);
+    StalenessMap get(Set<Node> servers, ClientRequest request);
 }

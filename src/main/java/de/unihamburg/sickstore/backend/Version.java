@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.SickServer;
 
 /**
@@ -28,7 +30,7 @@ public class Version {
      * A map from server IDs to timestamps; indicates when the version is
      * visible for what server
      */
-    private Map<Integer, Long> visibility = new HashMap<Integer, Long>();
+    private StalenessMap visibility = new StalenessMap();
 
     /**
      * Server timestamp at which this version was written.
@@ -42,11 +44,11 @@ public class Version {
     public Version() {
     }
 
-    public Version(int writtenBy, long writtenAt, Map<Integer, Long> visibility) {
+    public Version(int writtenBy, long writtenAt, StalenessMap visibility) {
         this(writtenBy, writtenAt, visibility, false);
     }
 
-    public Version(int writtenBy, long writtenAt, Map<Integer, Long> visibility, boolean isNull) {
+    public Version(int writtenBy, long writtenAt, StalenessMap visibility, boolean isNull) {
         this();
         this.writtenBy = writtenBy;
         if (visibility != null) {
@@ -89,7 +91,7 @@ public class Version {
         return values;
     }
 
-    public Map<Integer, Long> getVisibility() {
+    public StalenessMap getVisibility() {
         return visibility;
     }
 
@@ -134,7 +136,7 @@ public class Version {
         this.values.putAll(values);
     }
 
-    public void setVisibility(Map<Integer, Long> visibility) {
+    public void setVisibility(StalenessMap visibility) {
         this.visibility = visibility;
     }
 

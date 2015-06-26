@@ -9,7 +9,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.database.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +53,7 @@ public class QueryHandler {
     
 	private Store mediator;
 
-	protected final Set<Integer> servers = new HashSet<Integer>();
+	protected final Set<Node> servers = new HashSet<>();
 
 	private AnomalyGenerator anomalyGenerator;
 
@@ -73,7 +75,7 @@ public class QueryHandler {
 		this.timeHandler = timeHandler;
 	}
 
-	public synchronized Set<Integer> getServers() {
+	public synchronized Set<Node> getServers() {
 		return servers;
 	}
 
@@ -90,8 +92,7 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process delete request; no key was provided.");
 		}
 
-//		Map<Integer, Long> visibility = staleness.get(getServers(), request);
-		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
+		StalenessMap visibility = anomalyGenerator.getWriteVisibility(request, getServers());
 		mediator.delete(server, key, visibility, timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
@@ -117,7 +118,7 @@ public class QueryHandler {
 		}
 
 
-		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
+		StalenessMap visibility = anomalyGenerator.getWriteVisibility(request, getServers());
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.insert(server, key, version);
@@ -192,7 +193,7 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
+		StalenessMap visibility = anomalyGenerator.getWriteVisibility(request, getServers());
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
 		mediator.update(server, key, version);
@@ -277,7 +278,8 @@ public class QueryHandler {
 	 */
 	public synchronized int register(SickServer node) {
 		int newServerID = IDGenerator.getAndIncrement();
-		servers.add(newServerID);
+		servers.add(new Node(newServerID));
+
 		return newServerID;
 	}
 
@@ -291,8 +293,16 @@ public class QueryHandler {
 		if (node == null) {
 			throw new NullPointerException("server must not be null!");
 		}
+
 		int id = node.getID();
-		servers.remove(id);
+		for (Node server : servers) {
+			if (server.getId() == id) {
+				servers.remove(server);
+				
+				break;
+			}
+		}
+
 		return id;
 	}
 

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 
 /**
@@ -37,11 +38,11 @@ public class ConstantStaleness implements StalenessGenerator {
     /**
      * @see StalenessGenerator#get(Set, ClientRequest)
      */
-    public Map<Integer, Long> get(Set<Integer> servers, ClientRequest request) {
-        HashMap<Integer, Long> delay = new HashMap<Integer, Long>();
+    public StalenessMap get(Set<Node> servers, ClientRequest request) {
+        StalenessMap delay = new StalenessMap();
 
-        for (Integer server : servers) {
-            if (server == request.getReceivedBy()) {
+        for (Node server : servers) {
+            if (server.getId() == request.getReceivedBy()) {
                 delay.put(server, ownReads);
             } else {
                 delay.put(server, foreignReads);
