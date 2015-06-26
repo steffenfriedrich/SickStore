@@ -17,7 +17,6 @@ import com.esotericsoftware.kryonet.EndPoint;
 import com.google.common.reflect.ClassPath;
 
 import de.unihamburg.sickstore.backend.Version;
-import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
 import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
@@ -108,10 +107,8 @@ public class Participant {
         classes.add(AtomicLong.class);
         classes.add(byte[].class);
         classes.add(ConcurrentHashMap.class);
-        classes.add(Node.class);
         classes.add(Version.class);
         classes.add(Exception.class);
-        classes.add(StalenessMap.class);
         classes.add(HashMap.class);
         classes.add(HashSet.class);
         classes.add(IllegalArgumentException.class);

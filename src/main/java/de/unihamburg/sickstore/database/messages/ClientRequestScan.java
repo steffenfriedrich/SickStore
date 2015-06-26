@@ -11,9 +11,9 @@ public class ClientRequestScan extends ClientRequest {
     private ClientRequestScan() {
     }
 
-    public ClientRequestScan(String table, String key, int recordcount,
+    public ClientRequestScan(String destinationServer, String table, String key, int recordcount,
             Set<String> fields, boolean ascending) {
-        super(table, key);
+        super(destinationServer, table, key);
         this.recordcount = recordcount;
         this.fields = fields;
         this.ascending = ascending;

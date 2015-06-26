@@ -3,7 +3,9 @@
  */
 package de.unihamburg.sickstore.database;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 
@@ -26,6 +28,8 @@ public class SickServerTest extends SickstoreTestCase {
     private SickClient c1;
     private SickClient c2;
     private SickClient c3;
+    private SickServer server;
+
     private SickServer server1;
     private SickServer server2;
     private SickServer server3;
@@ -40,20 +44,21 @@ public class SickServerTest extends SickstoreTestCase {
         int timeout = 12000;
         int tcpPort = 54000;
 
-        // Create and start server and clients
-        server1 = new SickServer(tcpPort + 1, queryHandler, timeHandler);
-        server1.start();
-        server2 = new SickServer(tcpPort + 2, queryHandler, timeHandler);
-        server2.start();
-        server3 = new SickServer(tcpPort + 3, queryHandler, timeHandler);
-        server3.start();
+        Set<Node> nodes = new HashSet<>();
+        nodes.add(new Node("node1"));
+        nodes.add(new Node("node2"));
+        nodes.add(new Node("node3"));
+
+        queryHandler.setNodes(nodes);
+        server = new SickServer(tcpPort, queryHandler);
+        server.start();
 
         // Connect clients
-        c1 = new SickClient(timeout, host, tcpPort + 1, "Client 1", timeHandler);
+        c1 = new SickClient(timeout, host, tcpPort, "node1", timeHandler);
         c1.connect();
-        c2 = new SickClient(timeout, host, tcpPort + 2, "Client 2", timeHandler);
+        c2 = new SickClient(timeout, host, tcpPort, "node2", timeHandler);
         c2.connect();
-        c3 = new SickClient(timeout, host, tcpPort + 3, "Client 3", timeHandler);
+        c3 = new SickClient(timeout, host, tcpPort, "node3", timeHandler);
         c3.connect();
     }
 
@@ -65,10 +70,7 @@ public class SickServerTest extends SickstoreTestCase {
         c1.disconnect();
         c2.disconnect();
         c3.disconnect();
-        server1.shutdown();
-        server2.shutdown();
-        server3.shutdown();
-        store.clear();
+        server.shutdown();
     }
 
     private void checkClientStainless(Version insert, SickClient writer,

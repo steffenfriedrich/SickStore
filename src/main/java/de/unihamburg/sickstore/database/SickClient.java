@@ -29,7 +29,7 @@ public class SickClient extends Participant {
     private int timeout;
     private String host;
     private int tcpPort;
-    private String name;
+    private String destinationServer;
 
     /** stores outstanding requests by their identifiers (keys) */
     public final Map<Long, Object> outstandingRequests = new ConcurrentHashMap<Long, Object>();
@@ -56,15 +56,16 @@ public class SickClient extends Participant {
      * @param timeout
      * @param host
      * @param tcpPort
-     * @param name
+     * @param destinationServer
+     * @param timeHandler
      * @throws IOException
      */
-    SickClient(int timeout, String host, int tcpPort, String name, TimeHandler timeHandler)
+    SickClient(int timeout, String host, int tcpPort, String destinationServer, TimeHandler timeHandler)
             throws IOException {
         this.timeout = timeout;
         this.host = host;
         this.tcpPort = tcpPort;
-        this.name = name;
+        this.destinationServer = destinationServer;
         this.timeHandler = timeHandler;
 
         initConnection();
@@ -167,7 +168,7 @@ public class SickClient extends Participant {
     public boolean delete(String table, String key) throws DatabaseException {
         checkWhetherConnected("Cannot perform delete operation: not connected to server.");
 
-        ClientRequestDelete request = new ClientRequestDelete(table, key);
+        ClientRequestDelete request = new ClientRequestDelete(destinationServer, table, key);
         client.sendTCP(request);
 
         Object ack;
@@ -204,7 +205,7 @@ public class SickClient extends Participant {
             throws DatabaseException {
         checkWhetherConnected("Cannot perform insert operation: not connected to server.");
 
-        ClientRequestInsert request = new ClientRequestInsert(table, key,
+        ClientRequestInsert request = new ClientRequestInsert(destinationServer, table, key,
                 values);
         client.sendTCP(request);
 
@@ -237,7 +238,7 @@ public class SickClient extends Participant {
             throws DatabaseException {
         checkWhetherConnected("Cannot perform read operation: not connected to server.");
 
-        ClientRequestRead request = new ClientRequestRead(table, key, fields);
+        ClientRequestRead request = new ClientRequestRead(destinationServer, table, key, fields);
         client.sendTCP(request);
 
         Object ack;
@@ -280,7 +281,7 @@ public class SickClient extends Participant {
             Set<String> fields, boolean ascending) throws DatabaseException {
         checkWhetherConnected("Cannot perform scan operation: not connected to server.");
 
-        ClientRequestScan request = new ClientRequestScan(table, startkey,
+        ClientRequestScan request = new ClientRequestScan(destinationServer, table, startkey,
                 recordcount, fields, ascending);
         client.sendTCP(request);
 
@@ -310,11 +311,6 @@ public class SickClient extends Participant {
         }
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
-
     /**
      * Update a record under the given key
      * 
@@ -331,7 +327,7 @@ public class SickClient extends Participant {
             throws DatabaseException {
         checkWhetherConnected("Cannot perform update operation: not connected to server.");
 
-        ClientRequestUpdate request = new ClientRequestUpdate(table, key,
+        ClientRequestUpdate request = new ClientRequestUpdate(destinationServer, table, key,
                 values);
         client.sendTCP(request);
 

@@ -16,7 +16,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     /** number of nodes which need to confirm the write */
     private int minAcknowledgements;
 
-    /** custom delays between two servers */
+    /** custom delays between two nodes */
     private Map<Node[], Long> customDelays = new HashMap<>();
 
     /**
@@ -42,12 +42,12 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     }
 
     /**
-     * @see ClientDelayGenerator#calculateDelay(Set, ClientRequest)
+     * @see ClientDelayGenerator#calculateDelay(ClientRequest, Set)
      */
     @Override
-    public long calculateDelay(Set<Node> servers, ClientRequest request) {
-        if (servers.size() == 1 || minAcknowledgements == 0) {
-            // if there is only one server or it should not be waited for replica acknowledgements
+    public long calculateDelay(ClientRequest request, Set<Node> nodes) {
+        if (nodes.size() == 1 || minAcknowledgements == 0) {
+            // if there is only one node or it should not be waited for replica acknowledgements
             // there delay is zero
             return 0;
         }
@@ -62,9 +62,9 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
         for (Map.Entry<Node[], Long> customDelay : customDelays.entrySet()) {
             Node[] delayBetween = customDelay.getKey();
-            if (delayBetween[0].getId() == request.getReceivedBy()) {
-                // there is custom delay between the server which received the request
-                // and another server
+            if (delayBetween[0] == request.getReceivedBy()) {
+                // there is custom delay between the node which received the request
+                // and another node
 
                 delays.add(customDelay.getValue());
             }

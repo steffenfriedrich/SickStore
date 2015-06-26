@@ -9,8 +9,8 @@ public class ClientRequestUpdate extends ClientRequest {
     private ClientRequestUpdate() {
     }
 
-    public ClientRequestUpdate(String table, String key, Version version) {
-        super(table, key);
+    public ClientRequestUpdate(String destinationServer, String table, String key, Version version) {
+        super(destinationServer, table, key);
         this.version = version;
     }
 

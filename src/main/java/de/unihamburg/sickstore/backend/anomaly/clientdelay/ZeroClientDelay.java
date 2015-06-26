@@ -8,7 +8,7 @@ import java.util.Set;
 public class ZeroClientDelay implements ClientDelayGenerator {
 
     @Override
-    public long calculateDelay(Set<Node> servers, ClientRequest request) {
+    public long calculateDelay(ClientRequest request, Set<Node> nodes) {
         return 0;
     }
 }

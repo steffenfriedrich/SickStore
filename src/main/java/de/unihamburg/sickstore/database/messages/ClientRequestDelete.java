@@ -6,7 +6,7 @@ public class ClientRequestDelete extends ClientRequest {
     private ClientRequestDelete() {
     }
 
-    public ClientRequestDelete(String table, String key) {
-        super(table, key);
+    public ClientRequestDelete(String destinationServer, String table, String key) {
+        super(destinationServer, table, key);
     }
 }

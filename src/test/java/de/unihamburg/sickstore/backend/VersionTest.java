@@ -22,8 +22,8 @@ public class VersionTest {
 
         // Create visibility map
         StalenessMap visibility = new StalenessMap();
-        visibility.put(new Node(1), 100l);
-        visibility.put(new Node(2), 102l);
+        visibility.put(new Node("1"), 100l);
+        visibility.put(new Node("2"), 102l);
         // create a version object and set some values
         Version version = new Version();
         version.setVisibility(visibility);

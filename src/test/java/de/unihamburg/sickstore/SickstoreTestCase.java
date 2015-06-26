@@ -12,7 +12,6 @@ import org.junit.Before;
 public abstract class SickstoreTestCase {
 
     protected TimeHandler timeHandler;
-    protected Store store;
     protected BasicAnomalyGenerator anomalyGenerator;
     protected QueryHandler queryHandler;
 
@@ -20,12 +19,12 @@ public abstract class SickstoreTestCase {
     public void initEssentials() throws Exception {
         // init store and query handler
         timeHandler = new FakeTimeHandler();
-        store = new Store(timeHandler);
         anomalyGenerator = new BasicAnomalyGenerator(
             new ConstantStaleness(500, 0),
             new ZeroClientDelay()
         );
 
+        Store store = new Store(timeHandler);
         queryHandler = new QueryHandler(store, anomalyGenerator, timeHandler);
     }
 }

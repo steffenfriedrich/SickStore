@@ -10,10 +10,10 @@ public interface ClientDelayGenerator {
      * Calculates the time a specific write request needs to complete
      * (the time delay until it would be finished).
      *
-     * @param servers    set with all server ids the write is propagated to
      * @param request
+     * @param nodes    set with all nodes the write is propagated to
      * @return the returned value describes how long the request should be delayed until
      *          the request is finished
      */
-    long calculateDelay(Set<Node> servers, ClientRequest request);
+    long calculateDelay(ClientRequest request, Set<Node> nodes);
 }

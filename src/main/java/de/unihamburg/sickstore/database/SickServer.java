@@ -8,7 +8,6 @@ import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
-import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 import de.unihamburg.sickstore.database.messages.ServerResponseException;
@@ -17,30 +16,15 @@ import de.unihamburg.sickstore.database.messages.exception.UnknownMessageTypeExc
 public class SickServer extends Participant {
 
     private final QueryHandler queryHandler;
-    private final TimeHandler timeHandler;
 
     private final int port;
-    private final int ID;
     private final SickServer node = this;
 
     protected Server server;
 
-    public SickServer(int port, final QueryHandler queryHandler, final TimeHandler timeHandler) {
-        this.queryHandler = queryHandler;
-        this.timeHandler = timeHandler;
-
+    public SickServer(int port, final QueryHandler queryHandler) {
         this.port = port;
-
-        // register server in database backend
-        ID = queryHandler.register(node);
-    }
-
-    /**
-     *
-     * @return the Server's ID
-     */
-    public int getID() {
-        return ID;
+        this.queryHandler = queryHandler;
     }
 
     public void send(int connectionID, Object object) {
@@ -67,8 +51,6 @@ public class SickServer extends Participant {
         if (server != null) {
             server.stop();
         }
-
-        queryHandler.deregister(node);
     }
 
     /**
@@ -125,10 +107,6 @@ public class SickServer extends Participant {
     }
 
     protected ServerResponse handleRequest(ClientRequest request) {
-        // Mark the request as received by this server
-        request.setReceivedBy(node.getID());
-        request.setReceivedAt(timeHandler.getCurrentTime());
-
-        return queryHandler.processQuery(node, request);
+        return queryHandler.processQuery(request);
     }
 }

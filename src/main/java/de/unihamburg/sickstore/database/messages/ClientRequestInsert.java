@@ -9,8 +9,8 @@ public class ClientRequestInsert extends ClientRequest {
     private ClientRequestInsert() {
     }
 
-    public ClientRequestInsert(String table, String key, Version version) {
-        super(table, key);
+    public ClientRequestInsert(String destinationServer, String table, String key, Version version) {
+        super(destinationServer, table, key);
         this.version = version;
     }
 

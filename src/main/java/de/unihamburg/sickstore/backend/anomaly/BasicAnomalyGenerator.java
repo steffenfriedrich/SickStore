@@ -7,8 +7,6 @@ import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class BasicAnomalyGenerator implements AnomalyGenerator {
@@ -22,18 +20,18 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     }
 
     @Override
-    public StalenessMap getWriteVisibility(ClientRequest request, Set<Node> servers) {
+    public StalenessMap getWriteVisibility(ClientRequest request, Set<Node> nodes) {
         if (stalenessGenerator == null) {
             return new StalenessMap();
         }
 
-        return stalenessGenerator.get(servers, request);
+        return stalenessGenerator.get(nodes, request);
     }
 
     @Override
-    public void handleResponse(ServerResponse response, ClientRequest request, Set<Node> servers) {
+    public void handleResponse(ServerResponse response, ClientRequest request, Set<Node> nodes) {
         if (request.isWriteRequest() && clientDelayGenerator != null) {
-            long delay = clientDelayGenerator.calculateDelay(servers, request);
+            long delay = clientDelayGenerator.calculateDelay(request, nodes);
             response.setWaitTimeout(delay);
         }
     }

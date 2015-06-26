@@ -18,13 +18,13 @@ import de.unihamburg.sickstore.database.messages.ClientRequest;
 public class ConstantStaleness implements StalenessGenerator {
 
     /**
-     * the staleness in ms that a server experiences when reading data written
-     * by another server
+     * the staleness in ms that a node experiences when reading data written
+     * by another node
      */
     private long foreignReads = 0;
 
     /**
-     * the staleness in ms that a server experiences when reading data written
+     * the staleness in ms that a node experiences when reading data written
      * by itself
      */
     private long ownReads = 0;
@@ -38,14 +38,14 @@ public class ConstantStaleness implements StalenessGenerator {
     /**
      * @see StalenessGenerator#get(Set, ClientRequest)
      */
-    public StalenessMap get(Set<Node> servers, ClientRequest request) {
+    public StalenessMap get(Set<Node> nodes, ClientRequest request) {
         StalenessMap delay = new StalenessMap();
 
-        for (Node server : servers) {
-            if (server.getId() == request.getReceivedBy()) {
-                delay.put(server, ownReads);
+        for (Node node : nodes) {
+            if (node == request.getReceivedBy()) {
+                delay.put(node, ownReads);
             } else {
-                delay.put(server, foreignReads);
+                delay.put(node, foreignReads);
             }
         }
 
