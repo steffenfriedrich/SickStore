@@ -1,8 +1,9 @@
 package de.unihamburg.sickstore.database.messages;
 
 import de.unihamburg.sickstore.backend.Version;
+import de.unihamburg.sickstore.database.WriteConcern;
 
-public class ClientRequestInsert extends ClientRequest {
+public class ClientRequestInsert extends ClientWriteRequest {
     private Version version;
 
     @SuppressWarnings("unused")
@@ -11,6 +12,15 @@ public class ClientRequestInsert extends ClientRequest {
 
     public ClientRequestInsert(String destinationServer, String table, String key, Version version) {
         super(destinationServer, table, key);
+        this.version = version;
+    }
+
+    public ClientRequestInsert(String destinationNode,
+                               String table,
+                               String key,
+                               Version version,
+                               WriteConcern writeConcern) {
+        super(destinationNode, table, key, writeConcern);
         this.version = version;
     }
 

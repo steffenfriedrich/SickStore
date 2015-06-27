@@ -8,6 +8,7 @@ import java.util.Set;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.database.Node;
+import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.SickstoreTestCase;
 
@@ -280,7 +281,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
 
     @Test
     public void testDelayGenerator() throws Exception{
-        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100, 2, new HashMap<>()));
+        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100, new HashMap<>()));
 
         // create some data objects
         Version bob = new Version();
@@ -288,8 +289,10 @@ public class QueryHandlerTest extends SickstoreTestCase {
         bob.put("hair", "brown");
         bob.put("age", 25);
 
+        WriteConcern writeConcern = new WriteConcern(2);
+
         // minAcknowledgements > 0, but no custom delays -> return default delay (100)
-        ClientRequestInsert request = new ClientRequestInsert(node1.getName(), "", "bob", bob);
+        ClientRequestInsert request = new ClientRequestInsert(node1.getName(), "", "bob", bob, writeConcern);
         ServerResponse response = sendRequest(node1, request);
         assertEquals((Long) 100l, response.getWaitTimeout());
     }

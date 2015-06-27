@@ -82,15 +82,4 @@ public abstract class ClientRequest {
     public void setDestinationNode(String destinationNode) {
         this.destinationNode = destinationNode;
     }
-
-    public boolean isReadRequest() {
-        return this instanceof ClientRequestRead ||
-            this instanceof ClientRequestScan;
-    }
-
-    public boolean isWriteRequest() {
-        return this instanceof ClientRequestDelete ||
-            this instanceof ClientRequestInsert ||
-            this instanceof ClientRequestUpdate;
-    }
 }

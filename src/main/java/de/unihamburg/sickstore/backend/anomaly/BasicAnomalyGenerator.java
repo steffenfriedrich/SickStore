@@ -5,6 +5,7 @@ import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
+import de.unihamburg.sickstore.database.messages.ClientWriteRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
 import java.util.Set;
@@ -30,7 +31,7 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
 
     @Override
     public void handleResponse(ServerResponse response, ClientRequest request, Set<Node> nodes) {
-        if (request.isWriteRequest() && clientDelayGenerator != null) {
+        if (request instanceof ClientWriteRequest && clientDelayGenerator != null) {
             long delay = clientDelayGenerator.calculateDelay(request, nodes);
             response.setWaitTimeout(delay);
         }
