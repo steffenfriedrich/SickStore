@@ -124,6 +124,7 @@ public class QueryHandler {
 		StalenessMap visibility = anomalyGenerator.getWriteVisibility(request, getNodes());
 		version.setVisibility(visibility);
 		version.setWrittenAt(timestamp);
+		version.setWrittenBy(node);
 		mediator.insert(node, key, version);
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
@@ -221,9 +222,20 @@ public class QueryHandler {
 				id = clientRequest.getId();
 
 				// Find destination node
-				for (Node node : getNodes()) {
-					if (node.getName().equals(clientRequest.getDestinationNode())) {
-						clientRequest.setReceivedBy(node);
+				if (clientRequest.getDestinationNode() == null) {
+					// no destination node given, search primary
+					for (Node node : getNodes()) {
+						if (node.isPrimary()) {
+							clientRequest.setReceivedBy(node);
+
+							break;
+						}
+					}
+				} else {
+					for (Node node : getNodes()) {
+						if (node.getName().equals(clientRequest.getDestinationNode())) {
+							clientRequest.setReceivedBy(node);
+						}
 					}
 				}
 

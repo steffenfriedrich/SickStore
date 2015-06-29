@@ -9,8 +9,13 @@ public class ClientRequestRead extends ClientRequest {
     private ClientRequestRead() {
     }
 
-    public ClientRequestRead(String destinationServer, String table, String key, Set<String> fields) {
-        super(destinationServer, table, key);
+    public ClientRequestRead(String table, String key, Set<String> fields, String destinationServer) {
+        super(table, key, destinationServer);
+        this.fields = fields;
+    }
+
+    public ClientRequestRead(String table, String key, Set<String> fields) {
+        super(table, key);
         this.fields = fields;
     }
 

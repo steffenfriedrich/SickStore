@@ -168,7 +168,7 @@ public class SickClient extends Participant {
     public boolean delete(String table, String key) throws DatabaseException {
         checkWhetherConnected("Cannot perform delete operation: not connected to server.");
 
-        ClientRequestDelete request = new ClientRequestDelete(destinationServer, table, key);
+        ClientRequestDelete request = new ClientRequestDelete(table, key, destinationServer);
         client.sendTCP(request);
 
         Object ack;
@@ -205,8 +205,8 @@ public class SickClient extends Participant {
             throws DatabaseException {
         checkWhetherConnected("Cannot perform insert operation: not connected to server.");
 
-        ClientRequestInsert request = new ClientRequestInsert(destinationServer, table, key,
-                values);
+        ClientRequestInsert request = new ClientRequestInsert(table, key, values, destinationServer
+        );
         client.sendTCP(request);
 
         Object ack;
@@ -238,7 +238,7 @@ public class SickClient extends Participant {
             throws DatabaseException {
         checkWhetherConnected("Cannot perform read operation: not connected to server.");
 
-        ClientRequestRead request = new ClientRequestRead(destinationServer, table, key, fields);
+        ClientRequestRead request = new ClientRequestRead(table, key, fields, destinationServer);
         client.sendTCP(request);
 
         Object ack;
@@ -281,8 +281,8 @@ public class SickClient extends Participant {
             Set<String> fields, boolean ascending) throws DatabaseException {
         checkWhetherConnected("Cannot perform scan operation: not connected to server.");
 
-        ClientRequestScan request = new ClientRequestScan(destinationServer, table, startkey,
-                recordcount, fields, ascending);
+        ClientRequestScan request = new ClientRequestScan(table, startkey, recordcount, fields, ascending, destinationServer
+        );
         client.sendTCP(request);
 
         Object ack;
@@ -327,8 +327,8 @@ public class SickClient extends Participant {
             throws DatabaseException {
         checkWhetherConnected("Cannot perform update operation: not connected to server.");
 
-        ClientRequestUpdate request = new ClientRequestUpdate(destinationServer, table, key,
-                values);
+        ClientRequestUpdate request = new ClientRequestUpdate(table, key, values, destinationServer
+        );
         client.sendTCP(request);
 
         Object ack;

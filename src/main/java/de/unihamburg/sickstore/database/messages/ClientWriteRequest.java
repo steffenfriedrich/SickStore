@@ -9,20 +9,31 @@ public abstract class ClientWriteRequest extends ClientRequest {
     public ClientWriteRequest() {
     }
 
-    public ClientWriteRequest(String destinationNode, String table, String key) {
-        super(destinationNode, table, key);
+    public ClientWriteRequest(String table, String key) {
+        super(table, key);
     }
 
-    public ClientWriteRequest(String destinationNode,
-                              String table,
-                              String key,
-                              WriteConcern writeConcern) {
-        super(destinationNode, table, key);
+    public ClientWriteRequest(String table, String key, String destinationNode) {
+        super(table, key, destinationNode);
+    }
+
+    public ClientWriteRequest(String table, String key, WriteConcern writeConcern) {
+        super(table, key);
+
+        this.writeConcern = writeConcern;
+    }
+
+    public ClientWriteRequest(String table, String key, WriteConcern writeConcern, String destinationNode) {
+        super(table, key, destinationNode);
 
         this.writeConcern = writeConcern;
     }
 
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    public void setWriteConcern(WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
     }
 }

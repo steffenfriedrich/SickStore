@@ -24,7 +24,7 @@ public class MongoDbClientDelayTest {
         nodes.add(new Node());
 
         WriteConcern writeConcern = new WriteConcern();
-        ClientRequest request = new ClientRequestInsert("", "", "example", new Version(), writeConcern);
+        ClientRequest request = new ClientRequestInsert("", "example", new Version(), writeConcern, "");
 
         // no other nodes -> delay is 0
         assertEquals(0, delayGenerator.calculateDelay(request, nodes));
@@ -58,11 +58,7 @@ public class MongoDbClientDelayTest {
 
         WriteConcern writeConcern = new WriteConcern();
         ClientRequest request = new ClientRequestInsert(
-            node1.getName(),
-            "",
-            "example",
-            new Version(),
-            writeConcern
+            "", "example", new Version(), writeConcern, node1.getName()
         );
         request.setReceivedBy(node1);
 

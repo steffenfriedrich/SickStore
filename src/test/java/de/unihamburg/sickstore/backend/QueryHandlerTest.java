@@ -12,11 +12,12 @@ import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.SickstoreTestCase;
 
-import org.junit.After;
+import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import de.unihamburg.sickstore.database.SickServer;
 
@@ -38,14 +39,6 @@ public class QueryHandlerTest extends SickstoreTestCase {
         nodes.add(node3 = new Node("node3"));
 
         queryHandler.setNodes(nodes);
-
-        // Create and start server and clients
-        server = new SickServer(tcpPort, queryHandler);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        server.shutdown();
     }
 
     /**
@@ -107,9 +100,9 @@ public class QueryHandlerTest extends SickstoreTestCase {
      */
     private boolean delete(Node writer, String table, String key)
             throws Exception {
-        ClientRequestDelete request = new ClientRequestDelete(writer.getName(), table, key);
+        ClientRequestDelete request = new ClientRequestDelete(table, key, writer.getName());
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         return response instanceof ServerResponseDelete;
     }
@@ -119,9 +112,9 @@ public class QueryHandlerTest extends SickstoreTestCase {
      */
     private boolean insert(Node writer, String table, String key,
             Version insert) throws Exception {
-        ClientRequestInsert request = new ClientRequestInsert(writer.getName(), table, key, insert);
+        ClientRequestInsert request = new ClientRequestInsert(table, key, insert, writer.getName());
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         return response instanceof ServerResponseInsert;
     }
@@ -131,9 +124,9 @@ public class QueryHandlerTest extends SickstoreTestCase {
      */
     private Version read(Node writer, String table, String key,
             Set<String> fields) throws Exception {
-        ClientRequestRead request = new ClientRequestRead(writer.getName(), table, key, fields);
+        ClientRequestRead request = new ClientRequestRead(table, key, fields, writer.getName());
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         return ((ServerResponseRead) response).getVersion();
     }
@@ -151,10 +144,10 @@ public class QueryHandlerTest extends SickstoreTestCase {
     private List<Version> scan(Node writer, String table,
             String startkey, int recordcount, Set<String> fields)
             throws Exception {
-        ClientRequestScan request = new ClientRequestScan(writer.getName(), table, startkey,
-                recordcount, fields, true);
+        ClientRequestScan request = new ClientRequestScan(table, startkey, recordcount, fields, true, writer.getName()
+        );
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         if (response instanceof ServerResponseScan) {
             return ((ServerResponseScan) response).getEntries();
@@ -165,17 +158,12 @@ public class QueryHandlerTest extends SickstoreTestCase {
     /**
      * Send a specific request to the server
      *
-     * @param writer
      * @param request
      * @return
      * @throws Exception
      */
-    private ServerResponse sendRequest(Node writer, ClientRequest request)
+    private ServerResponse sendRequest(ClientRequest request)
         throws Exception {
-
-        request.setReceivedAt(timeHandler.getCurrentTime());
-        request.setReceivedBy(writer);
-
         ServerResponse response = queryHandler.processQuery(request);
         if (response instanceof ServerResponseException) {
             throw ((ServerResponseException) response).getException();
@@ -292,8 +280,33 @@ public class QueryHandlerTest extends SickstoreTestCase {
         WriteConcern writeConcern = new WriteConcern(2);
 
         // minAcknowledgements > 0, but no custom delays -> return default delay (100)
-        ClientRequestInsert request = new ClientRequestInsert(node1.getName(), "", "bob", bob, writeConcern);
-        ServerResponse response = sendRequest(node1, request);
+        ClientRequestInsert request = new ClientRequestInsert("", "bob", bob, writeConcern, node1.getName());
+        ServerResponse response = sendRequest(request);
         assertEquals((Long) 100l, response.getWaitTimeout());
+    }
+
+    /**
+     * Tests, whether a master node is found when no destination node is set
+     */
+    @Test
+    public void testNoDestinationNode() throws Exception{
+        Version bob = new Version();
+        bob.put("name", "bob");
+        bob.put("hair", "brown");
+        bob.put("age", 25);
+
+        ClientRequestInsert request = new ClientRequestInsert("", "bob", bob);
+
+        try {
+            sendRequest(request);
+            fail();
+        } catch(DatabaseException e) {
+            // No master specified, request should fail.
+        }
+
+        node2.setPrimary(true);
+        sendRequest(request);
+
+        assertEquals(node2, bob.getWrittenBy());
     }
 }

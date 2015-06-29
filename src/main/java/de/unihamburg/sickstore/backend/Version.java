@@ -129,11 +129,15 @@ public class Version {
         return getValues().isEmpty() || isNull;
     }
 
+    public void setWrittenBy(Node writtenBy) {
+        this.writtenBy = writtenBy;
+    }
+
     /**
-     * 
+     *
      * Updates the given column under the given key with the given value. If the
      * given column is <code>null</code>, it is removed.
-     * 
+     *
      * @param column
      * @param value
      */

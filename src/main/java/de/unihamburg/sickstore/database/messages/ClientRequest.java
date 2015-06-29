@@ -35,7 +35,14 @@ public abstract class ClientRequest {
         super();
     }
 
-    public ClientRequest(String destinationNode, String table, String key) {
+    public ClientRequest(String table, String key) {
+        this();
+        this.table = table;
+        this.key = key;
+        this.id = counter.incrementAndGet();
+    }
+
+    public ClientRequest(String table, String key, String destinationNode) {
         this();
         this.destinationNode = destinationNode;
         this.table = table;

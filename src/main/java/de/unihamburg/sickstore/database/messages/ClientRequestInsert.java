@@ -10,17 +10,23 @@ public class ClientRequestInsert extends ClientWriteRequest {
     private ClientRequestInsert() {
     }
 
-    public ClientRequestInsert(String destinationServer, String table, String key, Version version) {
-        super(destinationServer, table, key);
+    public ClientRequestInsert(String table, String key, Version version) {
+        super(table, key);
         this.version = version;
     }
 
-    public ClientRequestInsert(String destinationNode,
-                               String table,
-                               String key,
-                               Version version,
-                               WriteConcern writeConcern) {
-        super(destinationNode, table, key, writeConcern);
+    public ClientRequestInsert(String table, String key, Version version, String destinationServer) {
+        super(table, key, destinationServer);
+        this.version = version;
+    }
+
+    public ClientRequestInsert(String table, String key, Version version, WriteConcern writeConcern) {
+        super(table, key, writeConcern);
+        this.version = version;
+    }
+
+    public ClientRequestInsert(String table, String key, Version version, WriteConcern writeConcern, String destinationNode) {
+        super(table, key, writeConcern, destinationNode);
         this.version = version;
     }
 
