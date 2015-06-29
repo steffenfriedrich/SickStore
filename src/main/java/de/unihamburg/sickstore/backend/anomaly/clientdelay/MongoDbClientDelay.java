@@ -21,9 +21,12 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     private long journalCommitInterval = 100;
 
     /** custom delays between two nodes */
-    private Map<Node[], Long> customDelays = new HashMap<>();
+    private Set<NetworkDelay> customDelays = new HashSet<>();
 
     private TimeHandler timeHandler = new SystemTimeHandler();
+
+    // Tagset Name => tag + its replica acknowledgement
+    private HashMap<String, HashMap<String, Integer>> tagSets = new HashMap<>();
 
     private long startedAt;
 
@@ -46,11 +49,13 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      */
     public MongoDbClientDelay(long defaultDelay,
                               long journalCommitInterval,
-                              Map<Node[], Long> customDelays,
+                              Set<NetworkDelay> customDelays,
+                              HashMap<String, HashMap<String, Integer>> tagSets,
                               TimeHandler timeHandler) {
         this.defaultDelay = defaultDelay;
         this.journalCommitInterval = journalCommitInterval;
         this.customDelays = customDelays;
+        this.tagSets = tagSets;
         this.timeHandler = timeHandler;
         this.startedAt = timeHandler.getCurrentTime();
     }
@@ -89,6 +94,10 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
     private long calculateReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
         WriteConcern writeConcern = request.getWriteConcern();
+        if (writeConcern.getReplicaAcknowledgementTag() != null) {
+            return calculateTaggedReplicationDelay(request, nodes);
+        }
+
         if ((nodes.size() == 1 || writeConcern.getReplicaAcknowledgement() <= 1)) {
             // if there is only one node or it should not be waited for replica acknowledgements
             // there delay is zero
@@ -100,9 +109,47 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         }
 
         // check whether there are custom delays
-        Set<Long> delays = findRelevantReplicationDelays(request.getReceivedBy());
+        TreeSet<Long> delays = findRelevantReplicationDelays(request.getReceivedBy());
 
-        return calculateActualReplicationDelay(writeConcern, delays);
+        // the primary is subtracted (-1), as it has no delay
+        return calculateActualReplicationDelay(writeConcern.getReplicaAcknowledgement() - 1, delays);
+    }
+
+    private long calculateTaggedReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
+        WriteConcern writeConcern = request.getWriteConcern();
+        HashMap<String, Integer> tagset = tagSets.get(writeConcern.getReplicaAcknowledgementTag());
+
+        long delay = 0;
+        for (HashMap.Entry<String, Integer> tagsetEntry : tagset.entrySet()) {
+            String tag = tagsetEntry.getKey();
+            int acknowledgement = tagsetEntry.getValue();
+
+            // Find delays of nodes with that tag
+            TreeSet<Long> relevantDelays = new TreeSet<>();
+            for (Node node : nodes) {
+                if (node.getTags().contains(tag)) {
+                    if (node == request.getReceivedBy()) {
+                        // the receiving node has no extra delay
+                        acknowledgement--;
+                        continue;
+                    }
+
+                    for (NetworkDelay customDelay : customDelays) {
+                        if (customDelay.getTo() == node) {
+                            relevantDelays.add(customDelay.getDelay());
+                        }
+                    }
+                }
+            }
+
+            // Calculate delay for this tag
+            long tagDelay = calculateActualReplicationDelay(acknowledgement, relevantDelays);
+            if (tagDelay > delay) {
+                delay = tagDelay;
+            }
+        }
+
+        return delay;
     }
 
     /**
@@ -114,13 +161,12 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     private TreeSet<Long> findRelevantReplicationDelays(Node receivedBy) {
         TreeSet<Long> delays = new TreeSet<>();
 
-        for (Map.Entry<Node[], Long> customDelay : customDelays.entrySet()) {
-            Node[] delayBetween = customDelay.getKey();
-            if (delayBetween[0] == receivedBy) {
+        for (NetworkDelay customDelay : customDelays) {
+            if (customDelay.getFrom() == receivedBy) {
                 // there is custom delay between the node which received the request
                 // and another node
 
-                delays.add(customDelay.getValue());
+                delays.add(customDelay.getDelay());
             }
         }
 
@@ -129,15 +175,15 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
     /**
      * Calculates the actual delay that will be produced by the write concern.
-     * @param writeConcern
+     * @param acknowledgments number of acknowledgements that are necessary
      * @param delays
      * @return
      */
-    private long calculateActualReplicationDelay(WriteConcern writeConcern, Set<Long> delays) {
+    private long calculateActualReplicationDelay(int acknowledgments, TreeSet<Long> delays) {
 
         Iterator<Long> it = delays.iterator();
         long delay = 0;
-        int acknowledgementsLeft = writeConcern.getReplicaAcknowledgement() - 1; // the primary is substracted, as it has no delay
+        int acknowledgementsLeft = acknowledgments;
         while (it.hasNext() && acknowledgementsLeft > 0) {
             Long tmpDelay = it.next();
             if (tmpDelay > delay) {
@@ -162,8 +208,12 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         this.journalCommitInterval = journalCommitInterval;
     }
 
-    public void setCustomDelays(Map<Node[], Long> customDelays) {
+    public void setCustomDelays(Set<NetworkDelay> customDelays) {
         this.customDelays = customDelays;
+    }
+
+    public void setTagSets(HashMap<String, HashMap<String, Integer>> tagSets) {
+        this.tagSets = tagSets;
     }
 
     public void setTimeHandler(TimeHandler timeHandler) {

@@ -1,8 +1,12 @@
 package de.unihamburg.sickstore.database;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Node {
 
     private String name;
+    private Set<String> tags = new HashSet<>();
     private boolean primary = false;
 
     public Node() {
@@ -13,8 +17,14 @@ public class Node {
         this.name = name;
     }
 
-    public Node(String name, boolean primary) {
+    public Node(String name, Set<String> tags) {
         this.name = name;
+        this.tags = tags;
+    }
+
+    public Node(String name, Set<String> tags, boolean primary) {
+        this.name = name;
+        this.tags = tags;
         this.primary = primary;
     }
 
@@ -24,6 +34,14 @@ public class Node {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
     }
 
     public boolean isPrimary() {
