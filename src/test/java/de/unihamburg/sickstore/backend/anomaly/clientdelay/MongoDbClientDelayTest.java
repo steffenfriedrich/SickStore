@@ -1,10 +1,13 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
 import de.unihamburg.sickstore.backend.Version;
+import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -16,10 +19,24 @@ import static org.junit.Assert.assertEquals;
 
 public class MongoDbClientDelayTest {
 
+    private TimeHandler timeHandler;
+    private MongoDbClientDelay delayGenerator;
+
+    @Before
+    public void setUp()
+    {
+        timeHandler = new FakeTimeHandler();
+
+        delayGenerator = new MongoDbClientDelay(
+            42l,
+            300,
+            new HashMap<>(),
+            timeHandler
+        );
+    }
+
     @Test
     public void testDefaultDelay() {
-        MongoDbClientDelay delayGenerator = new MongoDbClientDelay(42l);
-
         Set<Node> nodes = new HashSet<>();
         nodes.add(new Node());
 
@@ -48,7 +65,7 @@ public class MongoDbClientDelayTest {
         Map<Node[], Long> customDelays = new HashMap<>();
         customDelays.put(new Node[] {node1, node2}, 100l); // 100 ms delay from node 1 to node 2
 
-        MongoDbClientDelay delayGenerator = new MongoDbClientDelay(42l, customDelays);
+        delayGenerator.setCustomDelays(customDelays);
 
         Set<Node> nodes = new HashSet<>();
         nodes.add(node1);
@@ -92,5 +109,33 @@ public class MongoDbClientDelayTest {
         // default delay now higher than the highest custom delay, we expect that
         delayGenerator.setDefaultDelay(1000l);
         assertEquals(1000, delayGenerator.calculateDelay(request, nodes));
+    }
+
+    @Test
+    public void testJournaling() {
+        WriteConcern writeConcern = new WriteConcern(0, true, 0);
+        ClientRequest request = new ClientRequestInsert("", "example", new Version(), writeConcern);
+
+        long delay = delayGenerator.calculateDelay(request, new HashSet<>());
+        assertEquals(100, delay);
+
+        timeHandler.sleep(50);
+        delay = delayGenerator.calculateDelay(request, new HashSet<>());
+        assertEquals(50, delay);
+
+        timeHandler.sleep(49);
+        delay = delayGenerator.calculateDelay(request, new HashSet<>());
+        assertEquals(1, delay);
+
+        // commit is running, we need to wait for the next one
+        timeHandler.sleep(1);
+        delay = delayGenerator.calculateDelay(request, new HashSet<>());
+        assertEquals(100, delay);
+
+        // change journal commit interval
+        // current time is 100 -> next commit in 32
+        delayGenerator.setJournalCommitInterval(100);
+        delay = delayGenerator.calculateDelay(request, new HashSet<>());
+        assertEquals(32, delay);
     }
 }

@@ -156,7 +156,7 @@ public class ServerStartup {
 
         AnomalyGenerator anomalyGenerator = new BasicAnomalyGenerator(
             new ConstantStaleness(foreignReads, ownReads),
-            new MongoDbClientDelay(100)
+            new MongoDbClientDelay()
         );
 
         TimeHandler timeHandler = new SystemTimeHandler();

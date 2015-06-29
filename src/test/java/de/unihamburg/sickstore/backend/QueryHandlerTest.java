@@ -269,7 +269,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
 
     @Test
     public void testDelayGenerator() throws Exception{
-        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100, new HashMap<>()));
+        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100));
 
         // create some data objects
         Version bob = new Version();

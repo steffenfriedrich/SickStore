@@ -1,5 +1,7 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
@@ -13,18 +15,28 @@ import java.util.*;
 public class MongoDbClientDelay implements ClientDelayGenerator {
 
     /** time needed to contact a replica until the response arrives */
-    private long defaultDelay;
+    private long defaultDelay = 0;
+
+    /** time interval in which the journal is committed */
+    private long journalCommitInterval = 100;
 
     /** custom delays between two nodes */
     private Map<Node[], Long> customDelays = new HashMap<>();
 
+    private TimeHandler timeHandler = new SystemTimeHandler();
+
+    private long startedAt;
+
     /**
-     *
-     * @param defaultDelay time needed (in ms) to send data to a replica until the
-     *                     response arrives
+     */
+    public MongoDbClientDelay() {
+    }
+
+    /**
      */
     public MongoDbClientDelay(long defaultDelay) {
         this.defaultDelay = defaultDelay;
+        this.startedAt = timeHandler.getCurrentTime();
     }
 
     /**
@@ -33,9 +45,14 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      *                     response arrives
      */
     public MongoDbClientDelay(long defaultDelay,
-                              Map<Node[], Long> customDelays) {
+                              long journalCommitInterval,
+                              Map<Node[], Long> customDelays,
+                              TimeHandler timeHandler) {
         this.defaultDelay = defaultDelay;
+        this.journalCommitInterval = journalCommitInterval;
         this.customDelays = customDelays;
+        this.timeHandler = timeHandler;
+        this.startedAt = timeHandler.getCurrentTime();
     }
 
     /**
@@ -51,9 +68,28 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     }
 
     private long calculateWriteDelay(ClientWriteRequest request, Set<Node> nodes) {
-        WriteConcern writeConcern = request.getWriteConcern();
+        long replicationDelay = calculateReplicationDelay(request, nodes);
+        long journalingDelay = calculateJournalingDelay(request);
 
-        if (nodes.size() == 1 || writeConcern.getReplicaAcknowledgement() <= 1) {
+        return Math.max(replicationDelay, journalingDelay);
+    }
+
+    private long calculateJournalingDelay(ClientWriteRequest request) {
+        if (!request.getWriteConcern().isJournaling()) {
+            return 0;
+        }
+
+        long timeSinceStartup = timeHandler.getCurrentTime() - startedAt;
+        long oneThird = journalCommitInterval / 3;
+
+        long nextCommit = oneThird - (timeSinceStartup % oneThird);
+
+        return nextCommit;
+    }
+
+    private long calculateReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
+        WriteConcern writeConcern = request.getWriteConcern();
+        if ((nodes.size() == 1 || writeConcern.getReplicaAcknowledgement() <= 1)) {
             // if there is only one node or it should not be waited for replica acknowledgements
             // there delay is zero
             return 0;
@@ -64,8 +100,9 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         }
 
         // check whether there are custom delays
-        Set<Long> delays = findRelevantDelays(request.getReceivedBy());
-        return calculateActualDelay(writeConcern, delays);
+        Set<Long> delays = findRelevantReplicationDelays(request.getReceivedBy());
+
+        return calculateActualReplicationDelay(writeConcern, delays);
     }
 
     /**
@@ -74,7 +111,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      * @param receivedBy
      * @return a sorted list with all delays
      */
-    private TreeSet<Long> findRelevantDelays(Node receivedBy) {
+    private TreeSet<Long> findRelevantReplicationDelays(Node receivedBy) {
         TreeSet<Long> delays = new TreeSet<>();
 
         for (Map.Entry<Node[], Long> customDelay : customDelays.entrySet()) {
@@ -96,7 +133,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      * @param delays
      * @return
      */
-    private long calculateActualDelay(WriteConcern writeConcern, Set<Long> delays) {
+    private long calculateActualReplicationDelay(WriteConcern writeConcern, Set<Long> delays) {
 
         Iterator<Long> it = delays.iterator();
         long delay = 0;
@@ -121,10 +158,15 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         this.defaultDelay = defaultDelay;
     }
 
-    public void setMinAcknowledgements(int minAcknowledgements) {
+    public void setJournalCommitInterval(long journalCommitInterval) {
+        this.journalCommitInterval = journalCommitInterval;
     }
 
     public void setCustomDelays(Map<Node[], Long> customDelays) {
         this.customDelays = customDelays;
+    }
+
+    public void setTimeHandler(TimeHandler timeHandler) {
+        this.timeHandler = timeHandler;
     }
 }
