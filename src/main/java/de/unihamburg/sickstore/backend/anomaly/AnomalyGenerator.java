@@ -14,16 +14,19 @@ public interface AnomalyGenerator {
      * Calculates the amount of time after that a write becomes visible to a specific server.
      *
      * @param request       the incoming request
-     * @param nodes       set of all server ids
-     * @return map of ServerId to Delay (in ms)
+     * @return
      */
-    StalenessMap getWriteVisibility(ClientRequest request, Set<Node> nodes);
+    Anomaly handleRequest(ClientRequest request, Set<Node> nodes);
 
     /**
-     * Modify the response object to reflect anomalies.
-     *
-     * @param response
+     * Handle the response for a request. The anomalies generated from the request can be updated
+     * here, depending on the result.
+     *  @param anomaly the anomalies generated for the request
      * @param request
+     * @param response
      */
-    void handleResponse(ServerResponse response, ClientRequest request, Set<Node> nodes);
+    void handleResponse(Anomaly anomaly,
+                        ClientRequest request,
+                        ServerResponse response,
+                        Set<Node> nodes);
 }

@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
-import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.exception.*;
@@ -18,7 +18,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 
-import de.unihamburg.sickstore.database.SickServer;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
 import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
@@ -95,11 +94,11 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process delete request; no key was provided.");
 		}
 
-		StalenessMap visibility = anomalyGenerator.getWriteVisibility(request, getNodes());
-		mediator.delete(node, key, visibility, timestamp);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		mediator.delete(node, key, anomaly.getStalenessMap(), timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
-		anomalyGenerator.handleResponse(response, request, getNodes());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -121,14 +120,14 @@ public class QueryHandler {
 		}
 
 
-		StalenessMap visibility = anomalyGenerator.getWriteVisibility(request, getNodes());
-		version.setVisibility(visibility);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		version.setVisibility(anomaly.getStalenessMap());
 		version.setWrittenAt(timestamp);
 		version.setWrittenBy(node);
 		mediator.insert(node, key, version);
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
-		anomalyGenerator.handleResponse(response, request, getNodes());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -148,13 +147,15 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+
 		Version version = mediator.get(node, key, columns, timestamp, true);
 		if (version == null) {
 			throw new NullPointerException("Version must not be null!");
 		}
 
 		ServerResponseRead response = new ServerResponseRead(clientRequestID, version);
-		anomalyGenerator.handleResponse(response, request, getNodes());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -176,9 +177,10 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		List<Version> versions = mediator.getRange(node, key, range, asc, columns, timestamp);
 		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
-		anomalyGenerator.handleResponse(response, request, getNodes());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -197,15 +199,28 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
-		StalenessMap visibility = anomalyGenerator.getWriteVisibility(request, getNodes());
-		version.setVisibility(visibility);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		version.setVisibility(anomaly.getStalenessMap());
 		version.setWrittenAt(timestamp);
 		mediator.update(node, key, version);
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
-		anomalyGenerator.handleResponse(response, request, getNodes());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
+	}
+
+	/**
+	 * Apply the generated anomalies on the response, if necessary.
+	 *
+	 * @param anomaly
+	 * @param response
+	 */
+	private void applyAnomaliesOnResponse(Anomaly anomaly,
+										  ClientRequest request,
+										  ServerResponse response) {
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
+		response.setWaitTimeout(anomaly.getClientDelay());
 	}
 
 	/**

@@ -3,11 +3,8 @@
  */
 package de.unihamburg.sickstore.backend.anomaly.staleness;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
-import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 

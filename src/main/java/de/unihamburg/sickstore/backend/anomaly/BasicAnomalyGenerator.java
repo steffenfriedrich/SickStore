@@ -2,7 +2,6 @@ package de.unihamburg.sickstore.backend.anomaly;
 
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
-import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientWriteRequest;
@@ -15,24 +14,30 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     private StalenessGenerator stalenessGenerator;
     private ClientDelayGenerator clientDelayGenerator;
 
-    public BasicAnomalyGenerator(StalenessGenerator stalenessGenerator, ClientDelayGenerator clientDelayGenerator) {
+    public BasicAnomalyGenerator(StalenessGenerator stalenessGenerator,
+                                 ClientDelayGenerator clientDelayGenerator) {
         this.stalenessGenerator = stalenessGenerator;
         this.clientDelayGenerator = clientDelayGenerator;
     }
 
     @Override
-    public StalenessMap getWriteVisibility(ClientRequest request, Set<Node> nodes) {
-        if (stalenessGenerator == null) {
-            return new StalenessMap();
+    public Anomaly handleRequest(ClientRequest request, Set<Node> nodes) {
+        Anomaly anomaly = new Anomaly();
+
+        if (request instanceof ClientWriteRequest && stalenessGenerator != null) {
+            anomaly.setStalenessMap(stalenessGenerator.get(nodes, request));
         }
 
-        return stalenessGenerator.get(nodes, request);
+        return anomaly;
     }
 
     @Override
-    public void handleResponse(ServerResponse response, ClientRequest request, Set<Node> nodes) {
+    public void handleResponse(Anomaly anomaly, ClientRequest request, ServerResponse response,
+                               Set<Node> nodes) {
         if (request instanceof ClientWriteRequest && clientDelayGenerator != null) {
             long delay = clientDelayGenerator.calculateDelay(request, nodes);
+
+            anomaly.setClientDelay(delay);
             response.setWaitTimeout(delay);
         }
     }

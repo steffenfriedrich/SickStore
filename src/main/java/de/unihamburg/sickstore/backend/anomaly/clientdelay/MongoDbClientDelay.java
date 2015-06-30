@@ -72,6 +72,14 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         return 0;
     }
 
+    /**
+     * Calculates the actual write delay, which is the maximum of the replication delay
+     * or the journaling delay.
+     *
+     * @param request
+     * @param nodes
+     * @return
+     */
     private long calculateWriteDelay(ClientWriteRequest request, Set<Node> nodes) {
         long replicationDelay = calculateReplicationDelay(request, nodes);
         long journalingDelay = calculateJournalingDelay(request);
@@ -79,6 +87,12 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         return Math.max(replicationDelay, journalingDelay);
     }
 
+    /**
+     * Calculates the write delay that is caused by a journal commmit.
+     *
+     * @param request
+     * @return
+     */
     private long calculateJournalingDelay(ClientWriteRequest request) {
         if (!request.getWriteConcern().isJournaling()) {
             return 0;
@@ -87,11 +101,17 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         long timeSinceStartup = timeHandler.getCurrentTime() - startedAt;
         long oneThird = journalCommitInterval / 3;
 
-        long nextCommit = oneThird - (timeSinceStartup % oneThird);
-
-        return nextCommit;
+        return oneThird - (timeSinceStartup % oneThird);
     }
 
+    /**
+     * Calculates the replica that is caused by replicating the operation to the required
+     * number of nodes (or all nodes which match the tag-concern)
+     *
+     * @param request
+     * @param nodes
+     * @return
+     */
     private long calculateReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
         WriteConcern writeConcern = request.getWriteConcern();
         if (writeConcern.getReplicaAcknowledgementTag() != null) {
@@ -115,8 +135,21 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         return calculateActualReplicationDelay(writeConcern.getReplicaAcknowledgement() - 1, delays);
     }
 
+    /**
+     * Calculate the delay for the request, that is produced by the write concern for a tag.
+     *
+     * @param request
+     * @param nodes
+     * @return
+     */
     private long calculateTaggedReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
         WriteConcern writeConcern = request.getWriteConcern();
+
+        if (!tagSets.containsKey(writeConcern.getReplicaAcknowledgementTag())) {
+            throw new IndexOutOfBoundsException("There is no tag-concern with name " +
+                writeConcern.getReplicaAcknowledgementTag());
+        }
+
         HashMap<String, Integer> tagset = tagSets.get(writeConcern.getReplicaAcknowledgementTag());
 
         long delay = 0;
