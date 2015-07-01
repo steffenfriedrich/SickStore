@@ -2,11 +2,11 @@ package de.unihamburg.sickstore.backend.anomaly;
 
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
+import de.unihamburg.sickstore.database.messages.ClientWriteRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class BasicAnomalyGenerator implements AnomalyGenerator {
@@ -14,24 +14,30 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     private StalenessGenerator stalenessGenerator;
     private ClientDelayGenerator clientDelayGenerator;
 
-    public BasicAnomalyGenerator(StalenessGenerator stalenessGenerator, ClientDelayGenerator clientDelayGenerator) {
+    public BasicAnomalyGenerator(StalenessGenerator stalenessGenerator,
+                                 ClientDelayGenerator clientDelayGenerator) {
         this.stalenessGenerator = stalenessGenerator;
         this.clientDelayGenerator = clientDelayGenerator;
     }
 
     @Override
-    public Map<Integer, Long> getWriteVisibility(ClientRequest request, Set<Integer> servers) {
-        if (stalenessGenerator == null) {
-            return new HashMap<>();
+    public Anomaly handleRequest(ClientRequest request, Set<Node> nodes) {
+        Anomaly anomaly = new Anomaly();
+
+        if (request instanceof ClientWriteRequest && stalenessGenerator != null) {
+            anomaly.setStalenessMap(stalenessGenerator.get(nodes, request));
         }
 
-        return stalenessGenerator.get(servers, request);
+        return anomaly;
     }
 
     @Override
-    public void handleResponse(ServerResponse response, ClientRequest request, Set<Integer> servers) {
-        if (request.isWriteRequest() && clientDelayGenerator != null) {
-            long delay = clientDelayGenerator.calculateDelay(servers, request);
+    public void handleResponse(Anomaly anomaly, ClientRequest request, ServerResponse response,
+                               Set<Node> nodes) {
+        if (request instanceof ClientWriteRequest && clientDelayGenerator != null) {
+            long delay = clientDelayGenerator.calculateDelay(request, nodes);
+
+            anomaly.setClientDelay(delay);
             response.setWaitTimeout(delay);
         }
     }

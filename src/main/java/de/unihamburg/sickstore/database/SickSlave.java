@@ -11,8 +11,8 @@ import de.unihamburg.sickstore.database.messages.exception.WriteForbiddenExcepti
  */
 public class SickSlave extends SickServer {
 
-    public SickSlave(int port, QueryHandler queryHandler, TimeHandler timeHandler) {
-        super(port, queryHandler, timeHandler);
+    public SickSlave(int port, QueryHandler queryHandler) {
+        super(port, queryHandler);
     }
 
     @Override

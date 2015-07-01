@@ -2,14 +2,15 @@ package de.unihamburg.sickstore.backend;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
-import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.database.Node;
+import de.unihamburg.sickstore.database.messages.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 
-import de.unihamburg.sickstore.database.SickServer;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
 import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
@@ -31,12 +31,6 @@ import de.unihamburg.sickstore.database.messages.ServerResponseInsert;
 import de.unihamburg.sickstore.database.messages.ServerResponseRead;
 import de.unihamburg.sickstore.database.messages.ServerResponseScan;
 import de.unihamburg.sickstore.database.messages.ServerResponseUpdate;
-import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
-import de.unihamburg.sickstore.database.messages.exception.DeleteException;
-import de.unihamburg.sickstore.database.messages.exception.InsertException;
-import de.unihamburg.sickstore.database.messages.exception.NoKeyProvidedException;
-import de.unihamburg.sickstore.database.messages.exception.UnknownMessageTypeException;
-import de.unihamburg.sickstore.database.messages.exception.UpdateException;
 
 public class QueryHandler {
 
@@ -45,13 +39,13 @@ public class QueryHandler {
 	/** Generates server IDs, starting with 1 */
 	private final AtomicInteger IDGenerator = new AtomicInteger(1);
 	
-	/** the overall number of clients connected to the entirety of all Sickstore servers */
+	/** the overall number of clients connected to the entirety of all Sickstore nodes */
     private final AtomicInteger clientCount = new AtomicInteger(0);
     
     
 	private Store mediator;
 
-	protected final Set<Integer> servers = new HashSet<Integer>();
+	protected Set<Node> nodes = new HashSet<>();
 
 	private AnomalyGenerator anomalyGenerator;
 
@@ -73,8 +67,18 @@ public class QueryHandler {
 		this.timeHandler = timeHandler;
 	}
 
-	public synchronized Set<Integer> getServers() {
-		return servers;
+	public QueryHandler(Store mediator,
+						AnomalyGenerator anomalyGenerator,
+						TimeHandler timeHandler,
+						Set<Node> nodes) {
+		this.mediator = mediator;
+		this.anomalyGenerator = anomalyGenerator;
+		this.timeHandler = timeHandler;
+		this.nodes = nodes;
+	}
+
+	public synchronized Set<Node> getNodes() {
+		return nodes;
 	}
 
 	/**
@@ -82,7 +86,7 @@ public class QueryHandler {
 	 */
 	private ServerResponseDelete process(ClientRequestDelete request)
 			throws NoKeyProvidedException, DeleteException {
-		int server = request.getReceivedBy();
+		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
 		long clientRequestID = request.getId();
@@ -90,12 +94,11 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process delete request; no key was provided.");
 		}
 
-//		Map<Integer, Long> visibility = staleness.get(getServers(), request);
-		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
-		mediator.delete(server, key, visibility, timestamp);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		mediator.delete(node, key, anomaly.getStalenessMap(), timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
-		anomalyGenerator.handleResponse(response, request, getServers());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -105,7 +108,7 @@ public class QueryHandler {
 	 */
 	private ServerResponseInsert process(ClientRequestInsert request)
 			throws NoKeyProvidedException, InsertException {
-		int server = request.getReceivedBy();
+		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
 		long clientRequestID = request.getId();
@@ -117,13 +120,14 @@ public class QueryHandler {
 		}
 
 
-		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
-		version.setVisibility(visibility);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		version.setVisibility(anomaly.getStalenessMap());
 		version.setWrittenAt(timestamp);
-		mediator.insert(server, key, version);
+		version.setWrittenBy(node);
+		mediator.insert(node, key, version);
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
-		anomalyGenerator.handleResponse(response, request, getServers());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -134,7 +138,7 @@ public class QueryHandler {
 	private ServerResponseRead process(ClientRequestRead request)
 			throws NoKeyProvidedException {
 
-		int server = request.getReceivedBy();
+		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		Set<String> columns = request.getFields();
 		long timestamp = request.getReceivedAt();
@@ -143,13 +147,15 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
-		Version version = mediator.get(server, key, columns, timestamp, true);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+
+		Version version = mediator.get(node, key, columns, timestamp, true);
 		if (version == null) {
 			throw new NullPointerException("Version must not be null!");
 		}
 
 		ServerResponseRead response = new ServerResponseRead(clientRequestID, version);
-		anomalyGenerator.handleResponse(response, request, getServers());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -159,7 +165,7 @@ public class QueryHandler {
 	 */
 	private ServerResponseScan process(ClientRequestScan request)
 			throws NoKeyProvidedException {
-		int server = request.getReceivedBy();
+		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		int range = request.getRecordcount();
 		boolean asc = request.isAscending();
@@ -171,9 +177,10 @@ public class QueryHandler {
 					"Cannot process get request; no key was provided.");
 		}
 
-		List<Version> versions = mediator.getRange(server, key, range, asc, columns, timestamp);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		List<Version> versions = mediator.getRange(node, key, range, asc, columns, timestamp);
 		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
-		anomalyGenerator.handleResponse(response, request, getServers());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
@@ -183,7 +190,7 @@ public class QueryHandler {
 	 */
 	private ServerResponseUpdate process(ClientRequestUpdate request)
 			throws NoKeyProvidedException, UpdateException {
-		int server = request.getReceivedBy();
+		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
 		long clientRequestID = request.getId();
@@ -192,30 +199,63 @@ public class QueryHandler {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
 
-		Map<Integer, Long> visibility = anomalyGenerator.getWriteVisibility(request, getServers());
-		version.setVisibility(visibility);
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		version.setVisibility(anomaly.getStalenessMap());
 		version.setWrittenAt(timestamp);
-		mediator.update(server, key, version);
+		mediator.update(node, key, version);
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
-		anomalyGenerator.handleResponse(response, request, getServers());
+		applyAnomaliesOnResponse(anomaly, request, response);
 
 		return response;
 	}
 
 	/**
+	 * Apply the generated anomalies on the response, if necessary.
+	 *
+	 * @param anomaly
+	 * @param response
+	 */
+	private void applyAnomaliesOnResponse(Anomaly anomaly,
+										  ClientRequest request,
+										  ServerResponse response) {
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
+		response.setWaitTimeout(anomaly.getClientDelay());
+	}
+
+	/**
 	 * Processes an incoming query.
 	 */
-	public synchronized ServerResponse processQuery(SickServer server, Object request) {
+	public synchronized ServerResponse processQuery(Object request) {
 		Long id = -1l;
 		ServerResponse response = null;
 		try {
 			if (request instanceof ClientRequest) {
-				id = ((ClientRequest) request).getId();
-				int activeServer = ((ClientRequest) request).getReceivedBy();
-				if (activeServer != server.getID()) {
-					throw new DatabaseException(
-							"Inconsistent: Request is not handled by the server that received it...  This should not be possible...");
+				ClientRequest clientRequest = (ClientRequest) request;
+				clientRequest.setReceivedAt(timeHandler.getCurrentTime());
+
+				id = clientRequest.getId();
+
+				// Find destination node
+				if (clientRequest.getDestinationNode() == null) {
+					// no destination node given, search primary
+					for (Node node : getNodes()) {
+						if (node.isPrimary()) {
+							clientRequest.setReceivedBy(node);
+
+							break;
+						}
+					}
+				} else {
+					for (Node node : getNodes()) {
+						if (node.getName().equals(clientRequest.getDestinationNode())) {
+							clientRequest.setReceivedBy(node);
+						}
+					}
+				}
+
+				if (clientRequest.getReceivedBy() == null) {
+					throw new DatabaseException("Did not find the node this request is pointed to (" + clientRequest.getDestinationNode() + ")");
 				}
 
 				// metrics measures "requests per second"
@@ -269,35 +309,12 @@ public class QueryHandler {
 		return response;
 	}
 
-	/**
-	 * Registers a new server node.
-	 *
-	 * @param node
-	 * @return the id of the server
-	 */
-	public synchronized int register(SickServer node) {
-		int newServerID = IDGenerator.getAndIncrement();
-		servers.add(newServerID);
-		return newServerID;
-	}
-
-	/**
-	 * Deregister a server and remove it from the server list.
-	 *
-	 * @param node
-	 * @return the removed node's id
-	 */
-	public synchronized int deregister(SickServer node) {
-		if (node == null) {
-			throw new NullPointerException("server must not be null!");
-		}
-		int id = node.getID();
-		servers.remove(id);
-		return id;
-	}
-
 	public synchronized void setTimeHandler(TimeHandler timeHandler) {
 		this.timeHandler = timeHandler;
+	}
+
+	public synchronized void setNodes(Set<Node> nodes) {
+		this.nodes = nodes;
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package de.unihamburg.sickstore.backend.anomaly;
 
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
@@ -12,16 +14,19 @@ public interface AnomalyGenerator {
      * Calculates the amount of time after that a write becomes visible to a specific server.
      *
      * @param request       the incoming request
-     * @param servers       set of all server ids
-     * @return map of ServerId to Delay (in ms)
+     * @return
      */
-    Map<Integer, Long> getWriteVisibility(ClientRequest request, Set<Integer> servers);
+    Anomaly handleRequest(ClientRequest request, Set<Node> nodes);
 
     /**
-     * Modify the response object to reflect anomalies.
-     *
-     * @param response
+     * Handle the response for a request. The anomalies generated from the request can be updated
+     * here, depending on the result.
+     *  @param anomaly the anomalies generated for the request
      * @param request
+     * @param response
      */
-    void handleResponse(ServerResponse response, ClientRequest request, Set<Integer> servers);
+    void handleResponse(Anomaly anomaly,
+                        ClientRequest request,
+                        ServerResponse response,
+                        Set<Node> nodes);
 }

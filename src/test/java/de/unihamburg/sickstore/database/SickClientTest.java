@@ -37,14 +37,18 @@ public class SickClientTest extends SickstoreTestCase {
     public void setUp() throws Exception {
         // specify connection parameters
         String host = "localhost";
-        int timeout = 1200;
+        int timeout = 1200000;
         int tcpPort = 54999;
 
+        Set<Node> nodes = new HashSet<Node>();
+        nodes.add(new Node("Node 1"));
+        queryHandler.setNodes(nodes);
+
         // Create and start server and clients
-        server = new SickServer(tcpPort, queryHandler, timeHandler);
+        server = new SickServer(tcpPort, queryHandler);
         server.start();
 
-        c1 = new SickClient(timeout, host, tcpPort, "Client 1", timeHandler);
+        c1 = new SickClient(timeout, host, tcpPort, "Node 1", timeHandler);
         c1.connect();
     }
 
@@ -55,7 +59,6 @@ public class SickClientTest extends SickstoreTestCase {
     public void tearDown() throws Exception {
         c1.disconnect();
         server.shutdown();
-        store.clear();
     }
 
     @Test

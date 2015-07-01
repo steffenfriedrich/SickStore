@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.SickServer;
 
 /**
@@ -17,18 +19,18 @@ import de.unihamburg.sickstore.database.SickServer;
 public class Version {
 
     /** a version representing the initial null value */
-    public static final Version NULL = new Version(-1, -1, null, true);
+    public static final Version NULL = new Version(null, -1, null, true);
 
     /** if true, there is no value under the given key in this version */
     private boolean isNull = false;
 
-    private TreeMap<String, Object> values = new TreeMap<String, Object>();
+    private TreeMap<String, Object> values = new TreeMap<>();
 
     /**
      * A map from server IDs to timestamps; indicates when the version is
      * visible for what server
      */
-    private Map<Integer, Long> visibility = new HashMap<Integer, Long>();
+    private transient StalenessMap visibility = new StalenessMap();
 
     /**
      * Server timestamp at which this version was written.
@@ -36,17 +38,35 @@ public class Version {
      */
     private long writtenAt = -1;
 
-    /** indicates what server has written the version and owns the data */
-    private int writtenBy;
+    /**
+     * indicates what server has written the version and owns the data
+     * this value is transient and is only relevant for the server, it will not be sent do the client.
+     * */
+    private transient Node writtenBy;
 
     public Version() {
     }
 
-    public Version(int writtenBy, long writtenAt, Map<Integer, Long> visibility) {
+    /**
+     * This construct must only be used by the server.
+     *
+     * @param writtenBy
+     * @param writtenAt
+     * @param visibility
+     */
+    public Version(Node writtenBy, long writtenAt, StalenessMap visibility) {
         this(writtenBy, writtenAt, visibility, false);
     }
 
-    public Version(int writtenBy, long writtenAt, Map<Integer, Long> visibility, boolean isNull) {
+    /**
+     * This construct must only be used by the server.
+     *
+     * @param writtenBy
+     * @param writtenAt
+     * @param visibility
+     * @param isNull
+     */
+    public Version(Node writtenBy, long writtenAt, StalenessMap visibility, boolean isNull) {
         this();
         this.writtenBy = writtenBy;
         if (visibility != null) {
@@ -89,7 +109,7 @@ public class Version {
         return values;
     }
 
-    public Map<Integer, Long> getVisibility() {
+    public StalenessMap getVisibility() {
         return visibility;
     }
 
@@ -101,7 +121,7 @@ public class Version {
         return writtenAt;
     }
 
-    public int getWrittenBy() {
+    public Node getWrittenBy() {
         return writtenBy;
     }
 
@@ -109,11 +129,15 @@ public class Version {
         return getValues().isEmpty() || isNull;
     }
 
+    public void setWrittenBy(Node writtenBy) {
+        this.writtenBy = writtenBy;
+    }
+
     /**
-     * 
+     *
      * Updates the given column under the given key with the given value. If the
      * given column is <code>null</code>, it is removed.
-     * 
+     *
      * @param column
      * @param value
      */
@@ -134,7 +158,7 @@ public class Version {
         this.values.putAll(values);
     }
 
-    public void setVisibility(Map<Integer, Long> visibility) {
+    public void setVisibility(StalenessMap visibility) {
         this.visibility = visibility;
     }
 

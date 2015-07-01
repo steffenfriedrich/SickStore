@@ -10,6 +10,7 @@ lazy val sickstore = (project in file(".")).settings(commonSettings: _*).
 
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.12" % "test",
+      "com.novocode" % "junit-interface" % "0.10" % "test",
       "com.esotericsoftware" % "kryonet" % "2.22.0-RC1",
       "commons-cli" % "commons-cli" % "1.3",
       "com.google.guava" % "guava" % "18.0",
@@ -18,7 +19,7 @@ lazy val sickstore = (project in file(".")).settings(commonSettings: _*).
       "ch.qos.logback" % "logback-classic" % "1.1.3",
       "io.dropwizard.metrics" % "metrics-core" % "3.1.2"),
 
-    mainClass in (Compile, run) := Some("de.unihamburg.sickstore.Server")
+    mainClass in (Compile, run) := Some("de.unihamburg.sickstore.ServerStartup")
   )
 
 

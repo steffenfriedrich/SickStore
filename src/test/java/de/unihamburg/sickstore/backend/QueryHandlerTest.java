@@ -1,57 +1,56 @@
 package de.unihamburg.sickstore.backend;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
+import de.unihamburg.sickstore.database.Node;
+import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.SickstoreTestCase;
 
-import org.junit.After;
+import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import de.unihamburg.sickstore.database.SickServer;
 
 public class QueryHandlerTest extends SickstoreTestCase {
 
-    private SickServer server1;
-    private SickServer server3;
-    private SickServer server2;
+    private SickServer server;
+    private Node node1;
+    private Node node2;
+    private Node node3;
 
     @Before
     public void setUp() throws Exception {
         // specify connection parameters
         int tcpPort = 54000;
 
-        // Create and start server and clients
-        server1 = new SickServer(tcpPort + 1, queryHandler, timeHandler);
-        server2 = new SickServer(tcpPort + 2, queryHandler, timeHandler);
-        server3 = new SickServer(tcpPort + 3, queryHandler, timeHandler);
-    }
+        Set<Node> nodes = new HashSet<>();
+        nodes.add(node1 = new Node( "node1"));
+        nodes.add(node2 = new Node("node2"));
+        nodes.add(node3 = new Node("node3"));
 
-    @After
-    public void tearDown() throws Exception {
-        server1.shutdown();
-        server2.shutdown();
-        server3.shutdown();
-        store.clear();
+        queryHandler.setNodes(nodes);
     }
 
     /**
      * Inserts a data item on a specific server and measures the time until
-     * it becomes visible for the other servers.
+     * it becomes visible for the other nodes.
      *
      * @param insert
      * @param writer
      * @param key
      * @throws Exception
      */
-    private void checkClientStainless(Version insert, SickServer writer,
+    private void checkClientStainless(Version insert, Node writer,
             String key) throws Exception {
         Version copyC1 = null;
         Version copyC2 = null;
@@ -66,13 +65,13 @@ public class QueryHandlerTest extends SickstoreTestCase {
         insert(writer, "", key, insert);
         start = timeHandler.getCurrentTime();
         do {
-            if (!(copyC1 = read(server1, "", key, null)).isNull() && delayC1 == -1) {
+            if (!(copyC1 = read(node1, "", key, null)).isNull() && delayC1 == -1) {
                 delayC1 = timeHandler.getCurrentTime() - start;
             }
-            if (!(copyC2 = read(server2, "", key, null)).isNull() && delayC2 == -1) {
+            if (!(copyC2 = read(node2, "", key, null)).isNull() && delayC2 == -1) {
                 delayC2 = timeHandler.getCurrentTime() - start;
             }
-            if (!(copyC3 = read(server3, "", key, null)).isNull() && delayC3 == -1) {
+            if (!(copyC3 = read(node3, "", key, null)).isNull() && delayC3 == -1) {
                 delayC3 = timeHandler.getCurrentTime() - start;
             }
 
@@ -90,20 +89,20 @@ public class QueryHandlerTest extends SickstoreTestCase {
         System.out.println("delay client 1:\t" + delayC1);
         System.out.println("delay client 2:\t" + delayC2);
         System.out.println("delay client 3:\t" + delayC3);
-        assertTrue((delayC1 < 50 && server1 == writer) || (450 < delayC1 && delayC1 < 550));
-        assertTrue((delayC2 < 50 && server2 == writer) || (450 < delayC2 && delayC2 < 550));
-        assertTrue((delayC3 < 50 && server3 == writer) || (450 < delayC3 && delayC3 < 550));
+        assertTrue((delayC1 < 50 && node1 == writer) || (450 < delayC1 && delayC1 < 550));
+        assertTrue((delayC2 < 50 && node2 == writer) || (450 < delayC2 && delayC2 < 550));
+        assertTrue((delayC3 < 50 && node3 == writer) || (450 < delayC3 && delayC3 < 550));
 
     }
 
     /**
      * Sends a delete request.
      */
-    private boolean delete(SickServer writer, String table, String key)
+    private boolean delete(Node writer, String table, String key)
             throws Exception {
-        ClientRequestDelete request = new ClientRequestDelete(table, key);
+        ClientRequestDelete request = new ClientRequestDelete(table, key, writer.getName());
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         return response instanceof ServerResponseDelete;
     }
@@ -111,12 +110,11 @@ public class QueryHandlerTest extends SickstoreTestCase {
     /**
      * Sends a insert request.
      */
-    private boolean insert(SickServer writer, String table, String key,
+    private boolean insert(Node writer, String table, String key,
             Version insert) throws Exception {
-        ClientRequestInsert request = new ClientRequestInsert(table, key,
-                insert);
+        ClientRequestInsert request = new ClientRequestInsert(table, key, insert, writer.getName());
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         return response instanceof ServerResponseInsert;
     }
@@ -124,11 +122,11 @@ public class QueryHandlerTest extends SickstoreTestCase {
     /**
      * Sends a read request.
      */
-    private Version read(SickServer writer, String table, String key,
+    private Version read(Node writer, String table, String key,
             Set<String> fields) throws Exception {
-        ClientRequestRead request = new ClientRequestRead(table, key, fields);
+        ClientRequestRead request = new ClientRequestRead(table, key, fields, writer.getName());
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         return ((ServerResponseRead) response).getVersion();
     }
@@ -143,13 +141,13 @@ public class QueryHandlerTest extends SickstoreTestCase {
      * @param fields          read only a specific set of columns
      * @return a list with all found data items.
      */
-    private List<Version> scan(SickServer writer, String table,
+    private List<Version> scan(Node writer, String table,
             String startkey, int recordcount, Set<String> fields)
             throws Exception {
-        ClientRequestScan request = new ClientRequestScan(table, startkey,
-                recordcount, fields, true);
+        ClientRequestScan request = new ClientRequestScan(table, startkey, recordcount, fields, true, writer.getName()
+        );
 
-        ServerResponse response = sendRequest(writer, request);
+        ServerResponse response = sendRequest(request);
 
         if (response instanceof ServerResponseScan) {
             return ((ServerResponseScan) response).getEntries();
@@ -160,18 +158,13 @@ public class QueryHandlerTest extends SickstoreTestCase {
     /**
      * Send a specific request to the server
      *
-     * @param writer
      * @param request
      * @return
      * @throws Exception
      */
-    private ServerResponse sendRequest(SickServer writer, ClientRequest request)
+    private ServerResponse sendRequest(ClientRequest request)
         throws Exception {
-
-        request.setReceivedAt(timeHandler.getCurrentTime());
-        request.setReceivedBy(writer.getID());
-
-        ServerResponse response = queryHandler.processQuery(writer, request);
+        ServerResponse response = queryHandler.processQuery(request);
         if (response instanceof ServerResponseException) {
             throw ((ServerResponseException) response).getException();
         }
@@ -204,24 +197,24 @@ public class QueryHandlerTest extends SickstoreTestCase {
         mike.put("hair", "blonde");
         mike.put("age", 31);
 
-        checkClientStainless(adele, server1, "adele");
-        checkClientStainless(mike, server2, "mike");
-        checkClientStainless(john, server3, "john");
-        checkClientStainless(bob, server1, "bob");
+        checkClientStainless(adele, node1, "adele");
+        checkClientStainless(mike, node2, "mike");
+        checkClientStainless(john, node3, "john");
+        checkClientStainless(bob, node1, "bob");
 
         List<Version> copies1 = null;
         List<Version> copies2 = null;
         List<Version> copies3 = null;
 
         // perform range query and compare
-        copies2 = scan(server2, "", "adele", 3, null);
+        copies2 = scan(node2, "", "adele", 3, null);
         assertEquals(adele, copies2.get(0));
         assertEquals(bob, copies2.get(1));
         assertEquals(john, copies2.get(2));
         assertEquals(3, copies2.size());
 
         // extend range and expect one additional row
-        copies2 = scan(server2, "", "adele", 4, null);
+        copies2 = scan(node2, "", "adele", 4, null);
         assertEquals(adele, copies2.get(0));
         assertEquals(bob, copies2.get(1));
         assertEquals(john, copies2.get(2));
@@ -229,7 +222,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
         assertEquals(4, copies2.size());
 
         // a larger range should return the same result
-        copies2 = scan(server2, "", "adele", 27, null);
+        copies2 = scan(node2, "", "adele", 27, null);
         assertEquals(adele, copies2.get(0));
         assertEquals(bob, copies2.get(1));
         assertEquals(john, copies2.get(2));
@@ -237,17 +230,17 @@ public class QueryHandlerTest extends SickstoreTestCase {
         assertEquals(4, copies2.size());
 
         // have the range begin and end somewhere in the middle
-        copies2 = scan(server2, "", "bob", 2, null);
+        copies2 = scan(node2, "", "bob", 2, null);
         assertEquals(bob, copies2.get(0));
         assertEquals(john, copies2.get(1));
         assertEquals(2, copies2.size());
 
         // remove something and do the same scan again
-        assertTrue(delete(server2, "", "john"));
+        assertTrue(delete(node2, "", "john"));
         // c2 should see the consequence immediately
-        copies1 = scan(server1, "", "bob", 2, null);
-        copies2 = scan(server2, "", "bob", 2, null);
-        copies3 = scan(server3, "", "bob", 2, null);
+        copies1 = scan(node1, "", "bob", 2, null);
+        copies2 = scan(node2, "", "bob", 2, null);
+        copies3 = scan(node3, "", "bob", 2, null);
         assertEquals(bob, copies2.get(0));
         assertEquals(mike, copies2.get(1));
         assertEquals(2, copies2.size());
@@ -263,8 +256,8 @@ public class QueryHandlerTest extends SickstoreTestCase {
         timeHandler.sleep(600);
         // c2 and c3 should see the consequence immediately not immediately
         // (after about 500 ms)
-        copies1 = scan(server1, "", "bob", 2, null);
-        copies3 = scan(server3, "", "bob", 2, null);
+        copies1 = scan(node1, "", "bob", 2, null);
+        copies3 = scan(node3, "", "bob", 2, null);
         assertEquals(bob, copies1.get(0));
         assertEquals(mike, copies1.get(1));
         assertEquals(2, copies1.size());
@@ -276,7 +269,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
 
     @Test
     public void testDelayGenerator() throws Exception{
-        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100, 2, new HashMap<Integer[], Long>()));
+        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100));
 
         // create some data objects
         Version bob = new Version();
@@ -284,9 +277,36 @@ public class QueryHandlerTest extends SickstoreTestCase {
         bob.put("hair", "brown");
         bob.put("age", 25);
 
+        WriteConcern writeConcern = new WriteConcern(2);
+
         // minAcknowledgements > 0, but no custom delays -> return default delay (100)
-        ClientRequestInsert request = new ClientRequestInsert("", "bob", bob);
-        ServerResponse response = sendRequest(server1, request);
+        ClientRequestInsert request = new ClientRequestInsert("", "bob", bob, writeConcern, node1.getName());
+        ServerResponse response = sendRequest(request);
         assertEquals((Long) 100l, response.getWaitTimeout());
+    }
+
+    /**
+     * Tests, whether a master node is found when no destination node is set
+     */
+    @Test
+    public void testNoDestinationNode() throws Exception{
+        Version bob = new Version();
+        bob.put("name", "bob");
+        bob.put("hair", "brown");
+        bob.put("age", 25);
+
+        ClientRequestInsert request = new ClientRequestInsert("", "bob", bob);
+
+        try {
+            sendRequest(request);
+            fail();
+        } catch(DatabaseException e) {
+            // No master specified, request should fail.
+        }
+
+        node2.setPrimary(true);
+        sendRequest(request);
+
+        assertEquals(node2, bob.getWrittenBy());
     }
 }

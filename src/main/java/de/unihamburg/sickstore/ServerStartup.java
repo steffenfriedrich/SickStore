@@ -1,6 +1,8 @@
 package de.unihamburg.sickstore;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
@@ -8,6 +10,7 @@ import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.database.Node;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +19,7 @@ import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.database.SickServer;
 
-public class Server {
+public class ServerStartup {
     private static final Logger log = LoggerFactory.getLogger("sickstore");
     
     @SuppressWarnings("unchecked")
@@ -74,10 +77,17 @@ public class Server {
         // Create options
         Option portOpt = new Option(
                 "p",
-                "ports",
+                "port",
                 true,
-                "a comma-separated list of all ports that Sick servers listen (there will be one simulated server node for each port)");
+                "the port, SickStore will listen to (default 54000)");
         options.addOption(portOpt);
+
+        Option nodesOpt = new Option(
+                "n",
+                "nodes",
+                true,
+                "the number of nodes, that will be created");
+        options.addOption(nodesOpt);
 
         Option foreignReadsOpt = new Option(
                 "f",
@@ -126,41 +136,40 @@ public class Server {
             System.out.println();
         }
 
-        String[] ports = ((String) checkOption(portOpt, "54000", line))
-                .split(",");
-
+        int port = Integer.parseInt(checkOption(portOpt, "54000", line));
+        int nodes = Integer.parseInt(checkOption(portOpt, "1", line));
         Long foreignReads = checkOption(foreignReadsOpt, new Long(500), line);
-
         Long ownReads = checkOption(ownReadsOpt, new Long(0), line);
 
-        startServers(ports, foreignReads, ownReads);
+        startServers(port, nodes, foreignReads, ownReads);
     }
 
-    private static void startServers(String[] ports, long foreignReads,
+    private static void startServers(int port, int numberOfNodes, long foreignReads,
             long ownReads) throws IOException {
 
-        log.info("Starting Sick server...");
+        Set<Node> nodes = new HashSet<>();
+        for (int i = 1; i < numberOfNodes; i++) {
+            // use the id as name
+            nodes.add(new Node(i + ""));
+        }
+
 
         AnomalyGenerator anomalyGenerator = new BasicAnomalyGenerator(
             new ConstantStaleness(foreignReads, ownReads),
-            new MongoDbClientDelay(100)
+            new MongoDbClientDelay()
         );
 
         TimeHandler timeHandler = new SystemTimeHandler();
         QueryHandler queryHandler = new QueryHandler(
-                new Store(timeHandler),
-                anomalyGenerator,
-                timeHandler
+            new Store(timeHandler),
+            anomalyGenerator,
+            timeHandler,
+            nodes
         );
 
-        int p = -1;
-        for (String port : ports) {
-            p = Integer.parseInt(port);
-            SickServer server = new SickServer(p, queryHandler, timeHandler);
-            server.start();
-
-            log.info("... on port " + port);
-        }
+        log.info("Starting Sick server on port " + port);
+        SickServer server = new SickServer(port, queryHandler);
+        server.start();
 
         // Some variables that give you a handle on the store and the server
         // nodes during debugging

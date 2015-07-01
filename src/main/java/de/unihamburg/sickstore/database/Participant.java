@@ -121,6 +121,7 @@ public class Participant {
         classes.add(TreeMap.class);
 
         // register messages
+        classes.add(WriteConcern.class);
         classes.add(ClientRequest.class);
         classes.add(ClientRequestDelete.class);
         classes.add(ClientRequestInsert.class);
