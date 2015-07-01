@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-    organization := "de.uni-hamburg",
+    organization := "de.uni-hamburg.informatik.nosqlmark",
     version := "1.0",
     scalaVersion := "2.11.6"
 )
@@ -33,13 +33,17 @@ scalacOptions in ThisBuild ++= Seq(
   "-feature", // warning and location for usages of features that should be imported explicitly
   "-unchecked", // additional warnings where generated code depends on assumptions
   "-Xlint", // recommended additional warnings
+  "-Xdoclint:none",
   "-Ywarn-adapted-args", // Warn if an argument list is modified to match the receiver
   "-Ywarn-value-discard", // Warn when non-Unit expression results are unused
   "-Ywarn-inaccessible",
   "-Ywarn-dead-code"
 )
 
+javacOptions in (Compile, doc) += "-Xdoclint:none"
+
 // see https://github.com/xerial/sbt-pack
 packAutoSettings
+
 
 
