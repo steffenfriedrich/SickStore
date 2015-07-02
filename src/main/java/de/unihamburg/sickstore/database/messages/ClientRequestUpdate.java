@@ -15,12 +15,14 @@ public class ClientRequestUpdate extends ClientWriteRequest {
         this.version = version;
     }
 
-    public ClientRequestUpdate(String table, String key, WriteConcern writeConcern) {
+    public ClientRequestUpdate(String table, String key, Version version, WriteConcern writeConcern) {
         super(table, key, writeConcern);
+        this.version = version;
     }
 
-    public ClientRequestUpdate(String table, String key, WriteConcern writeConcern, String destinationNode) {
+    public ClientRequestUpdate(String table, String key, Version version, WriteConcern writeConcern, String destinationNode) {
         super(table, key, writeConcern, destinationNode);
+        this.version = version;
     }
 
     public Version getVersion() {

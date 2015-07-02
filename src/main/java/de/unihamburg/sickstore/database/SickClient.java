@@ -129,8 +129,8 @@ public class SickClient extends Participant {
                 } else if (object instanceof FrameworkMessage) {
                 } else {
                     System.out.println("connection "
-                            + sickclient.client.getID() + " received: "
-                            + object);
+                        + sickclient.client.getID() + " received: "
+                        + object);
                 }
             }
         });
@@ -165,10 +165,10 @@ public class SickClient extends Participant {
      * @return true on success; false else
      * @throws DatabaseException
      */
-    public boolean delete(String table, String key) throws DatabaseException {
+    public boolean delete(String table, String key, WriteConcern writeConcern) throws DatabaseException {
         checkWhetherConnected("Cannot perform delete operation: not connected to server.");
 
-        ClientRequestDelete request = new ClientRequestDelete(table, key, destinationServer);
+        ClientRequestDelete request = new ClientRequestDelete(table, key, writeConcern, destinationServer);
         client.sendTCP(request);
 
         Object ack;
@@ -183,6 +183,18 @@ public class SickClient extends Participant {
             throw (DatabaseException) ack;
         }
         return false;
+    }
+
+    /**
+     * Fallback, if no write concern was specified.
+     *
+     * @param table
+     * @param key
+     * @return
+     * @throws DatabaseException
+     */
+    public boolean delete(String table, String key) throws DatabaseException {
+        return delete(table, key, new WriteConcern());
     }
 
     public void disconnect() {
@@ -201,12 +213,11 @@ public class SickClient extends Participant {
      * @return true on success; false else
      * @throws DatabaseException
      */
-    public boolean insert(String table, String key, Version values)
+    public boolean insert(String table, String key, Version values, WriteConcern writeConcern)
             throws DatabaseException {
         checkWhetherConnected("Cannot perform insert operation: not connected to server.");
 
-        ClientRequestInsert request = new ClientRequestInsert(table, key, values, destinationServer
-        );
+        ClientRequestInsert request = new ClientRequestInsert(table, key, values, writeConcern, destinationServer);
         client.sendTCP(request);
 
         Object ack;
@@ -221,6 +232,18 @@ public class SickClient extends Participant {
             throw (DatabaseException) ack;
         }
         return false;
+    }
+
+    /**
+     * Fallback, if no write concern was specified.
+     *
+     * @param table
+     * @param key
+     * @return
+     * @throws DatabaseException
+     */
+    public boolean insert(String table, String key, Version version) throws DatabaseException {
+        return insert(table, key, version, new WriteConcern());
     }
 
     /**
@@ -323,12 +346,11 @@ public class SickClient extends Participant {
      * @return true on success; false else
      * @throws DatabaseException
      */
-    public boolean update(String table, String key, Version values)
+    public boolean update(String table, String key, Version values, WriteConcern writeConcern)
             throws DatabaseException {
         checkWhetherConnected("Cannot perform update operation: not connected to server.");
 
-        ClientRequestUpdate request = new ClientRequestUpdate(table, key, values, destinationServer
-        );
+        ClientRequestUpdate request = new ClientRequestUpdate(table, key, values, writeConcern, destinationServer);
         client.sendTCP(request);
 
         Object ack;
@@ -343,5 +365,18 @@ public class SickClient extends Participant {
             throw (DatabaseException) ack;
         }
         return false;
+    }
+
+
+    /**
+     * Fallback, if no write concern was specified.
+     *
+     * @param table
+     * @param key
+     * @return
+     * @throws DatabaseException
+     */
+    public boolean update(String table, String key, Version values) throws DatabaseException {
+        return update(table, key, values, new WriteConcern());
     }
 }

@@ -98,7 +98,7 @@ public class QueryHandler {
 		mediator.delete(node, key, anomaly.getStalenessMap(), timestamp);
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
-		applyAnomaliesOnResponse(anomaly, request, response);
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
 
 		return response;
 	}
@@ -127,7 +127,7 @@ public class QueryHandler {
 		mediator.insert(node, key, version);
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
-		applyAnomaliesOnResponse(anomaly, request, response);
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
 
 		return response;
 	}
@@ -155,7 +155,7 @@ public class QueryHandler {
 		}
 
 		ServerResponseRead response = new ServerResponseRead(clientRequestID, version);
-		applyAnomaliesOnResponse(anomaly, request, response);
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
 
 		return response;
 	}
@@ -180,7 +180,7 @@ public class QueryHandler {
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		List<Version> versions = mediator.getRange(node, key, range, asc, columns, timestamp);
 		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
-		applyAnomaliesOnResponse(anomaly, request, response);
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
 
 		return response;
 	}
@@ -205,22 +205,9 @@ public class QueryHandler {
 		mediator.update(node, key, version);
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
-		applyAnomaliesOnResponse(anomaly, request, response);
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
 
 		return response;
-	}
-
-	/**
-	 * Apply the generated anomalies on the response, if necessary.
-	 *
-	 * @param anomaly
-	 * @param response
-	 */
-	private void applyAnomaliesOnResponse(Anomaly anomaly,
-										  ClientRequest request,
-										  ServerResponse response) {
-		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-		response.setWaitTimeout(anomaly.getClientDelay());
 	}
 
 	/**
