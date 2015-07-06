@@ -7,7 +7,11 @@ import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.database.Node;
 import org.junit.Before;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class SickstoreTestCase {
 
@@ -15,8 +19,18 @@ public abstract class SickstoreTestCase {
     protected BasicAnomalyGenerator anomalyGenerator;
     protected QueryHandler queryHandler;
 
+    protected Node node1;
+    protected Node node2;
+    protected Node node3;
+
     @Before
     public void initEssentials() throws Exception {
+        // create 3 test nodes
+        Set<Node> nodes = new HashSet<>();
+        nodes.add(node1 = new Node("node1"));
+        nodes.add(node2 = new Node("node2"));
+        nodes.add(node3 = new Node("node3"));
+
         // init store and query handler
         timeHandler = new FakeTimeHandler();
         anomalyGenerator = new BasicAnomalyGenerator(
@@ -25,6 +39,6 @@ public abstract class SickstoreTestCase {
         );
 
         Store store = new Store(timeHandler);
-        queryHandler = new QueryHandler(store, anomalyGenerator, timeHandler);
+        queryHandler = new QueryHandler(store, anomalyGenerator, timeHandler, nodes);
     }
 }

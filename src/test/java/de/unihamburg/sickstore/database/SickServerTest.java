@@ -30,10 +30,6 @@ public class SickServerTest extends SickstoreTestCase {
     private SickClient c3;
     private SickServer server;
 
-    private SickServer server1;
-    private SickServer server2;
-    private SickServer server3;
-
     /**
      * @throws java.lang.Exception
      */
@@ -44,12 +40,6 @@ public class SickServerTest extends SickstoreTestCase {
         int timeout = 12000;
         int tcpPort = 54000;
 
-        Set<Node> nodes = new HashSet<>();
-        nodes.add(new Node("node1"));
-        nodes.add(new Node("node2"));
-        nodes.add(new Node("node3"));
-
-        queryHandler.setNodes(nodes);
         server = new SickServer(tcpPort, queryHandler);
         server.start();
 

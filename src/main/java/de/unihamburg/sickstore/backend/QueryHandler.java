@@ -57,14 +57,6 @@ public class QueryHandler {
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
-						TimeHandler timeHandler) {
-		this.mediator = mediator;
-		this.anomalyGenerator = anomalyGenerator;
-		this.timeHandler = timeHandler;
-	}
-
-	public QueryHandler(Store mediator,
-						AnomalyGenerator anomalyGenerator,
 						TimeHandler timeHandler,
 						Set<Node> nodes) {
 		this.mediator = mediator;

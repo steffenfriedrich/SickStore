@@ -40,15 +40,11 @@ public class SickClientTest extends SickstoreTestCase {
         int timeout = 1200000;
         int tcpPort = 54999;
 
-        Set<Node> nodes = new HashSet<Node>();
-        nodes.add(new Node("Node 1"));
-        queryHandler.setNodes(nodes);
-
         // Create and start server and clients
         server = new SickServer(tcpPort, queryHandler);
         server.start();
 
-        c1 = new SickClient(timeout, host, tcpPort, "Node 1", timeHandler);
+        c1 = new SickClient(timeout, host, tcpPort, "node1", timeHandler);
         c1.connect();
     }
 

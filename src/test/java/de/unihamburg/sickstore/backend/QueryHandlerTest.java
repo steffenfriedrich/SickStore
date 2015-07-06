@@ -1,7 +1,5 @@
 package de.unihamburg.sickstore.backend;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -13,33 +11,12 @@ import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.SickstoreTestCase;
 
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
-import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import de.unihamburg.sickstore.database.SickServer;
-
 public class QueryHandlerTest extends SickstoreTestCase {
-
-    private SickServer server;
-    private Node node1;
-    private Node node2;
-    private Node node3;
-
-    @Before
-    public void setUp() throws Exception {
-        // specify connection parameters
-        int tcpPort = 54000;
-
-        Set<Node> nodes = new HashSet<>();
-        nodes.add(node1 = new Node( "node1"));
-        nodes.add(node2 = new Node("node2"));
-        nodes.add(node3 = new Node("node3"));
-
-        queryHandler.setNodes(nodes);
-    }
 
     /**
      * Inserts a data item on a specific server and measures the time until
