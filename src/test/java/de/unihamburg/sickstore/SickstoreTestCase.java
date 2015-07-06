@@ -1,23 +1,28 @@
 package de.unihamburg.sickstore;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
+import de.unihamburg.sickstore.backend.QueryHandlerInterface;
+import de.unihamburg.sickstore.backend.ShardedQueryHandler;
 import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
+import de.unihamburg.sickstore.backend.sharding.HashBasedStrategy;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import org.junit.Before;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public abstract class SickstoreTestCase {
 
     protected TimeHandler timeHandler;
     protected BasicAnomalyGenerator anomalyGenerator;
-    protected QueryHandler queryHandler;
+    protected QueryHandlerInterface queryHandler;
 
     protected Node node1;
     protected Node node2;

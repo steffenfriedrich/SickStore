@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.unihamburg.sickstore.backend.QueryHandlerInterface;
 import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
@@ -152,7 +153,6 @@ public class ServerStartup {
             // use the id as name
             nodes.add(new Node(i + ""));
         }
-
 
         AnomalyGenerator anomalyGenerator = new BasicAnomalyGenerator(
             new ConstantStaleness(foreignReads, ownReads),

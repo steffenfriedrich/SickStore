@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
@@ -32,17 +31,11 @@ import de.unihamburg.sickstore.database.messages.ServerResponseRead;
 import de.unihamburg.sickstore.database.messages.ServerResponseScan;
 import de.unihamburg.sickstore.database.messages.ServerResponseUpdate;
 
-public class QueryHandler {
+public class QueryHandler implements QueryHandlerInterface {
 
 	private TimeHandler timeHandler;
-
-	/** Generates server IDs, starting with 1 */
-	private final AtomicInteger IDGenerator = new AtomicInteger(1);
-
 	private Store mediator;
-
 	protected Set<Node> nodes = new HashSet<>();
-
 	private AnomalyGenerator anomalyGenerator;
 
 	private final MetricRegistry metrics = new MetricRegistry();
@@ -201,45 +194,43 @@ public class QueryHandler {
 	/**
 	 * Processes an incoming query.
 	 */
-	public synchronized ServerResponse processQuery(Object request) {
+	@Override
+	public synchronized ServerResponse processQuery(ClientRequest request) {
 		Long id = -1l;
 		ServerResponse response = null;
 		try {
-			if (request instanceof ClientRequest) {
-				ClientRequest clientRequest = (ClientRequest) request;
-				clientRequest.setReceivedAt(timeHandler.getCurrentTime());
+			request.setReceivedAt(timeHandler.getCurrentTime());
 
-				id = clientRequest.getId();
+			id = request.getId();
 
-				// Find destination node
-				if (clientRequest.getDestinationNode() == null) {
-					// no destination node given, search primary
-					for (Node node : getNodes()) {
-						if (node.isPrimary()) {
-							clientRequest.setReceivedBy(node);
+			// Find destination node
+			if (request.getDestinationNode() == null) {
+				// no destination node given, search primary
+				for (Node node : getNodes()) {
+					if (node.isPrimary()) {
+						request.setReceivedBy(node);
 
-							break;
-						}
-					}
-				} else {
-					for (Node node : getNodes()) {
-						if (node.getName().equals(clientRequest.getDestinationNode())) {
-							clientRequest.setReceivedBy(node);
-						}
+						break;
 					}
 				}
-
-				if (clientRequest.getReceivedBy() == null) {
-					throw new DatabaseException("Did not find the node this request is pointed to (" + clientRequest.getDestinationNode() + ")");
+			} else {
+				for (Node node : getNodes()) {
+					if (node.getName().equals(request.getDestinationNode())) {
+						request.setReceivedBy(node);
+					}
 				}
-
-				// metrics measures "requests per second"
-				if (requests == null) {
-					initMetricReporter();
-					requests = metrics.meter("requests");
-				} 
-				requests.mark();
 			}
+
+			if (request.getReceivedBy() == null) {
+				throw new DatabaseException("Did not find the node this request is pointed to (" + request.getDestinationNode() + ")");
+			}
+
+			// metrics measures "requests per second"
+			if (requests == null) {
+				initMetricReporter();
+				requests = metrics.meter("requests");
+			}
+			requests.mark();
 
 			if (request instanceof ClientRequestDelete) {
 				// delete request

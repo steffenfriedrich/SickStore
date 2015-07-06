@@ -1,7 +1,6 @@
 package de.unihamburg.sickstore.database;
 
-import de.unihamburg.sickstore.backend.QueryHandler;
-import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.backend.QueryHandlerInterface;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.WriteForbiddenException;
 
@@ -11,7 +10,7 @@ import de.unihamburg.sickstore.database.messages.exception.WriteForbiddenExcepti
  */
 public class SickSlave extends SickServer {
 
-    public SickSlave(int port, QueryHandler queryHandler) {
+    public SickSlave(int port, QueryHandlerInterface queryHandler) {
         super(port, queryHandler);
     }
 

@@ -8,7 +8,7 @@ import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
-import de.unihamburg.sickstore.backend.QueryHandler;
+import de.unihamburg.sickstore.backend.QueryHandlerInterface;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 import de.unihamburg.sickstore.database.messages.ServerResponseException;
@@ -16,7 +16,7 @@ import de.unihamburg.sickstore.database.messages.exception.UnknownMessageTypeExc
 
 public class SickServer extends Participant {
 
-    private final QueryHandler queryHandler;
+    private final QueryHandlerInterface queryHandler;
 
     private final int port;
     private final SickServer node = this;
@@ -26,7 +26,7 @@ public class SickServer extends Participant {
     /** the overall number of clients connected to the entirety of all SickStore nodes */
     private final AtomicInteger clientCount = new AtomicInteger(0);
 
-    public SickServer(int port, final QueryHandler queryHandler) {
+    public SickServer(int port, final QueryHandlerInterface queryHandler) {
         this.port = port;
         this.queryHandler = queryHandler;
     }
