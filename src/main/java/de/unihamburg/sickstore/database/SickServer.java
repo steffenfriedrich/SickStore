@@ -1,6 +1,7 @@
 package de.unihamburg.sickstore.database;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage;
@@ -21,6 +22,9 @@ public class SickServer extends Participant {
     private final SickServer node = this;
 
     protected Server server;
+
+    /** the overall number of clients connected to the entirety of all SickStore nodes */
+    private final AtomicInteger clientCount = new AtomicInteger(0);
 
     public SickServer(int port, final QueryHandler queryHandler) {
         this.port = port;
@@ -62,14 +66,14 @@ public class SickServer extends Participant {
         server.addListener(new Listener() {
             @Override
             public void disconnected(Connection c) {
-                queryHandler.decrementAndGetClientCount();
+                decrementAndGetClientCount();
                 System.out.println("Server disconnected from connection "
                         + c.getID());
             }
 
             @Override
             public void connected(Connection connection) {
-                queryHandler.incrementAndGetClientCount();
+                incrementAndGetClientCount();
                 super.connected(connection);
             }
 
@@ -108,5 +112,37 @@ public class SickServer extends Participant {
 
     protected ServerResponse handleRequest(ClientRequest request) {
         return queryHandler.processQuery(request);
+    }
+
+    /**
+     * Increment the number of connection clients and return the current number.
+     *
+     * @return number of connected clients
+     */
+    public int incrementAndGetClientCount() {
+        clientCount.incrementAndGet();
+        resetMetersIfIdle();
+        return clientCount.get();
+    }
+
+    /**
+     * Decrement the number of connection clients and return the current number.
+     *
+     * @return number of connected clients
+     */
+    public int decrementAndGetClientCount() {
+        clientCount.decrementAndGet();
+        resetMetersIfIdle();
+        return clientCount.get();
+    }
+
+    /**
+     * Calls {@link #resetMetres()}, if there are no clients connected to
+     * Sickstore
+     */
+    public void resetMetersIfIdle() {
+        if (clientCount.get() == 0) {
+            queryHandler.resetMeters();
+        }
     }
 }

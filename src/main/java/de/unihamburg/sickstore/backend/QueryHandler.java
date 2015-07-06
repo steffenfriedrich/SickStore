@@ -38,11 +38,7 @@ public class QueryHandler {
 
 	/** Generates server IDs, starting with 1 */
 	private final AtomicInteger IDGenerator = new AtomicInteger(1);
-	
-	/** the overall number of clients connected to the entirety of all Sickstore nodes */
-    private final AtomicInteger clientCount = new AtomicInteger(0);
-    
-    
+
 	private Store mediator;
 
 	protected Set<Node> nodes = new HashSet<>();
@@ -303,38 +299,6 @@ public class QueryHandler {
 	public synchronized void setNodes(Set<Node> nodes) {
 		this.nodes = nodes;
 	}
-
-	/**
-	 * Increment the number of connection clients and return the current number.
-	 *
-	 * @return number of connected clients
-	 */
-	public int incrementAndGetClientCount() {
-        clientCount.incrementAndGet();
-        resetMetersIfIdle();
-        return clientCount.get();
-    }
-
-	/**
-	 * Decrement the number of connection clients and return the current number.
-	 *
-	 * @return number of connected clients
-	 */
-    public int decrementAndGetClientCount() {
-        clientCount.decrementAndGet();
-        resetMetersIfIdle();
-        return clientCount.get();
-    }
-
-    /**
-     * Calls {@link #resetMetres()}, if there are no clients connected to
-     * Sickstore
-     */
-    public void resetMetersIfIdle() {
-        if (clientCount.get() == 0) {
-            resetMeters();
-        }
-    }
 
     public void resetMeters() {
 		if (reporter != null) {
