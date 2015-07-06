@@ -54,6 +54,10 @@ public abstract class ClientRequest {
         return id;
     }
 
+    public String getTable() {
+        return table;
+    }
+
     public String getKey() {
         return key;
     }
@@ -68,6 +72,10 @@ public abstract class ClientRequest {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public void setTable(String table) {
+        this.table = table;
     }
 
     public void setKey(String key) {

@@ -4,6 +4,7 @@ import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.sharding.HashBasedStrategy;
+import de.unihamburg.sickstore.backend.sharding.ShardingStrategy;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
@@ -11,9 +12,7 @@ import de.unihamburg.sickstore.database.messages.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -55,7 +54,26 @@ public class ShardedQueryHandlerTest {
         shards.add(new QueryHandler(store2 = new Store(timeHandler), anomalyGenerator, timeHandler, nodes2));
         shards.add(new QueryHandler(store3 = new Store(timeHandler), anomalyGenerator, timeHandler, nodes3));
 
-        queryHandler = new ShardedQueryHandler(shards, new HashBasedStrategy());
+        Map<String, ShardingStrategy> strategies = new HashMap<>();
+        strategies.put("", new HashBasedStrategy());
+
+        queryHandler = new ShardedQueryHandler(shards, strategies);
+    }
+
+    @Test
+    public void testNoShardingStrategy() {
+        ServerResponse response;
+
+        Version bob = new Version();
+        bob.put("name", "Bob");
+
+        queryHandler.processQuery(new ClientRequestInsert("random", "bob", bob));
+
+        response = queryHandler.processQuery(new ClientRequestRead("random", "bob", null));
+        assertEquals(bob, ((ServerResponseRead) response).getVersion());
+
+        // assert it is in store1 (the first one)
+        assertEquals(bob, store1.get(node1, "bob", timeHandler.getCurrentTime(), false));
     }
 
     @Test

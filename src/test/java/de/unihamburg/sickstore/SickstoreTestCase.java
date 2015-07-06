@@ -7,7 +7,6 @@ import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
-import de.unihamburg.sickstore.backend.sharding.HashBasedStrategy;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;

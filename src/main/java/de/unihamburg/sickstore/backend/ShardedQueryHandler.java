@@ -9,17 +9,19 @@ import java.util.*;
 
 /**
  * The sharded query handler redirects all queries to a specific shard (which is a QueryHandlerInterface).
+ * The sharding is organized by tables.
  */
 public class ShardedQueryHandler implements QueryHandlerInterface {
 
     /** contains all shards */
     private List<QueryHandlerInterface> shards = new ArrayList<>();
 
-    private ShardingStrategy strategy;
+    /** Maps a table name to a sharding strategy */
+    private Map<String, ShardingStrategy> strategies;
 
-    public ShardedQueryHandler(List<QueryHandlerInterface> shards, ShardingStrategy strategy) {
+    public ShardedQueryHandler(List<QueryHandlerInterface> shards, Map<String, ShardingStrategy> strategies) {
         this.shards = shards;
-        this.strategy = strategy;
+        this.strategies = strategies;
     }
 
     @Override
@@ -86,6 +88,12 @@ public class ShardedQueryHandler implements QueryHandlerInterface {
     }
 
     private QueryHandlerInterface getTargetShard(ClientRequest request) {
+        ShardingStrategy strategy = strategies.get(request.getTable());
+        if (strategy == null) {
+            // if no strategy is defined use the first shard
+            return shards.iterator().next();
+        }
+
         return strategy.getTargetShard(request, shards);
     }
 }
