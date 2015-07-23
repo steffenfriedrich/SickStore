@@ -90,33 +90,32 @@ public class ShardedQueryHandlerTest {
         assertStoredOnce("bob");
     }
 
-// At the moment, scanning does not work correctly
-//    @Test
-//    public void testScan() {
-//        ServerResponse response;
-//
-//        Version bob = new Version();
-//        bob.put("name", "Bob");
-//        Version bobi = new Version();
-//        bobi.put("name", "Bobi");
-//        Version bobo = new Version();
-//        bobo.put("name", "Bobo");
-//
-//        queryHandler.processQuery(new ClientRequestInsert("", "bob", bob));
-//        queryHandler.processQuery(new ClientRequestInsert("", "bobi", bobi));
-//        queryHandler.processQuery(new ClientRequestInsert("", "bobo", bobo));
-//
-//        assertStoredOnce("bob");
-//        assertStoredOnce("bobi");
-//        assertStoredOnce("bobo");
-//
-//        response = queryHandler.processQuery(new ClientRequestScan("", "bob", 2, null, true));
-//        List<Version> versions = ((ServerResponseScan) response).getEntries();
-//
-//        assertEquals(2, versions.size());
-//        assertEquals(bob, versions.get(0));
-//        assertEquals(bobi, versions.get(1));
-//    }
+    @Test
+    public void testScan() {
+        ServerResponse response;
+
+        Version bob = new Version();
+        bob.put("name", "Bob");
+        Version bobi = new Version();
+        bobi.put("name", "Bobi");
+        Version bobo = new Version();
+        bobo.put("name", "Bobo");
+
+        queryHandler.processQuery(new ClientRequestInsert("", "bob", bob));
+        queryHandler.processQuery(new ClientRequestInsert("", "bobi", bobi));
+        queryHandler.processQuery(new ClientRequestInsert("", "bobo", bobo));
+
+        assertStoredOnce("bob");
+        assertStoredOnce("bobi");
+        assertStoredOnce("bobo");
+
+        response = queryHandler.processQuery(new ClientRequestScan("", "bob", 2, null, true));
+        List<Version> versions = ((ServerResponseScan) response).getEntries();
+
+        assertEquals(2, versions.size());
+        assertEquals(bob, versions.get(0));
+        assertEquals(bobi, versions.get(1));
+    }
 
     /**
      * Assert the key was stored in only one store.

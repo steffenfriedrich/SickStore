@@ -19,7 +19,7 @@ import de.unihamburg.sickstore.database.SickServer;
 public class Version {
 
     /** a version representing the initial null value */
-    public static final Version NULL = new Version(null, -1, null, true);
+    public static final Version NULL = new Version(null, null, -1, null, true);
 
     /** if true, there is no value under the given key in this version */
     private boolean isNull = false;
@@ -44,6 +44,12 @@ public class Version {
      * */
     private transient Node writtenBy;
 
+    /**
+     * the key of this version, will be set by the server and must not be set by the client
+     * the client defines the key as part of the request.
+     * */
+    private String key;
+
     public Version() {
     }
 
@@ -54,8 +60,8 @@ public class Version {
      * @param writtenAt
      * @param visibility
      */
-    public Version(Node writtenBy, long writtenAt, StalenessMap visibility) {
-        this(writtenBy, writtenAt, visibility, false);
+    public Version(String key, Node writtenBy, long writtenAt, StalenessMap visibility) {
+        this(key, writtenBy, writtenAt, visibility, false);
     }
 
     /**
@@ -66,8 +72,9 @@ public class Version {
      * @param visibility
      * @param isNull
      */
-    public Version(Node writtenBy, long writtenAt, StalenessMap visibility, boolean isNull) {
+    public Version(String key, Node writtenBy, long writtenAt, StalenessMap visibility, boolean isNull) {
         this();
+        this.key = key;
         this.writtenBy = writtenBy;
         if (visibility != null) {
             this.visibility.putAll(visibility);
@@ -82,7 +89,7 @@ public class Version {
     }
 
     public Version clone(Set<String> columns) throws CloneNotSupportedException {
-        Version clone = new Version(writtenBy, writtenAt, visibility);
+        Version clone = new Version(key, writtenBy, writtenAt, visibility);
 
         for (String column : values.keySet()) {
             if (columns == null || columns.contains(column)) {
@@ -172,5 +179,13 @@ public class Version {
             return writtenAt + ": null";
         }
         return writtenAt + ": " + values.toString();
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getKey() {
+        return key;
     }
 }

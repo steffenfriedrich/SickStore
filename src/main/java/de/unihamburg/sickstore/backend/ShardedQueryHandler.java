@@ -43,25 +43,45 @@ public class ShardedQueryHandler implements QueryHandlerInterface {
         }
 
         if (request instanceof ClientRequestScan) {
-            // Currently the range is resolved and merged from all shards
-            // and therefore, some shards cannot answer the request properly.
-            // Furthermore, the results cannot be merged correctly, because a Version
-            // does not save its key.
-
-            return new ServerResponseException(request.getId(), new Exception("Scanning is not " +
-                "supported with the shared SickStore at the moment."));
-
-//            List<Version> versions = new ArrayList<>();
-//            for (QueryHandlerInterface shard : shards) {
-//                ServerResponseScan response = (ServerResponseScan) shard.processQuery(request);
-//                versions.addAll(response.getEntries());
-//            }
-//
-//            return new ServerResponseScan(request.getId(), versions);
+            return processScanRequest((ClientRequestScan) request);
         }
 
         // this should not happen, all request types were handled above
-        return null;
+        throw new RuntimeException("Unknown request type: " + request.getClass().getName());
+    }
+
+    /**
+     * Processes a scan request. It is send to all shards and combined afterwards.
+     *
+     * @param request
+     * @return
+     */
+    private ServerResponse processScanRequest(ClientRequestScan request) {
+        // at first collect all versions, to sort them
+        TreeMap<String, Version> orderedVersions = new TreeMap<>();
+        for (QueryHandlerInterface shard : shards) {
+            ServerResponseScan response = (ServerResponseScan) shard.processQuery(request);
+
+            for (Version version : response.getEntries()) {
+                orderedVersions.put(version.getKey(), version);
+            }
+        }
+
+        // afterwards select only the required number of versions
+        int range = request.getRecordcount();
+        boolean asc = request.isAscending();
+
+        List<Version> versions = new ArrayList<>(range);
+        String nextKey = request.getKey();
+
+        do {
+            versions.add(orderedVersions.get(nextKey));
+        } while (range > versions.size() && (
+            (asc && (nextKey = orderedVersions.higherKey(nextKey)) != null) ||
+                (!asc && (nextKey = orderedVersions.lowerKey(nextKey)) != null)
+        ));
+
+        return new ServerResponseScan(request.getId(), versions);
     }
 
     @Override

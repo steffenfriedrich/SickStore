@@ -59,7 +59,7 @@ public class Store {
 					"Value cannot be deleted, because there is no value under key \""
 							+ key + "\".");
 		} else {
-			insertOrUpdate(key, new Version(node, timeHandler.getCurrentTime(), visibility, true));
+			insertOrUpdate(key, new Version(key, node, timeHandler.getCurrentTime(), visibility, true));
 		}
 	}
 
@@ -108,7 +108,7 @@ public class Store {
 		}
 
 		// log staleness informations for ClientRequestRead only
-		if (logStaleness) {
+		if (logStaleness && version != Version.NULL) {
 			if (version == versionMostRecent) {
 				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
 				logMeasure.info("key;" + key + ";most recent version;"
@@ -187,9 +187,10 @@ public class Store {
 			if (!version.isNull()) {
 				versions.add(version);
 			}
-		} while (range > versions.size()
-				&& (asc && (nextKey = higherKey(nextKey)) != null || !asc
-						&& (nextKey = lowerKey(nextKey)) != null));
+		} while (range > versions.size() && (
+			   (asc && (nextKey = higherKey(nextKey)) != null) ||
+			   (!asc && (nextKey = lowerKey(nextKey)) != null)
+		));
 
 		return versions;
 	}

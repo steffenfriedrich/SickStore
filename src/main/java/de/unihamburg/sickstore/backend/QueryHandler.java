@@ -9,6 +9,7 @@ import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
+import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,20 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-
-import de.unihamburg.sickstore.database.messages.ClientRequest;
-import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
-import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
-import de.unihamburg.sickstore.database.messages.ClientRequestRead;
-import de.unihamburg.sickstore.database.messages.ClientRequestScan;
-import de.unihamburg.sickstore.database.messages.ClientRequestUpdate;
-import de.unihamburg.sickstore.database.messages.ServerResponse;
-import de.unihamburg.sickstore.database.messages.ServerResponseDelete;
-import de.unihamburg.sickstore.database.messages.ServerResponseException;
-import de.unihamburg.sickstore.database.messages.ServerResponseInsert;
-import de.unihamburg.sickstore.database.messages.ServerResponseRead;
-import de.unihamburg.sickstore.database.messages.ServerResponseScan;
-import de.unihamburg.sickstore.database.messages.ServerResponseUpdate;
 
 public class QueryHandler implements QueryHandlerInterface {
 
@@ -105,6 +92,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		version.setVisibility(anomaly.getStalenessMap());
 		version.setWrittenAt(timestamp);
 		version.setWrittenBy(node);
+		version.setKey(request.getKey());
 		mediator.insert(node, key, version);
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
@@ -183,6 +171,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		version.setVisibility(anomaly.getStalenessMap());
 		version.setWrittenAt(timestamp);
+		version.setKey(request.getKey());
 		mediator.update(node, key, version);
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
