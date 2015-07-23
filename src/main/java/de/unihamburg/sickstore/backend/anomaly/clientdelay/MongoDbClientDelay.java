@@ -25,7 +25,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
     private TimeHandler timeHandler = new SystemTimeHandler();
 
-    // Tagset Name => tag + its replica acknowledgement
+    // Tagset Name => tag + its replica acknowledgment
     private HashMap<String, HashMap<String, Integer>> tagSets = new HashMap<>();
 
     private long startedAt;
@@ -114,21 +114,17 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      */
     private long calculateReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
         WriteConcern writeConcern = request.getWriteConcern();
-        if (writeConcern.getReplicaAcknowledgementTag() != null) {
+        if (writeConcern.getReplicaAcknowledgementTagSet() != null) {
             return calculateTaggedReplicationDelay(request, nodes);
         }
 
         if ((nodes.size() == 1 || writeConcern.getReplicaAcknowledgement() <= 1)) {
-            // if there is only one node or it should not be waited for replica acknowledgements
-            // there delay is zero
+            // if there is only one node or if it should not be waited for
+            // further replica acknowledgments the delay is zero
             return 0;
         }
 
-        if (customDelays.size() == 0) {
-            return defaultDelay;
-        }
-
-        // check whether there are custom delays
+        // select custom delays
         TreeSet<Long> delays = findRelevantReplicationDelays(request.getReceivedBy());
 
         // the primary is subtracted (-1), as it has no delay
@@ -145,38 +141,32 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     private long calculateTaggedReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
         WriteConcern writeConcern = request.getWriteConcern();
 
-        if (!tagSets.containsKey(writeConcern.getReplicaAcknowledgementTag())) {
+        if (!tagSets.containsKey(writeConcern.getReplicaAcknowledgementTagSet())) {
             throw new IndexOutOfBoundsException("There is no tag-concern with name " +
-                writeConcern.getReplicaAcknowledgementTag());
+                writeConcern.getReplicaAcknowledgementTagSet());
         }
 
-        HashMap<String, Integer> tagset = tagSets.get(writeConcern.getReplicaAcknowledgementTag());
+        HashMap<String, Integer> tagSet = tagSets.get(writeConcern.getReplicaAcknowledgementTagSet());
 
         long delay = 0;
-        for (HashMap.Entry<String, Integer> tagsetEntry : tagset.entrySet()) {
+        for (HashMap.Entry<String, Integer> tagsetEntry : tagSet.entrySet()) {
             String tag = tagsetEntry.getKey();
-            int acknowledgement = tagsetEntry.getValue();
 
-            // Find delays of nodes with that tag
-            TreeSet<Long> relevantDelays = new TreeSet<>();
-            for (Node node : nodes) {
-                if (node.getTags().contains(tag)) {
-                    if (node == request.getReceivedBy()) {
-                        // the receiving node has no extra delay
-                        acknowledgement--;
-                        continue;
-                    }
-
-                    for (NetworkDelay customDelay : customDelays) {
-                        if (customDelay.getTo() == node) {
-                            relevantDelays.add(customDelay.getDelay());
-                        }
-                    }
-                }
+            int acknowledgment = tagsetEntry.getValue();
+            if (request.getReceivedBy().getTags().contains(tag)) {
+                // if the receiving node has the current tag, reduce the number of acknowledgments
+                acknowledgment--;
             }
 
-            // Calculate delay for this tag
-            long tagDelay = calculateActualReplicationDelay(acknowledgement, relevantDelays);
+            // find custom delays of nodes with the current tag
+            TreeSet<Long> relevantDelays = findRelevantReplicationDelaysWithTag(
+                tag,
+                request.getReceivedBy(),
+                nodes
+            );
+
+            // calculate delay for this tag
+            long tagDelay = calculateActualReplicationDelay(acknowledgment, relevantDelays);
             if (tagDelay > delay) {
                 delay = tagDelay;
             }
@@ -186,7 +176,37 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     }
 
     /**
-     * Returns a sorted list of all delays, that occur from the receiving nodes to their replica.
+     * Returns a sorted list of all delays, that occur from the receiving node
+     * to its replicas with a specific tag.
+     *
+     * @param receivedBy
+     * @return a sorted list with all delays
+     */
+    private TreeSet<Long> findRelevantReplicationDelaysWithTag(String tag,
+                                                               Node receivedBy,
+                                                               Set<Node> nodes) {
+        // Find delays of nodes with that tag
+        TreeSet<Long> delays = new TreeSet<>();
+        for (Node node : nodes) {
+            if (node.getTags().contains(tag)) {
+                if (node == receivedBy) {
+                    // the receiving node has no extra delay
+                    continue;
+                }
+
+                for (NetworkDelay customDelay : customDelays) {
+                    if (customDelay.getFrom() == receivedBy && customDelay.getTo() == node) {
+                        delays.add(customDelay.getDelay());
+                    }
+                }
+            }
+        }
+
+        return delays;
+    }
+
+    /**
+     * Returns a sorted list of all delays, that occur from the receiving node to its replicas.
      *
      * @param receivedBy
      * @return a sorted list with all delays
@@ -208,7 +228,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
     /**
      * Calculates the actual delay that will be produced by the write concern.
-     * @param acknowledgments number of acknowledgements that are necessary
+     * @param acknowledgments number of acknowledgments that are necessary
      * @param delays
      * @return
      */
@@ -216,17 +236,17 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
         Iterator<Long> it = delays.iterator();
         long delay = 0;
-        int acknowledgementsLeft = acknowledgments;
-        while (it.hasNext() && acknowledgementsLeft > 0) {
+        int acknowledgmentsLeft = acknowledgments;
+        while (it.hasNext() && acknowledgmentsLeft > 0) {
             Long tmpDelay = it.next();
             if (tmpDelay > delay) {
                 delay = tmpDelay;
             }
 
-            acknowledgementsLeft--;
+            acknowledgmentsLeft--;
         }
 
-        if (acknowledgementsLeft > 0 && delay < defaultDelay) {
+        if (acknowledgmentsLeft > 0 && delay < defaultDelay) {
             return defaultDelay;
         }
 

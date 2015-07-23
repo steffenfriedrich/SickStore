@@ -3,7 +3,7 @@ package de.unihamburg.sickstore.database;
 public class WriteConcern {
 
     private int replicaAcknowledgement = 1;
-    private String replicaAcknowledgementTag = null;
+    private String replicaAcknowledgementTagSet = null;
     private boolean journaling = false;
     private int timeout = 0;
 
@@ -14,8 +14,8 @@ public class WriteConcern {
         this.replicaAcknowledgement = replicaAcknowledgement;
     }
 
-    public WriteConcern(String replicaAcknowledgementTag) {
-        this.replicaAcknowledgementTag = replicaAcknowledgementTag;
+    public WriteConcern(String replicaAcknowledgementTagSet) {
+        this.replicaAcknowledgementTagSet = replicaAcknowledgementTagSet;
     }
 
     public WriteConcern(int replicaAcknowledgement, boolean journaling, int timeout) {
@@ -24,8 +24,8 @@ public class WriteConcern {
         this.timeout = timeout;
     }
 
-    public WriteConcern(String replicaAcknowledgementTag, boolean journaling, int timeout) {
-        this.replicaAcknowledgementTag = replicaAcknowledgementTag;
+    public WriteConcern(String replicaAcknowledgementTagSet, boolean journaling, int timeout) {
+        this.replicaAcknowledgementTagSet = replicaAcknowledgementTagSet;
         this.journaling = journaling;
         this.timeout = timeout;
     }
@@ -36,15 +36,15 @@ public class WriteConcern {
 
     public void setReplicaAcknowledgement(int replicaAcknowledgement) {
         this.replicaAcknowledgement = replicaAcknowledgement;
-        this.replicaAcknowledgementTag = null;
+        this.replicaAcknowledgementTagSet = null;
     }
 
-    public String getReplicaAcknowledgementTag() {
-        return replicaAcknowledgementTag;
+    public String getReplicaAcknowledgementTagSet() {
+        return replicaAcknowledgementTagSet;
     }
 
-    public void setReplicaAcknowledgementTag(String replicaAcknowledgementTag) {
-        this.replicaAcknowledgementTag = replicaAcknowledgementTag;
+    public void setReplicaAcknowledgementTagSet(String replicaAcknowledgementTagSet) {
+        this.replicaAcknowledgementTagSet = replicaAcknowledgementTagSet;
     }
 
     public boolean isJournaling() {
