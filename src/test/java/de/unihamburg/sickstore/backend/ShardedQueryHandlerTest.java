@@ -8,11 +8,8 @@ import de.unihamburg.sickstore.backend.sharding.ShardingStrategy;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
-import de.unihamburg.sickstore.database.messages.*;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -50,9 +47,9 @@ public class ShardedQueryHandlerTest {
         );
 
         ArrayList<QueryHandlerInterface> shards = new ArrayList<>();
-        shards.add(new QueryHandler(store1 = new Store(timeHandler), anomalyGenerator, timeHandler, nodes1));
-        shards.add(new QueryHandler(store2 = new Store(timeHandler), anomalyGenerator, timeHandler, nodes2));
-        shards.add(new QueryHandler(store3 = new Store(timeHandler), anomalyGenerator, timeHandler, nodes3));
+        shards.add(new QueryHandler(store1 = new Store(timeHandler), anomalyGenerator, nodes1, timeHandler));
+        shards.add(new QueryHandler(store2 = new Store(timeHandler), anomalyGenerator, nodes2, timeHandler));
+        shards.add(new QueryHandler(store3 = new Store(timeHandler), anomalyGenerator, nodes3, timeHandler));
 
         Map<String, ShardingStrategy> strategies = new HashMap<>();
         strategies.put("", new HashBasedStrategy());

@@ -2,7 +2,6 @@ package de.unihamburg.sickstore;
 
 import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.QueryHandlerInterface;
-import de.unihamburg.sickstore.backend.ShardedQueryHandler;
 import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
@@ -12,9 +11,7 @@ import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import org.junit.Before;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public abstract class SickstoreTestCase {
@@ -43,6 +40,6 @@ public abstract class SickstoreTestCase {
         );
 
         Store store = new Store(timeHandler);
-        queryHandler = new QueryHandler(store, anomalyGenerator, timeHandler, nodes);
+        queryHandler = new QueryHandler(store, anomalyGenerator, nodes, timeHandler);
     }
 }

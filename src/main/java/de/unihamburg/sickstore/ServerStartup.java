@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.unihamburg.sickstore.backend.QueryHandlerInterface;
 import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
@@ -163,8 +162,8 @@ public class ServerStartup {
         QueryHandler queryHandler = new QueryHandler(
             new Store(timeHandler),
             anomalyGenerator,
-            timeHandler,
-            nodes
+            nodes,
+            timeHandler
         );
 
         log.info("Starting Sick server on port " + port);

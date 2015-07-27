@@ -1,6 +1,7 @@
 package de.unihamburg.sickstore.database;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.esotericsoftware.kryonet.Connection;
@@ -8,7 +9,9 @@ import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
+import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.QueryHandlerInterface;
+import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 import de.unihamburg.sickstore.database.messages.ServerResponseException;
@@ -25,6 +28,21 @@ public class SickServer extends Participant {
 
     /** the overall number of clients connected to the entirety of all SickStore nodes */
     private final AtomicInteger clientCount = new AtomicInteger(0);
+
+    /**
+     * Creates a new instance from a given config object.
+     *
+     * @param config
+     */
+    @SuppressWarnings("unused")
+    public static SickServer newInstanceFromConfig(Map<String, Object> config) {
+        int port = (int) config.getOrDefault("port", 54000);
+        QueryHandlerInterface queryHandler = (QueryHandlerInterface) InstanceFactory.newInstanceFromConfig(
+            (Map<String, Object>) config.get("queryHandler")
+        );
+
+        return new SickServer(port, queryHandler);
+    }
 
     public SickServer(int port, final QueryHandlerInterface queryHandler) {
         this.port = port;

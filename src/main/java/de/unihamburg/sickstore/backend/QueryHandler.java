@@ -1,13 +1,13 @@
 package de.unihamburg.sickstore.backend;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.*;
@@ -20,7 +20,7 @@ import com.codahale.metrics.Slf4jReporter;
 
 public class QueryHandler implements QueryHandlerInterface {
 
-	private TimeHandler timeHandler;
+	private TimeHandler timeHandler = new SystemTimeHandler();
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
 	private AnomalyGenerator anomalyGenerator;
@@ -35,13 +35,39 @@ public class QueryHandler implements QueryHandlerInterface {
 	private Meter requestsScan= null;
 	private Meter requestsUpdate= null;
 
+	@SuppressWarnings("unused")
+	public static QueryHandlerInterface newInstanceFromConfig(Map<String, Object> config) {
+		Map<String, Object> anomalyGeneratorConfig = (Map<String, Object>) config.get("anomalyGenerator");
+		if (anomalyGeneratorConfig == null) {
+			throw new RuntimeException("Missing anomaly generator");
+		}
+
+		Set<Node> nodes = new HashSet<>();
+		for (Map<String, Object> node : (List<Map<String, Object>>) config.getOrDefault("nodes", new ArrayList<>())) {
+			nodes.add((Node) InstanceFactory.newInstanceFromConfig(node));
+		}
+
+		// add nodes into parameters, so that anomaly generators are aware of the available nodes
+		anomalyGeneratorConfig.put("nodes", nodes);
+		AnomalyGenerator anomalyGenerator = (AnomalyGenerator) InstanceFactory
+			.newInstanceFromConfig(anomalyGeneratorConfig);
+
+		return new QueryHandler(new Store(), anomalyGenerator, nodes);
+	}
+
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
-						TimeHandler timeHandler,
+						Set<Node> nodes,
+						TimeHandler timeHandler) {
+		this(mediator, anomalyGenerator, nodes);
+		this.timeHandler = timeHandler;
+	}
+
+	public QueryHandler(Store mediator,
+						AnomalyGenerator anomalyGenerator,
 						Set<Node> nodes) {
 		this.mediator = mediator;
 		this.anomalyGenerator = anomalyGenerator;
-		this.timeHandler = timeHandler;
 		this.nodes = nodes;
 	}
 

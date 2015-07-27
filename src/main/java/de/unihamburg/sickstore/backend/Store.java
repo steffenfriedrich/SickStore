@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +35,12 @@ public class Store {
 	private static final Logger logMeasure = LoggerFactory
 			.getLogger("measurements");
 
-	private TimeHandler timeHandler;
+	private TimeHandler timeHandler = new SystemTimeHandler();
 
 	private TreeMap<String, VersionSet> values = new TreeMap<>();
+
+	public Store() {
+	}
 
 	public Store(TimeHandler timeHandler) {
 		this.timeHandler = timeHandler;

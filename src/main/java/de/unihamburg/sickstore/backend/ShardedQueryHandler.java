@@ -1,9 +1,12 @@
 package de.unihamburg.sickstore.backend;
 
+import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.sharding.ShardingStrategy;
+import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
+import sun.security.jca.GetInstance;
 
 import java.util.*;
 
@@ -19,7 +22,40 @@ public class ShardedQueryHandler implements QueryHandlerInterface {
     /** Maps a table name to a sharding strategy */
     private Map<String, ShardingStrategy> strategies;
 
+    @SuppressWarnings("unused")
+    public static QueryHandlerInterface newInstanceFromConfig(Map<String, Object> config) {
+        List<Map<String, Object>> shardConfigs = (List<Map<String, Object>>) config.get("shards");
+        Map<String, Map<String, Object>> strategyConfigs = (Map<String, Map<String, Object>>) config.get("strategies");
+        if (shardConfigs == null) {
+            throw new RuntimeException("Missing shards");
+        }
+        if (strategyConfigs == null) {
+            throw new RuntimeException("Missing strategies");
+        }
+
+        List<QueryHandlerInterface> shards = new ArrayList<>();
+        for (Map<String, Object> shardConfig : shardConfigs) {
+            shards.add((QueryHandlerInterface) InstanceFactory.newInstanceFromConfig(shardConfig));
+        }
+
+        Map<String, ShardingStrategy> strategies = new HashMap<>();
+        for (Map.Entry<String, Map<String, Object>> entry : strategyConfigs.entrySet()) {
+            String table = entry.getKey();
+
+            strategies.put(
+                table,
+                (ShardingStrategy) InstanceFactory.newInstanceFromConfig(entry.getValue())
+            );
+        }
+
+        return new ShardedQueryHandler(shards, strategies);
+    }
+
     public ShardedQueryHandler(List<QueryHandlerInterface> shards, Map<String, ShardingStrategy> strategies) {
+        if (shards.size() == 0) {
+            throw new RuntimeException("At least one shard is necessary.");
+        }
+
         this.shards = shards;
         this.strategies = strategies;
     }

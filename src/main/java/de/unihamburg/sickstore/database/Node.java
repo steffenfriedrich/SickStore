@@ -1,6 +1,8 @@
 package de.unihamburg.sickstore.database;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class Node {
@@ -8,6 +10,24 @@ public class Node {
     private String name;
     private Set<String> tags = new HashSet<>();
     private boolean primary = false;
+
+    @SuppressWarnings("unused")
+    public static Node newInstanceFromConfig(Map<String, Object> config) {
+        Node node = new Node();
+
+        if (config.get("name") != null) {
+            node.setName((String) config.get("name"));
+        }
+        if (config.get("primary") != null) {
+            node.setPrimary((Boolean) config.get("primary"));
+        }
+        if (config.get("tags") != null) {
+            List<String> tags = (List<String>) config.get("tags");
+            node.setTags(new HashSet<>(tags));
+        }
+
+        return node;
+    }
 
     public Node() {
         this.name = super.toString();

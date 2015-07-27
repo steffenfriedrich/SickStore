@@ -26,13 +26,51 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     private TimeHandler timeHandler = new SystemTimeHandler();
 
     // Tagset Name => tag + its replica acknowledgment
-    private HashMap<String, HashMap<String, Integer>> tagSets = new HashMap<>();
+    private Map<String, Map<String, Integer>> tagSets = new HashMap<>();
 
     private long startedAt;
+
+    @SuppressWarnings("unused")
+    public static MongoDbClientDelay newInstanceFromConfig(Map<String, Object> config) {
+
+        Set<Node> nodes = (Set<Node>) config.get("nodes");
+        Set<NetworkDelay> customDelays = new HashSet<>();
+
+        List<List<Object>> customDelayConfig = (List<List<Object>>) config.
+            getOrDefault("customDelays", new ArrayList<>());
+
+        for (List<Object> customDelay : customDelayConfig) {
+            String fromName = (String) customDelay.get(0);
+            String toName = (String) customDelay.get(1);
+
+            Node to = null;
+            Node from = null;
+
+            // search nodes
+            for (Node node : nodes) {
+                if (node.getName().equals(fromName)) {
+                    from = node;
+                }
+                if (node.getName().equals(toName)) {
+                    to = node;
+                }
+            }
+
+            customDelays.add(new NetworkDelay(from, to, (int) customDelay.get(2)));
+        }
+
+        return new MongoDbClientDelay(
+            (int) config.getOrDefault("defaultDelay", 0),
+            (int) config.getOrDefault("journalCommitInterval", 0),
+            customDelays,
+            (Map<String, Map<String, Integer>>) config.getOrDefault("tagSets", new HashMap<>())
+        );
+    }
 
     /**
      */
     public MongoDbClientDelay() {
+        this.startedAt = timeHandler.getCurrentTime();
     }
 
     /**
@@ -50,7 +88,19 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     public MongoDbClientDelay(long defaultDelay,
                               long journalCommitInterval,
                               Set<NetworkDelay> customDelays,
-                              HashMap<String, HashMap<String, Integer>> tagSets,
+                              Map<String, Map<String, Integer>> tagSets) {
+        this(defaultDelay, journalCommitInterval, customDelays, tagSets, new SystemTimeHandler());
+    }
+
+    /**
+     *
+     * @param defaultDelay time needed (in ms) to send data to a replica until the
+     *                     response arrives
+     */
+    public MongoDbClientDelay(long defaultDelay,
+                              long journalCommitInterval,
+                              Set<NetworkDelay> customDelays,
+                              Map<String, Map<String, Integer>> tagSets,
                               TimeHandler timeHandler) {
         this.defaultDelay = defaultDelay;
         this.journalCommitInterval = journalCommitInterval;
@@ -146,7 +196,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
                 writeConcern.getReplicaAcknowledgementTagSet());
         }
 
-        HashMap<String, Integer> tagSet = tagSets.get(writeConcern.getReplicaAcknowledgementTagSet());
+        Map<String, Integer> tagSet = tagSets.get(writeConcern.getReplicaAcknowledgementTagSet());
 
         long delay = 0;
         for (HashMap.Entry<String, Integer> tagsetEntry : tagSet.entrySet()) {
@@ -265,7 +315,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         this.customDelays = customDelays;
     }
 
-    public void setTagSets(HashMap<String, HashMap<String, Integer>> tagSets) {
+    public void setTagSets(Map<String, Map<String, Integer>> tagSets) {
         this.tagSets = tagSets;
     }
 

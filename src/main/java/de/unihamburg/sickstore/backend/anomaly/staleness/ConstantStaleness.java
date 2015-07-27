@@ -3,6 +3,7 @@
  */
 package de.unihamburg.sickstore.backend.anomaly.staleness;
 
+import java.util.Map;
 import java.util.Set;
 
 import de.unihamburg.sickstore.database.Node;
@@ -25,6 +26,14 @@ public class ConstantStaleness implements StalenessGenerator {
      * by itself
      */
     private long ownReads = 0;
+
+    @SuppressWarnings("unused")
+    public static ConstantStaleness newInstanceFromConfig(Map<String, Object> config) {
+        return new ConstantStaleness(
+            Long.valueOf((Integer) config.get("foreignReads")),
+            Long.valueOf((Integer) config.get("ownReads"))
+        );
+    }
 
     public ConstantStaleness(long foreignReads, long ownReads) {
         super();
