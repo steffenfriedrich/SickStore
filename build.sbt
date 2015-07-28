@@ -17,6 +17,7 @@ lazy val sickstore = (project in file(".")).settings(commonSettings: _*).
       "org.reflections" % "reflections" % "0.9.10",
       "org.slf4j" % "slf4j-api" % "1.7.12",
       "ch.qos.logback" % "logback-classic" % "1.1.3",
+      "org.yaml" % "snakeyaml" % "1.8",
       "io.dropwizard.metrics" % "metrics-core" % "3.1.2"),
 
     mainClass in (Compile, run) := Some("de.unihamburg.sickstore.ServerStartup")

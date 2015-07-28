@@ -158,7 +158,7 @@ public class MongoDbClientDelayTest {
         tagConcern.put("A", 1);
         tagConcern.put("B", 2);
 
-        HashMap<String, HashMap<String, Integer>> tagSets = new HashMap<>();
+        Map<String, Map<String, Integer>> tagSets = new HashMap<>();
         tagSets.put("tagConcern", tagConcern);
         delayGenerator.setTagSets(tagSets);
 

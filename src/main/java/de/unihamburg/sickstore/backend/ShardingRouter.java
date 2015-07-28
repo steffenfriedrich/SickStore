@@ -1,12 +1,10 @@
 package de.unihamburg.sickstore.backend;
 
-import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.sharding.ShardingStrategy;
 import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
-import sun.security.jca.GetInstance;
 
 import java.util.*;
 
@@ -14,7 +12,7 @@ import java.util.*;
  * The sharded query handler redirects all queries to a specific shard (which is a QueryHandlerInterface).
  * The sharding is organized by tables.
  */
-public class ShardedQueryHandler implements QueryHandlerInterface {
+public class ShardingRouter implements QueryHandlerInterface {
 
     /** contains all shards */
     private List<QueryHandlerInterface> shards = new ArrayList<>();
@@ -48,10 +46,11 @@ public class ShardedQueryHandler implements QueryHandlerInterface {
             );
         }
 
-        return new ShardedQueryHandler(shards, strategies);
+        return new ShardingRouter(shards, strategies);
     }
 
-    public ShardedQueryHandler(List<QueryHandlerInterface> shards, Map<String, ShardingStrategy> strategies) {
+    public ShardingRouter(List<QueryHandlerInterface> shards, Map<String, ShardingStrategy>
+        strategies) {
         if (shards.size() == 0) {
             throw new RuntimeException("At least one shard is necessary.");
         }

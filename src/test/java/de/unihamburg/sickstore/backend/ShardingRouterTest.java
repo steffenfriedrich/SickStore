@@ -8,12 +8,15 @@ import de.unihamburg.sickstore.backend.sharding.ShardingStrategy;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
+import de.unihamburg.sickstore.database.messages.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.*;
+
 import static org.junit.Assert.assertEquals;
 
-public class ShardedQueryHandlerTest {
+public class ShardingRouterTest {
 
     private TimeHandler timeHandler;
     private BasicAnomalyGenerator anomalyGenerator;
@@ -54,7 +57,7 @@ public class ShardedQueryHandlerTest {
         Map<String, ShardingStrategy> strategies = new HashMap<>();
         strategies.put("", new HashBasedStrategy());
 
-        queryHandler = new ShardedQueryHandler(shards, strategies);
+        queryHandler = new ShardingRouter(shards, strategies);
     }
 
     @Test
