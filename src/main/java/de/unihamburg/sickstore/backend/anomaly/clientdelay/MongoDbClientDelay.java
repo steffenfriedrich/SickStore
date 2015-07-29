@@ -169,16 +169,19 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         }
 
         if ((nodes.size() == 1 || writeConcern.getReplicaAcknowledgement() <= 1)) {
-            // if there is only one node or if it should not be waited for
-            // further replica acknowledgments the delay is zero
+            // if there is only one node or if no replica acknowledgment is required
+            // the delay is zero
             return 0;
         }
 
-        // select custom delays
-        TreeSet<Long> delays = findRelevantReplicationDelays(request.getReceivedBy());
+        // look for custom delays
+        TreeSet<Long> delays = findCustomDelays(request.getReceivedBy());
 
         // the primary is subtracted (-1), as it has no delay
-        return calculateActualReplicationDelay(writeConcern.getReplicaAcknowledgement() - 1, delays);
+        return calculateObservableReplicationDelay(
+            writeConcern.getReplicaAcknowledgement() - 1,
+            delays
+        );
     }
 
     /**
@@ -209,14 +212,14 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
             }
 
             // find custom delays of nodes with the current tag
-            TreeSet<Long> relevantDelays = findRelevantReplicationDelaysWithTag(
+            TreeSet<Long> relevantDelays = findCustomDelaysWithTag(
                 tag,
                 request.getReceivedBy(),
                 nodes
             );
 
             // calculate delay for this tag
-            long tagDelay = calculateActualReplicationDelay(acknowledgment, relevantDelays);
+            long tagDelay = calculateObservableReplicationDelay(acknowledgment, relevantDelays);
             if (tagDelay > delay) {
                 delay = tagDelay;
             }
@@ -232,9 +235,9 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      * @param receivedBy
      * @return a sorted list with all delays
      */
-    private TreeSet<Long> findRelevantReplicationDelaysWithTag(String tag,
-                                                               Node receivedBy,
-                                                               Set<Node> nodes) {
+    private TreeSet<Long> findCustomDelaysWithTag(String tag,
+                                                  Node receivedBy,
+                                                  Set<Node> nodes) {
         // Find delays of nodes with that tag
         TreeSet<Long> delays = new TreeSet<>();
         for (Node node : nodes) {
@@ -261,12 +264,12 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      * @param receivedBy
      * @return a sorted list with all delays
      */
-    private TreeSet<Long> findRelevantReplicationDelays(Node receivedBy) {
+    private TreeSet<Long> findCustomDelays(Node receivedBy) {
         TreeSet<Long> delays = new TreeSet<>();
 
         for (NetworkDelay customDelay : customDelays) {
             if (customDelay.getFrom() == receivedBy) {
-                // there is custom delay between the node which received the request
+                // there is a custom delay between the node which received the request
                 // and another node
 
                 delays.add(customDelay.getDelay());
@@ -282,8 +285,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      * @param delays
      * @return
      */
-    private long calculateActualReplicationDelay(int acknowledgments, TreeSet<Long> delays) {
-
+    private long calculateObservableReplicationDelay(int acknowledgments, TreeSet<Long> delays) {
         Iterator<Long> it = delays.iterator();
         long delay = 0;
         int acknowledgmentsLeft = acknowledgments;
