@@ -93,28 +93,14 @@ public class ShardingRouter implements QueryHandlerInterface {
      */
     private ServerResponse processScanRequest(ClientRequestScan request) {
         // at first collect all versions, to sort them
-        TreeMap<String, Version> orderedVersions = new TreeMap<>();
-        for (QueryHandlerInterface shard : shards) {
-            ServerResponseScan response = (ServerResponseScan) shard.processQuery(request);
-
-            for (Version version : response.getEntries()) {
-                orderedVersions.put(version.getKey(), version);
-            }
+        ShardingStrategy strategy = strategies.get(request.getTable());
+        if (strategy == null) {
+            // no strategy for this table, ask first shard
+            QueryHandlerInterface shard = shards.iterator().next();
+            return shard.processQuery(request);
         }
 
-        // afterwards select only the required number of versions
-        int range = request.getRecordcount();
-        boolean asc = request.isAscending();
-
-        List<Version> versions = new ArrayList<>(range);
-        String nextKey = request.getKey();
-
-        do {
-            versions.add(orderedVersions.get(nextKey));
-        } while (range > versions.size() && (
-            (asc && (nextKey = orderedVersions.higherKey(nextKey)) != null) ||
-                (!asc && (nextKey = orderedVersions.lowerKey(nextKey)) != null)
-        ));
+        List<Version> versions = strategy.doScanRequest(request, shards);
 
         return new ServerResponseScan(request.getId(), versions);
     }

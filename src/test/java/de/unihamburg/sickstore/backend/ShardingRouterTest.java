@@ -4,6 +4,7 @@ import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
 import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.sharding.HashBasedStrategy;
+import de.unihamburg.sickstore.backend.sharding.RangeBasedStrategy;
 import de.unihamburg.sickstore.backend.sharding.ShardingStrategy;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
@@ -31,7 +32,7 @@ public class ShardingRouterTest {
     private Store store3;
 
     @Before
-    public void initEssentials() throws Exception {
+    public void initEssentials() {
         // create 3 test nodes
         Set<Node> nodes1 = new HashSet<>();
         Set<Node> nodes2 = new HashSet<>();
@@ -56,10 +57,15 @@ public class ShardingRouterTest {
 
         Map<String, ShardingStrategy> strategies = new HashMap<>();
         strategies.put("", new HashBasedStrategy());
+        strategies.put("range", new RangeBasedStrategy(new String [] {"a", "bob"}));
 
         queryHandler = new ShardingRouter(shards, strategies);
     }
 
+    /**
+     * In this case, no sharding strategy is used, as a un-sharded table was specified.
+     * In this case, the item is stored in the first store.
+     */
     @Test
     public void testNoShardingStrategy() {
         ServerResponse response;
@@ -92,35 +98,12 @@ public class ShardingRouterTest {
 
     @Test
     public void testScan() {
-        ServerResponse response;
-
-        Version bob = new Version();
-        bob.put("name", "Bob");
-        Version bobi = new Version();
-        bobi.put("name", "Bobi");
-        Version bobo = new Version();
-        bobo.put("name", "Bobo");
-
-        queryHandler.processQuery(new ClientRequestInsert("", "bob", bob));
-        queryHandler.processQuery(new ClientRequestInsert("", "bobi", bobi));
-        queryHandler.processQuery(new ClientRequestInsert("", "bobo", bobo));
-
-        assertStoredOnce("bob");
-        assertStoredOnce("bobi");
-        assertStoredOnce("bobo");
-
-        response = queryHandler.processQuery(new ClientRequestScan("", "bob", 2, null, true));
-        List<Version> versions = ((ServerResponseScan) response).getEntries();
-
-        assertEquals(2, versions.size());
-        assertEquals(bob, versions.get(0));
-        assertEquals(bobi, versions.get(1));
+        testScanWithTable(""); // hash-based
+        testScanWithTable("range"); // range-based
     }
 
     /**
      * Assert the key was stored in only one store.
-     *
-     * @return
      */
     private void assertStoredOnce(String key)
     {
@@ -141,5 +124,39 @@ public class ShardingRouterTest {
         }
 
         assertEquals(1, stored);
+    }
+
+    private void testScanWithTable(String table) {
+        store1.clear();
+        store2.clear();
+        store3.clear();
+
+        ServerResponse response;
+
+        Version admin = new Version();
+        admin.put("name", "Adam");
+        Version bob = new Version();
+        bob.put("name", "Bob");
+        Version bobi = new Version();
+        bobi.put("name", "Bobi");
+        Version bobo = new Version();
+        bobo.put("name", "Bobo");
+
+        queryHandler.processQuery(new ClientRequestInsert(table, "adam", bob));
+        queryHandler.processQuery(new ClientRequestInsert(table, "bob", bob));
+        queryHandler.processQuery(new ClientRequestInsert(table, "bobi", bobi));
+        queryHandler.processQuery(new ClientRequestInsert(table, "bobo", bobo));
+
+        assertStoredOnce("adam");
+        assertStoredOnce("bob");
+        assertStoredOnce("bobi");
+        assertStoredOnce("bobo");
+
+        response = queryHandler.processQuery(new ClientRequestScan(table, "bob", 2, null, true));
+        List<Version> versions = ((ServerResponseScan) response).getEntries();
+
+        assertEquals(2, versions.size());
+        assertEquals(bob, versions.get(0));
+        assertEquals(bobi, versions.get(1));
     }
 }

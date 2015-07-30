@@ -1,6 +1,8 @@
 package de.unihamburg.sickstore.backend.anomaly;
 
 import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
+import de.unihamburg.sickstore.backend.anomaly.clientdelay.ZeroClientDelay;
+import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
@@ -44,6 +46,11 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
             .newInstanceFromConfig(clientDelayGeneratorConfig);
 
         return new BasicAnomalyGenerator(stalenessGenerator, clientDelayGenerator);
+    }
+
+    public BasicAnomalyGenerator() {
+        this.stalenessGenerator = new ConstantStaleness(0, 0);
+        this.clientDelayGenerator = new ZeroClientDelay();
     }
 
     public BasicAnomalyGenerator(StalenessGenerator stalenessGenerator,
