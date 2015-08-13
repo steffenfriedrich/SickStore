@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
     organization := "de.uni-hamburg.informatik.nosqlmark",
-    version := "1.0",
+    version := "1.1",
     scalaVersion := "2.11.6"
 )
 
