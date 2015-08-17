@@ -1,5 +1,7 @@
-package de.unihamburg.sickstore.backend.anomaly.clientdelay;
+package de.unihamburg.sickstore.backend.anomaly;
 
+import de.unihamburg.sickstore.backend.anomaly.clientdelay.ClientDelayGenerator;
+import de.unihamburg.sickstore.backend.anomaly.clientdelay.NetworkDelay;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
@@ -14,7 +16,7 @@ import java.util.*;
 /**
  * This class calculates a delay for write request which is caused by a MongoDB-like replication.
  */
-public class MongoDbClientDelay implements ClientDelayGenerator {
+public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerator {
 
     /** time needed to contact a replica until the response arrives */
     private long defaultDelay = 0;
@@ -33,7 +35,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     private long startedAt;
 
     @SuppressWarnings("unused")
-    public static MongoDbClientDelay newInstanceFromConfig(Map<String, Object> config) {
+    public static MongoDbAnomalies newInstanceFromConfig(Map<String, Object> config) {
 
         Set<Node> nodes = (Set<Node>) config.get("nodes");
         Set<NetworkDelay> customDelays = new HashSet<>();
@@ -58,10 +60,17 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
                 }
             }
 
+            if (from == null) {
+                throw new RuntimeException("No node found for from: " + fromName);
+            }
+            if (to == null) {
+                throw new RuntimeException("No node found for to: " + toName);
+            }
+
             customDelays.add(new NetworkDelay(from, to, (int) customDelay.get(2)));
         }
 
-        return new MongoDbClientDelay(
+        return new MongoDbAnomalies(
             (int) config.getOrDefault("defaultDelay", 0),
             (int) config.getOrDefault("journalCommitInterval", 0),
             customDelays,
@@ -71,13 +80,13 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
     /**
      */
-    public MongoDbClientDelay() {
+    public MongoDbAnomalies() {
         this.startedAt = timeHandler.getCurrentTime();
     }
 
     /**
      */
-    public MongoDbClientDelay(long defaultDelay) {
+    public MongoDbAnomalies(long defaultDelay) {
         this.defaultDelay = defaultDelay;
         this.startedAt = timeHandler.getCurrentTime();
     }
@@ -89,21 +98,21 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
      * @param customDelays             custom delays between two nodes
      * @param tagSets
      */
-    public MongoDbClientDelay(long defaultDelay,
-                              long journalCommitInterval,
-                              Set<NetworkDelay> customDelays,
-                              Map<String, Map<String, Integer>> tagSets) {
+    public MongoDbAnomalies(long defaultDelay,
+                            long journalCommitInterval,
+                            Set<NetworkDelay> customDelays,
+                            Map<String, Map<String, Integer>> tagSets) {
         this(defaultDelay, journalCommitInterval, customDelays, tagSets, new SystemTimeHandler());
     }
 
     /**
      *
      */
-    public MongoDbClientDelay(long defaultDelay,
-                              long journalCommitInterval,
-                              Set<NetworkDelay> customDelays,
-                              Map<String, Map<String, Integer>> tagSets,
-                              TimeHandler timeHandler) {
+    public MongoDbAnomalies(long defaultDelay,
+                            long journalCommitInterval,
+                            Set<NetworkDelay> customDelays,
+                            Map<String, Map<String, Integer>> tagSets,
+                            TimeHandler timeHandler) {
         this.defaultDelay = defaultDelay;
         this.journalCommitInterval = journalCommitInterval;
         this.customDelays = customDelays;
@@ -122,6 +131,46 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         }
 
         return 0;
+    }
+
+    /**
+     * Calculates the staleness map for the passed request.
+     *
+     * @param nodes a set with all nodes
+     * @param request the change request
+     * @return
+     */
+    @Override
+    public StalenessMap generateStalenessMap(Set<Node> nodes, ClientRequest request) {
+        StalenessMap stalenessMap = new StalenessMap();
+
+        for (Node node : nodes) {
+            long staleness = -1;
+            // find custom delay to replica (which is also the staleness value)
+
+            if (node == request.getReceivedBy()) {
+                // request arrived already on the primary, so there is no staleness
+                staleness = 0;
+            } else {
+                // find the delay that occurs until the request arrives at the replica
+                for (NetworkDelay delay : customDelays) {
+                    if (delay.getFrom() == request.getReceivedBy() && node == delay.getTo()) {
+                        staleness = delay.getDelay();
+
+                        break;
+                    }
+                }
+            }
+
+            // no custom delay found, use the default one
+            if (staleness == -1) {
+                staleness = defaultDelay;
+            }
+
+            stalenessMap.put(node, staleness);
+        }
+
+        return stalenessMap;
     }
 
     /**

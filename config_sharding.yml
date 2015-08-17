@@ -17,8 +17,7 @@ queryHandler:
                     foreignReads: 500
                     ownReads: 0
                 clientDelayGenerator:
-                    class: de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay
-                    defaultDelay: 50
+                    class: de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbAnomaliesAnomalies          defaultDelay: 50
                     journalCommitInterval: 300
             nodes:
                 -

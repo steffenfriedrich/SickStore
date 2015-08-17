@@ -3,7 +3,7 @@ package de.unihamburg.sickstore.backend;
 import java.util.List;
 import java.util.Set;
 
-import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
+import de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.WriteConcern;
@@ -246,7 +246,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
 
     @Test
     public void testDelayGenerator() throws Exception{
-        anomalyGenerator.setClientDelayGenerator(new MongoDbClientDelay(100));
+        anomalyGenerator.setClientDelayGenerator(new MongoDbAnomalies(100));
 
         // create some data objects
         Version bob = new Version();

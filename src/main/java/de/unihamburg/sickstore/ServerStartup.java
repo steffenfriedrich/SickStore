@@ -7,7 +7,7 @@ import java.util.Set;
 import de.unihamburg.sickstore.backend.Store;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
 import de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator;
-import de.unihamburg.sickstore.backend.anomaly.clientdelay.MongoDbClientDelay;
+import de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
@@ -155,7 +155,7 @@ public class ServerStartup {
 
         AnomalyGenerator anomalyGenerator = new BasicAnomalyGenerator(
             new ConstantStaleness(foreignReads, ownReads),
-            new MongoDbClientDelay()
+            new MongoDbAnomalies()
         );
 
         TimeHandler timeHandler = new SystemTimeHandler();

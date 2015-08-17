@@ -28,22 +28,39 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     public static BasicAnomalyGenerator newInstanceFromConfig(Map<String, Object> config) {
         Map<String, Object> stalenessGeneratorConfig = (Map<String, Object>) config.get("stalenessGenerator");
         Map<String, Object> clientDelayGeneratorConfig = (Map<String, Object>) config.get("clientDelayGenerator");
-        if (stalenessGeneratorConfig == null) {
-            throw new RuntimeException("Missing staleness generator");
-        }
-        if (clientDelayGeneratorConfig == null) {
-            throw new RuntimeException("Missing client delay generator");
-        }
+        Map<String, Object> combinedGeneratorConfig = (Map<String, Object>) config.get("combinedGenerator");
 
-        if (config.containsKey("nodes")) {
-            stalenessGeneratorConfig.put("nodes", config.get("nodes"));
-            clientDelayGeneratorConfig.put("nodes", config.get("nodes"));
-        }
+        StalenessGenerator stalenessGenerator;
+        ClientDelayGenerator clientDelayGenerator;
 
-        StalenessGenerator stalenessGenerator = (StalenessGenerator) InstanceFactory
-            .newInstanceFromConfig(stalenessGeneratorConfig);
-        ClientDelayGenerator clientDelayGenerator = (ClientDelayGenerator) InstanceFactory
-            .newInstanceFromConfig(clientDelayGeneratorConfig);
+        if (combinedGeneratorConfig != null) {
+            if (config.containsKey("nodes")) {
+                combinedGeneratorConfig.put("nodes", config.get("nodes"));
+            }
+
+            // a combined generator implements all types of anomalies
+            Object generator = InstanceFactory.newInstanceFromConfig(combinedGeneratorConfig);
+
+            stalenessGenerator = (StalenessGenerator) generator;
+            clientDelayGenerator = (ClientDelayGenerator) generator;
+        } else {
+            if (stalenessGeneratorConfig == null) {
+                throw new RuntimeException("Missing staleness generator");
+            }
+            if (clientDelayGeneratorConfig == null) {
+                throw new RuntimeException("Missing client delay generator");
+            }
+
+            if (config.containsKey("nodes")) {
+                stalenessGeneratorConfig.put("nodes", config.get("nodes"));
+                clientDelayGeneratorConfig.put("nodes", config.get("nodes"));
+            }
+
+            stalenessGenerator = (StalenessGenerator) InstanceFactory
+                .newInstanceFromConfig(stalenessGeneratorConfig);
+            clientDelayGenerator = (ClientDelayGenerator) InstanceFactory
+                .newInstanceFromConfig(clientDelayGeneratorConfig);
+        }
 
         return new BasicAnomalyGenerator(stalenessGenerator, clientDelayGenerator);
     }
@@ -75,6 +92,7 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
                                Set<Node> nodes) {
         if (request instanceof ClientWriteRequest && clientDelayGenerator != null) {
             long delay = clientDelayGenerator.calculateDelay(request, nodes);
+            System.out.println(delay);
 
             anomaly.setClientDelay(delay);
             response.setWaitTimeout(delay);
