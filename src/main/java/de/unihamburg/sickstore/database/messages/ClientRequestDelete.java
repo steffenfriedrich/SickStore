@@ -12,8 +12,8 @@ public class ClientRequestDelete extends ClientWriteRequest {
         super(table, key);
     }
 
-    public ClientRequestDelete(String table, String key, String destinationServer) {
-        super(table, key, destinationServer);
+    public ClientRequestDelete(String table, String key, String destinationNode) {
+        super(table, key, destinationNode);
     }
 
     public ClientRequestDelete(String table, String key, WriteConcern writeConcern) {

@@ -10,8 +10,8 @@ public class ClientRequestUpdate extends ClientWriteRequest {
     private ClientRequestUpdate() {
     }
 
-    public ClientRequestUpdate(String table, String key, Version version, String destinationServer) {
-        super(table, key, destinationServer);
+    public ClientRequestUpdate(String table, String key, Version version, String destinationNode) {
+        super(table, key, destinationNode);
         this.version = version;
     }
 
