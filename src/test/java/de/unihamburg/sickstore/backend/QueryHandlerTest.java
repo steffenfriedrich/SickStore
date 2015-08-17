@@ -259,7 +259,7 @@ public class QueryHandlerTest extends SickstoreTestCase {
         // minAcknowledgements > 0, but no custom delays -> return default delay (100)
         ClientRequestInsert request = new ClientRequestInsert("", "bob", bob, writeConcern, node1.getName());
         ServerResponse response = sendRequest(request);
-        assertEquals((Long) 100l, response.getWaitTimeout());
+        assertEquals((Long) 200l, response.getWaitTimeout());
     }
 
     /**

@@ -37,4 +37,26 @@ public class NetworkDelay {
     public void setLatency(long latency) {
         this.latency = latency;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NetworkDelay that = (NetworkDelay) o;
+
+        if (latency != that.latency) return false;
+        if (!from.equals(that.from)) return false;
+
+        return to.equals(that.to);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = from.hashCode();
+        result = 31 * result + to.hashCode();
+
+        return result;
+    }
 }

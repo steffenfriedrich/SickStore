@@ -48,9 +48,10 @@ public class MongoDbClientDelayTest {
         nodes.add(new Node("name"));
         assertEquals(0, delayGenerator.calculateDelay(request, nodes));
 
-        // another node, min acknowledgement = 2 -> delay is default delay (42)
+        // another node, min acknowledgement = 2
+        // delay is based on default delay (42 + 42, request to + response from replica)
         writeConcern.setReplicaAcknowledgement(2);
-        assertEquals(42, delayGenerator.calculateDelay(request, nodes));
+        assertEquals(84, delayGenerator.calculateDelay(request, nodes));
     }
 
     @Test
@@ -61,7 +62,8 @@ public class MongoDbClientDelayTest {
         Node node4 = new Node("4");
 
         Set<NetworkDelay> customDelays = new HashSet<>();
-        customDelays.add(new NetworkDelay(node1, node2, 100l)); // 100 ms delay from node 1 to node 2
+        customDelays.add(new NetworkDelay(node1, node2, 50l)); // 100 ms delay from node 1 to node 2
+        customDelays.add(new NetworkDelay(node2, node1, 25l)); // 50 ms delay from node 2 to node 1
 
         delayGenerator.setCustomDelays(customDelays);
 
@@ -85,28 +87,29 @@ public class MongoDbClientDelayTest {
         writeConcern.setReplicaAcknowledgement(1);
         assertEquals(0, delayGenerator.calculateDelay(request, nodes));
 
-        // with min Acknowledgement of one other node -> delay is 100
+        // with acknowledgement of additional node -> delay is 150 (primary to replica and back)
         writeConcern.setReplicaAcknowledgement(2);
-        assertEquals(100, delayGenerator.calculateDelay(request, nodes));
+        assertEquals(75, delayGenerator.calculateDelay(request, nodes));
 
-        // add more custom delays. We want to find the shortest delay which fulfills the min acknowledgements
+        // add more custom delays
+        // we want to find the shortest delay which fulfills the min acknowledgements
         writeConcern.setReplicaAcknowledgement(3);
-        customDelays.add(new NetworkDelay(node2, node2, 0l)); // wrong direction, must be ignored
-        customDelays.add(new NetworkDelay(node2, node3, 0l)); // wrong direction, must be ignored
-        customDelays.add(new NetworkDelay(node1, node3, 10l));
+        customDelays.add(new NetworkDelay(node2, node3, 0l)); // does not match -> is ignored
+        customDelays.add(new NetworkDelay(node1, node3, 10l)); // replication to node 3 takes 10 + 42 (default delay) = 52 ms
         customDelays.add(new NetworkDelay(node1, node4, 50l));
+        customDelays.add(new NetworkDelay(node4, node1, 10l)); // replication to node 4 takes 50 + 10 = 60 ms
 
-        // the custom delays from 1 to 3 and 4 can fulfill the min acknowledgement of 3 in 50 ms
-        assertEquals(50, delayGenerator.calculateDelay(request, nodes));
+        assertEquals(60, delayGenerator.calculateDelay(request, nodes));
 
         // more min acknowledgements than custom delays
-        // but the highest custom delay is higher than the default delay, so we expect 100
+        // but the highest custom delay is higher than the default delay, so we expect 75
         writeConcern.setReplicaAcknowledgement(10);
-        assertEquals(100, delayGenerator.calculateDelay(request, nodes));
+        assertEquals(75, delayGenerator.calculateDelay(request, nodes));
 
-        // default delay now higher than the highest custom delay, we expect that
+        // no custom delay for response from node 3 to node 1, so the default delay will be used
+        // 10 + 1000 = 1010 is expected
         delayGenerator.setDefaultDelay(1000l);
-        assertEquals(1000, delayGenerator.calculateDelay(request, nodes));
+        assertEquals(1010, delayGenerator.calculateDelay(request, nodes));
     }
 
     @Test
@@ -175,16 +178,16 @@ public class MongoDbClientDelayTest {
         request.setReceivedBy(primary);
 
         long delay = delayGenerator.calculateDelay(request, nodes);
-        assertEquals(10, delay);
+        assertEquals(52, delay);
 
         // expect three acks for B
         tagConcern.put("B", 3);
         delay = delayGenerator.calculateDelay(request, nodes);
-        assertEquals(20, delay);
+        assertEquals(62, delay);
 
         // no custom delays, expect the default
         customDelays.clear();
         delay = delayGenerator.calculateDelay(request, nodes);
-        assertEquals(42, delay);
+        assertEquals(84, delay);
     }
 }

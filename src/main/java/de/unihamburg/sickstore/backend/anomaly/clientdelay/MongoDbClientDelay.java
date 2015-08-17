@@ -1,5 +1,7 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
+import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
@@ -82,8 +84,10 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
     /**
      *
-     * @param defaultDelay time needed (in ms) to send data to a replica until the
-     *                     response arrives
+     * @param defaultDelay             default delay (in ms) between two nodes.
+     * @param journalCommitInterval
+     * @param customDelays             custom delays between two nodes
+     * @param tagSets
      */
     public MongoDbClientDelay(long defaultDelay,
                               long journalCommitInterval,
@@ -94,8 +98,6 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
 
     /**
      *
-     * @param defaultDelay time needed (in ms) to send data to a replica until the
-     *                     response arrives
      */
     public MongoDbClientDelay(long defaultDelay,
                               long journalCommitInterval,
@@ -175,7 +177,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
         }
 
         // look for custom delays
-        TreeSet<Long> delays = findCustomDelays(request.getReceivedBy());
+        TreeSet<Long> delays = findCustomDelays(request.getReceivedBy(), nodes);
 
         // the primary is subtracted (-1), as it has no delay
         return calculateObservableReplicationDelay(
@@ -238,42 +240,56 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     private TreeSet<Long> findCustomDelaysWithTag(String tag,
                                                   Node receivedBy,
                                                   Set<Node> nodes) {
-        // Find delays of nodes with that tag
-        TreeSet<Long> delays = new TreeSet<>();
+        // Find all nodes with that tag
+        Set<Node> foundNodes = new HashSet<>();
         for (Node node : nodes) {
-            if (node.getTags().contains(tag)) {
-                if (node == receivedBy) {
-                    // the receiving node has no extra delay
-                    continue;
-                }
-
-                for (NetworkDelay customDelay : customDelays) {
-                    if (customDelay.getFrom() == receivedBy && customDelay.getTo() == node) {
-                        delays.add(customDelay.getDelay());
-                    }
-                }
+            if (node.getTags().contains(tag) && node != receivedBy) {
+                foundNodes.add(node);
             }
         }
 
-        return delays;
+        return findCustomDelays(receivedBy, foundNodes);
     }
 
     /**
-     * Returns a sorted list of all delays, that occur from the receiving node to its replicas.
+     * Returns a sorted list of all delays, that occur from a request that is propagated to a
+     * replica until a confirmation is received.
      *
      * @param receivedBy
+     * @param nodes
      * @return a sorted list with all delays
      */
-    private TreeSet<Long> findCustomDelays(Node receivedBy) {
+    private TreeSet<Long> findCustomDelays(Node receivedBy, Set<Node> nodes) {
         TreeSet<Long> delays = new TreeSet<>();
 
-        for (NetworkDelay customDelay : customDelays) {
-            if (customDelay.getFrom() == receivedBy) {
-                // there is a custom delay between the node which received the request
-                // and another node
-
-                delays.add(customDelay.getDelay());
+        // calculate the delays that occur by propagating the request to each node
+        for (Node node : nodes) {
+            if (node == receivedBy) {
+                // there is no delay to the primary (the receiving node)
+                // so, the node can be ignored
+                continue;
             }
+
+            long requestDelay = -1; // delay from primary to replica
+            long responseDelay = -1; // delay from replica to primary
+            for (NetworkDelay customDelay : customDelays) {
+                if (customDelay.getFrom() == receivedBy && customDelay.getTo() == node) {
+                    requestDelay = customDelay.getDelay();
+                }
+                if (customDelay.getTo() == receivedBy && customDelay.getFrom() == node) {
+                    responseDelay = customDelay.getDelay();
+                }
+            }
+
+            if (requestDelay == -1) {
+                requestDelay = defaultDelay;
+            }
+            if (responseDelay == -1) {
+                responseDelay = defaultDelay;
+            }
+
+            long delay = requestDelay + responseDelay;
+            delays.add(delay);
         }
 
         return delays;
@@ -282,7 +298,7 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
     /**
      * Calculates the actual delay that will be produced by the write concern.
      * @param acknowledgments number of acknowledgments that are necessary
-     * @param delays
+     * @param delays a set with all delays until a response is retrieved from a replica
      * @return
      */
     private long calculateObservableReplicationDelay(int acknowledgments, TreeSet<Long> delays) {
@@ -296,10 +312,6 @@ public class MongoDbClientDelay implements ClientDelayGenerator {
             }
 
             acknowledgmentsLeft--;
-        }
-
-        if (acknowledgmentsLeft > 0 && delay < defaultDelay) {
-            return defaultDelay;
         }
 
         return delay;
