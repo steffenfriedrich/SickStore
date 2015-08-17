@@ -5,7 +5,7 @@
 	<groupId>de.uni-hamburg.informatik.nosqlmark</groupId>
 	<artifactId>sickstore</artifactId>
 	<packaging>jar</packaging>
-	<version>1.1</version>
+	<version>1.2</version>
 	<name>sickstore</name>
 
 	<properties>
