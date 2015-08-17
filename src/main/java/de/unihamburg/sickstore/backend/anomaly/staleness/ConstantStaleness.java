@@ -42,9 +42,9 @@ public class ConstantStaleness implements StalenessGenerator {
     }
 
     /**
-     * @see StalenessGenerator#get(Set, ClientRequest)
+     * @see StalenessGenerator#generateStalenessMap(Set, ClientRequest)
      */
-    public StalenessMap get(Set<Node> nodes, ClientRequest request) {
+    public StalenessMap generateStalenessMap(Set<Node> nodes, ClientRequest request) {
         StalenessMap delay = new StalenessMap();
 
         for (Node node : nodes) {

@@ -64,7 +64,7 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
         Anomaly anomaly = new Anomaly();
 
         if (request instanceof ClientWriteRequest && stalenessGenerator != null) {
-            anomaly.setStalenessMap(stalenessGenerator.get(nodes, request));
+            anomaly.setStalenessMap(stalenessGenerator.generateStalenessMap(nodes, request));
         }
 
         return anomaly;
