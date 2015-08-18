@@ -92,7 +92,6 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
                                Set<Node> nodes) {
         if (request instanceof ClientWriteRequest && clientDelayGenerator != null) {
             long delay = clientDelayGenerator.calculateDelay(request, nodes);
-            System.out.println(delay);
 
             anomaly.setClientDelay(delay);
             response.setWaitTimeout(delay);
