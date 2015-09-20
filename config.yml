@@ -16,8 +16,10 @@ queryHandler:
             journalCommitInterval: 300
             customDelays:
                 # to, from, delay
-                - [primary, secondary1, 1000]
-                - [secondary1, primary, 100]
+                - [primary, secondary1, 100]
+                - [primary, secondary2, 50]
+                - [secondary1, primary, 90]
+                - [secondary2, primary, 50]
             tagSets:
                 foobar:
                     A: 1

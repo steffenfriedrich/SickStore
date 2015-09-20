@@ -27,7 +27,7 @@ Download [the latest JAR](http://nosqlmark.informatik.uni-hamburg.de/nosqlmark/)
 <dependency>
     <groupId>de.uni-hamburg.informatik.nosqlmark</groupId>
     <artifactId>sickstore</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
     
