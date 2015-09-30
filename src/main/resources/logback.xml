@@ -34,7 +34,7 @@
 		</rollingPolicy>
 	</appender>
 	
-		<appender name="METRICS-FILE"
+	<appender name="METRICS-FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<encoder>
 			<pattern>%date{ISO8601};%msg%n</pattern>
@@ -47,12 +47,10 @@
 	</appender>
 
 	<logger name="measurements" level="info" additivity="false">
-<!-- 		<appender-ref ref="STDOUT"/> -->
 		<appender-ref ref="MEASUREMENTS-FILE" />
 	</logger>
 
 	<logger name="metrics" level="info" additivity="false">
-<!-- 		<appender-ref ref="STDOUT"/> -->
 		<appender-ref ref="METRICS-FILE" />
 	</logger>
 
@@ -62,6 +60,6 @@
 	</logger>
 
 	<root level="debug">
-		<appender-ref ref="STDOUT" />
+		<appender-ref ref="SICKSTORE-FILE"/>
 	</root>
 </configuration>
