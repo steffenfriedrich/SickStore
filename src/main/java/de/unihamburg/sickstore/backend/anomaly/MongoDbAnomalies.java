@@ -24,6 +24,9 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
     /** time interval in which the journal is committed */
     private long journalCommitInterval = 100;
 
+    /** delays between client and nodes */
+    private Set<NetworkDelay> clientNodeLatencies = new HashSet<>();
+
     /** custom delays between two nodes */
     private Set<NetworkDelay> customDelays = new HashSet<>();
 
@@ -38,6 +41,29 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
     public static MongoDbAnomalies newInstanceFromConfig(Map<String, Object> config) {
 
         Set<Node> nodes = (Set<Node>) config.get("nodes");
+        Set<NetworkDelay> clientNodeLatencies = new HashSet<>();
+
+        List<List<Object>> clientNodeLatenciesConfig = (List<List<Object>>) config.
+                getOrDefault("clientNodeLatencies", new ArrayList<>());
+        
+        for (List<Object> clientNodeLatency : clientNodeLatenciesConfig) {
+            String serverName = (String) clientNodeLatency.get(0);
+
+            Node server = null;
+            // search nodes
+            for (Node node : nodes) {
+                if (node.getName().equals(serverName)) {
+                    server = node;
+                }
+            }
+            if (server == null) {
+                throw new RuntimeException("No node found for delay between client and server node (" + server + ")");
+            }
+            NetworkDelay delay = new NetworkDelay(new Node("Client"), server, (int) clientNodeLatency.get(1));
+            clientNodeLatencies.add(delay);
+        }
+
+
         Set<NetworkDelay> customDelays = new HashSet<>();
 
         List<List<Object>> customDelayConfig = (List<List<Object>>) config.
@@ -73,6 +99,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
         return new MongoDbAnomalies(
             (int) config.getOrDefault("defaultDelay", 0),
             (int) config.getOrDefault("journalCommitInterval", 0),
+                clientNodeLatencies,
             customDelays,
             (Map<String, Map<String, Integer>>) config.getOrDefault("tagSets", new HashMap<>())
         );
@@ -100,9 +127,10 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      */
     public MongoDbAnomalies(long defaultDelay,
                             long journalCommitInterval,
+                            Set<NetworkDelay> clientNodeLatencies,
                             Set<NetworkDelay> customDelays,
                             Map<String, Map<String, Integer>> tagSets) {
-        this(defaultDelay, journalCommitInterval, customDelays, tagSets, new SystemTimeHandler());
+        this(defaultDelay, journalCommitInterval, clientNodeLatencies, customDelays, tagSets, new SystemTimeHandler());
     }
 
     /**
@@ -110,11 +138,13 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      */
     public MongoDbAnomalies(long defaultDelay,
                             long journalCommitInterval,
+                            Set<NetworkDelay> clientNodeLatencies,
                             Set<NetworkDelay> customDelays,
                             Map<String, Map<String, Integer>> tagSets,
                             TimeHandler timeHandler) {
         this.defaultDelay = defaultDelay;
         this.journalCommitInterval = journalCommitInterval;
+        this.clientNodeLatencies = clientNodeLatencies;
         this.customDelays = customDelays;
         this.tagSets = tagSets;
         this.timeHandler = timeHandler;
@@ -126,12 +156,32 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      */
     @Override
     public long calculateDelay(ClientRequest request, Set<Node> nodes) {
+        long clientServerDelay = calculateClientServerDelay(request, nodes);
+
         if (request instanceof ClientWriteRequest) {
-            return calculateWriteDelay((ClientWriteRequest) request, nodes);
+            return clientServerDelay + calculateWriteDelay((ClientWriteRequest) request, nodes);
         }
 
+        return clientServerDelay;
+    }
+
+    /**
+     * Calculates the delay between client and requested node
+     * @param request
+     * @param nodes
+     * @return
+     */
+    private long calculateClientServerDelay(ClientRequest request, Set<Node> nodes) {
+        Node receivedBy = request.getReceivedBy();
+
+        for (NetworkDelay delay : clientNodeLatencies) {
+            if (delay.getTo() == receivedBy) {
+                return delay.getDelay();
+            }
+        }
         return 0;
     }
+
 
     /**
      * Calculates the staleness map for the passed request.

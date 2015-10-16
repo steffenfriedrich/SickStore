@@ -37,7 +37,7 @@ Contribute
 To publish a new SickStore version ([Articel on javaworld.com](http://www.javaworld.com/article/2073230/maven-repository-in-three-steps.html).):
 
     mvn install -DperformRelease=true -DcreateChecksum=true
-    
+        
 This will create all necessary folder structures in your local Maven2 repository 
 (which is located ~/.m2/repository/de/uni-hamburg/informatik/nosqlmark/sickstore, and will install all artifacts there (along with md5 and sha1 checksums). 
 

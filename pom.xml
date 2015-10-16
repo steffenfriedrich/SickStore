@@ -3,8 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.unihamburg</groupId>
 	<artifactId>sickstore</artifactId>
-	<packaging>pom</packaging>
-	<version>1.2</version>
+	<packaging>jar</packaging>
+	<version>1.3</version>
 	<name>Sickstore</name>
 
 	<properties>

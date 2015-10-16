@@ -13,6 +13,11 @@ public abstract class ClientRequest {
     protected String key;
 
     /**
+     * a timestamp indicating when the client sended the request.
+     */
+    private long sendedByClientAt = -1;
+
+    /**
      * a timestamp indicating when the server received the request. Has to be
      * set by the receiving server
      */
@@ -37,6 +42,7 @@ public abstract class ClientRequest {
 
     public ClientRequest(String table, String key) {
         this();
+        this.sendedByClientAt = System.currentTimeMillis();
         this.table = table;
         this.key = key;
         this.id = counter.incrementAndGet();
@@ -44,6 +50,7 @@ public abstract class ClientRequest {
 
     public ClientRequest(String table, String key, String destinationNode) {
         this();
+        this.sendedByClientAt = System.currentTimeMillis();
         this.destinationNode = destinationNode;
         this.table = table;
         this.key = key;
@@ -60,6 +67,10 @@ public abstract class ClientRequest {
 
     public String getKey() {
         return key;
+    }
+
+    public long getSendedByClientAt() {
+        return sendedByClientAt;
     }
 
     public long getReceivedAt() {

@@ -104,13 +104,18 @@ public class SickClient extends Participant {
                 System.out.println("Disconnected from server.");
             }
 
+
             @Override
             public void received(Connection c, Object object) {
                 if (object instanceof ServerResponse) {
                     // Wait some time if the response wants us to wait
                     ServerResponse response = (ServerResponse) object;
-                    if (response.getWaitTimeout() > 0) {
-                        sickclient.timeHandler.sleep(response.getWaitTimeout());
+                    long sentByClientAt = response.getSentByClientAt();
+                    long now = System.currentTimeMillis();
+                    long latency = now - sentByClientAt;
+                    long diff = response.getWaitTimeout() - latency;
+                    if (diff > 0) {
+                        sickclient.timeHandler.sleep(diff);
                     }
                 }
 

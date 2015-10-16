@@ -12,18 +12,18 @@ queryHandler:
 #            class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
         combinedGenerator:
             class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
-            defaultDelay: 100
-            journalCommitInterval: 300
+            defaultDelay: 10
+            journalCommitInterval: 10
             clientNodeLatencies:
-                - [primary, 200]
-                - [secondary1, 200]
-                - [secondary2, 200]
+                - [primary, 20]
+                - [secondary1, 20]
+                - [secondary2, 20]
             customDelays:
                 # to, from, delay
-                - [primary, secondary1, 50]
-                - [primary, secondary2, 20]
-                - [secondary1, primary, 60]
-                - [secondary2, primary, 20]
+                - [primary, secondary1, 10]
+                - [primary, secondary2, 5]
+                - [secondary1, primary, 10]
+                - [secondary2, primary, 5]
             tagSets:
                 foobar:
                     A: 1

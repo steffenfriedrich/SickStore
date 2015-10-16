@@ -12,6 +12,9 @@ public class ServerResponse {
     /** Atomic ID of this response (which increases with each response) */
     protected Long responseId;
 
+    /** a timestamp indicating when the client sended the request.*/
+    private long sendedByClientAt = -1;
+
     /** Indicates how long the requesting client needs to delay after this response (to simulate write latencies) */
     protected Long waitTimeout = 0l;
 
@@ -34,6 +37,10 @@ public class ServerResponse {
     public Long getResponseId() {
         return responseId;
     }
+
+    public Long getSentByClientAt(){return this.sendedByClientAt;}
+
+    public void setSentByClientAt(Long sendedByClientAt){this.sendedByClientAt = sendedByClientAt;}
 
     public Long getWaitTimeout() {
         return waitTimeout;

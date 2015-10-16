@@ -96,6 +96,7 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
             anomaly.setClientDelay(delay);
             response.setWaitTimeout(delay);
         }
+        response.setSentByClientAt(request.getSendedByClientAt());
     }
 
     public StalenessGenerator getStalenessGenerator() {
