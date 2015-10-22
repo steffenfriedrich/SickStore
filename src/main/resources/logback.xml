@@ -54,6 +54,22 @@
 		</triggeringPolicy>
 	</appender>
 
+	<appender name="STALENESS-FILE"
+			  class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>logs/staleness.log</file>
+		<encoder>
+			<pattern>%date{ISO8601} | %-5level | %msg%n</pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>logs/staleness-%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<triggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<maxFileSize>20MB</maxFileSize>
+		</triggeringPolicy>
+	</appender>
+
 	<appender name="METRICS-FILE"
 			  class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>logs/metrics.log</file>
@@ -113,6 +129,10 @@
 	<logger name="sickstore" level="debug" additivity="false">
 		<appender-ref ref="STDOUT"/>
 		<appender-ref ref="SICKSTORE-FILE" />
+	</logger>
+
+	<logger name="staleness" level="debug" additivity="false">
+		<appender-ref ref="STALENESS-FILE"/>
 	</logger>
 
 	<root level="debug">

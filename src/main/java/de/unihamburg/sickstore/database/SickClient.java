@@ -18,6 +18,8 @@ import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import de.unihamburg.sickstore.database.messages.exception.NotConnectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -25,7 +27,7 @@ import de.unihamburg.sickstore.database.messages.exception.NotConnectedException
  * 
  */
 public class SickClient extends Participant {
-
+    private static final Logger log = LoggerFactory.getLogger("sickstore");
     private int timeout;
     private String host;
     private int tcpPort;
@@ -114,6 +116,7 @@ public class SickClient extends Participant {
                     long now = System.currentTimeMillis();
                     long latency = now - sentByClientAt;
                     long diff = response.getWaitTimeout() - latency;
+                    log.debug("latency {}, wait timeout {}, diff {}", latency, response.getWaitTimeout(), diff);
                     if (diff > 0) {
                         sickclient.timeHandler.sleep(diff);
                     }
@@ -143,13 +146,12 @@ public class SickClient extends Participant {
                 } else if (object instanceof ServerResponse) {
                     ServerResponse message = (ServerResponse) object;
                     Long id = message.getClientRequestID();
-
                     sickclient.outstandingRequests.put(id, true);
                 } else if (object instanceof FrameworkMessage) {
                 } else {
                     System.out.println("connection "
-                        + sickclient.client.getID() + " received: "
-                        + object);
+                            + sickclient.client.getID() + " received: "
+                            + object);
                 }
             }
         });
@@ -397,5 +399,33 @@ public class SickClient extends Participant {
      */
     public boolean update(String table, String key, Version values) throws DatabaseException {
         return update(table, key, values, new WriteConcern());
+    }
+
+    /**
+     * Request to export measurements and restart measurement
+     * @param exportFolder  export measurements to a folder with the given name
+     * @return  true on success; false else
+     * @throws DatabaseException
+     */
+    public boolean cleanup(String exportFolder) throws DatabaseException {
+        checkWhetherConnected("Cannot perform cleanup operation: not connected to server.");
+
+        checkWhetherConnected("Cannot perform scan operation: not connected to server.");
+
+        ClientRequestCleanup request = new ClientRequestCleanup(exportFolder);
+        client.sendTCP(request);
+
+        Object ack;
+        do {
+            checkWhetherConnected("Connection dropped.");
+            ack = outstandingRequests.get(request.getId());
+        } while (ack == null);
+
+        if (ack instanceof Boolean) {
+            return (Boolean) ack;
+        } else if (ack instanceof DatabaseException) {
+            throw (DatabaseException) ack;
+        }
+        return false;
     }
 }

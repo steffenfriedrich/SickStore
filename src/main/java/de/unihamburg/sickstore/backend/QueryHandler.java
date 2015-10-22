@@ -1,7 +1,6 @@
 package de.unihamburg.sickstore.backend;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
@@ -11,12 +10,6 @@ import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Slf4jReporter;
 
 public class QueryHandler implements QueryHandlerInterface {
 
@@ -24,16 +17,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
 	private AnomalyGenerator anomalyGenerator;
-
-	private final MetricRegistry metrics = new MetricRegistry();
-    private static final Logger logMetrics = LoggerFactory.getLogger("metrics");
-	private Slf4jReporter reporter = null;
-	private Meter requests = null;
-	private Meter requestsInsert = null;
-	private Meter requestsDelete = null;
-	private Meter requestsRead= null;
-	private Meter requestsScan= null;
-	private Meter requestsUpdate= null;
 
 	@SuppressWarnings("unused")
 	public static QueryHandlerInterface newInstanceFromConfig(Map<String, Object> config) {
@@ -206,6 +189,13 @@ public class QueryHandler implements QueryHandlerInterface {
 		return response;
 	}
 
+	private ServerResponseCleanup process(ClientRequestCleanup request) {
+		long timestamp = request.getReceivedAt();
+		long clientRequestID = request.getId();
+		// TODO export measurement
+ 		return new ServerResponseCleanup(clientRequestID);
+	}
+
 	/**
 	 * Processes an incoming query.
 	 */
@@ -235,49 +225,27 @@ public class QueryHandler implements QueryHandlerInterface {
 					}
 				}
 			}
-
 			if (request.getReceivedBy() == null) {
 				throw new DatabaseException("Did not find the node this request is pointed to (" + request.getDestinationNode() + ")");
 			}
-
-			// metrics measures "requests per second"
-			if (requests == null) {
-				initMetricReporter();
-				requests = metrics.meter("requests");
-			}
-			requests.mark();
-
 			if (request instanceof ClientRequestDelete) {
 				// delete request
 				response = process((ClientRequestDelete) request);
 			} else if (request instanceof ClientRequestInsert) {
 				// insert request
-				if (requestsInsert == null) {
-					requestsInsert = metrics.meter("requestsInsert");
-				}
 				response = process((ClientRequestInsert) request);
-				requestsInsert.mark();
 			} else if (request instanceof ClientRequestRead) {
 				// read request
-				if (requestsRead == null) {
-					requestsRead = metrics.meter("requestsRead");
-				}
 				response = process((ClientRequestRead) request);
-				requestsRead.mark();
 			} else if (request instanceof ClientRequestScan) {
 				// scan request
-				if (requestsScan == null) {
-					requestsScan = metrics.meter("requestsScan");
-				}
 				response = process((ClientRequestScan) request);
-				requestsScan.mark();
 			} else if (request instanceof ClientRequestUpdate) {
 				// update request
-				if (requestsUpdate == null) {
-					requestsUpdate = metrics.meter("requestsUpdate");
-				}
 				response = process((ClientRequestUpdate) request);
-				requestsUpdate.mark();
+			} else if (request instanceof ClientRequestCleanup) {
+				// cleanup request
+				response = process((ClientRequestCleanup) request);
 			} else {
 				throw new UnknownMessageTypeException(
 						"Cannot process request; unknown message type: "
@@ -297,25 +265,4 @@ public class QueryHandler implements QueryHandlerInterface {
 	public synchronized void setNodes(Set<Node> nodes) {
 		this.nodes = nodes;
 	}
-
-    public void resetMeters() {
-		if (reporter != null) {
-			reporter.stop();
-			logMetrics.info("reporter stopped");
-			for (String name : metrics.getMetrics().keySet()) {
-				metrics.remove(name);
-			}
-			requests = null;
-			requestsInsert = null;
-		}
-    }
-    
-    public void initMetricReporter() {
-		reporter = Slf4jReporter.forRegistry(metrics)
-		.outputTo(LoggerFactory.getLogger("metrics"))
-		.convertRatesTo(TimeUnit.SECONDS)
-		.convertDurationsTo(TimeUnit.MILLISECONDS).build();
-		reporter.start(5, TimeUnit.SECONDS);
-    	logMetrics.info("reporter started");
-    }
 }

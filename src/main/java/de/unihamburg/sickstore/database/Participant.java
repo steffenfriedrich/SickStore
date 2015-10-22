@@ -17,19 +17,7 @@ import com.esotericsoftware.kryonet.EndPoint;
 import com.google.common.reflect.ClassPath;
 
 import de.unihamburg.sickstore.backend.Version;
-import de.unihamburg.sickstore.database.messages.ClientRequest;
-import de.unihamburg.sickstore.database.messages.ClientRequestDelete;
-import de.unihamburg.sickstore.database.messages.ClientRequestInsert;
-import de.unihamburg.sickstore.database.messages.ClientRequestRead;
-import de.unihamburg.sickstore.database.messages.ClientRequestScan;
-import de.unihamburg.sickstore.database.messages.ClientRequestUpdate;
-import de.unihamburg.sickstore.database.messages.ServerResponse;
-import de.unihamburg.sickstore.database.messages.ServerResponseDelete;
-import de.unihamburg.sickstore.database.messages.ServerResponseException;
-import de.unihamburg.sickstore.database.messages.ServerResponseInsert;
-import de.unihamburg.sickstore.database.messages.ServerResponseRead;
-import de.unihamburg.sickstore.database.messages.ServerResponseScan;
-import de.unihamburg.sickstore.database.messages.ServerResponseUpdate;
+import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import de.unihamburg.sickstore.database.messages.exception.DeleteException;
 import de.unihamburg.sickstore.database.messages.exception.DoubleVersionException;
@@ -128,6 +116,7 @@ public class Participant {
         classes.add(ClientRequestRead.class);
         classes.add(ClientRequestScan.class);
         classes.add(ClientRequestUpdate.class);
+        classes.add(ClientRequestCleanup.class);
         classes.add(DatabaseException.class);
         classes.add(DeleteException.class);
         classes.add(DoubleVersionException.class);
@@ -143,6 +132,7 @@ public class Participant {
         classes.add(ServerResponseRead.class);
         classes.add(ServerResponseScan.class);
         classes.add(ServerResponseUpdate.class);
+        classes.add(ServerResponseCleanup.class);
         classes.add(UnknownMessageTypeException.class);
         classes.add(UpdateException.class);
 

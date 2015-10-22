@@ -32,8 +32,8 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
  */
 public class Store {
 
-	private static final Logger logMeasure = LoggerFactory
-			.getLogger("measurements");
+	private static final Logger logStaleness = LoggerFactory
+			.getLogger("staleness");
 
 	private TimeHandler timeHandler = new SystemTimeHandler();
 
@@ -115,14 +115,14 @@ public class Store {
 		if (logStaleness && version != Version.NULL) {
 			if (version == versionMostRecent) {
 				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
-				logMeasure.info("key;" + key + ";most recent version;"
+				Store.logStaleness.info("key;" + key + ";most recent version;"
 						+ versionMostRecent.getWrittenAt()
 						+ ";staleness in versions;" + versionStaleness
 						+ ";staleness in ms;0" + ";read-after-write lag;"
 						+ timeSinceLastUpdate);
 
 			} else {
-				logMeasure.info("key;"
+				Store.logStaleness.info("key;"
 						+ key
 						+ ";most recent version;"
 						+ versionMostRecent.getWrittenAt()
@@ -130,7 +130,7 @@ public class Store {
 						+ versionStaleness
 						+ ";staleness in ms;"
 						+ (timestamp - versionMostRecent.getWrittenAt()
-								+ ";read-after-write lag;" + -1));
+						+ ";read-after-write lag;" + -1));
 			}
 		}
 

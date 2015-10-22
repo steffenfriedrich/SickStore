@@ -139,7 +139,6 @@ public class SickServer extends Participant {
      */
     public int incrementAndGetClientCount() {
         clientCount.incrementAndGet();
-        resetMetersIfIdle();
         return clientCount.get();
     }
 
@@ -150,17 +149,6 @@ public class SickServer extends Participant {
      */
     public int decrementAndGetClientCount() {
         clientCount.decrementAndGet();
-        resetMetersIfIdle();
         return clientCount.get();
-    }
-
-    /**
-     * Calls {@link #resetMetres()}, if there are no clients connected to
-     * Sickstore
-     */
-    public void resetMetersIfIdle() {
-        if (clientCount.get() == 0) {
-            queryHandler.resetMeters();
-        }
     }
 }
