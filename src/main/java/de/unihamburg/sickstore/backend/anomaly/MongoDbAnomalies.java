@@ -195,6 +195,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      */
     @Override
     public StalenessMap generateStalenessMap(Set<Node> nodes, ClientRequest request) {
+        long start = System.currentTimeMillis();
         StalenessMap stalenessMap = new StalenessMap();
 
         for (Node node : nodes) {
@@ -222,7 +223,8 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
 
             stalenessMap.put(node, staleness);
         }
-
+        long end = System.currentTimeMillis();
+        log.debug("MongoDbAnomalies,generateStalenessMap,{},{}",request.toString(), (end - start));
         return stalenessMap;
     }
 
@@ -267,6 +269,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @return
      */
     private long calculateReplicationDelay(ClientRequestWrite request, Set<Node> nodes) {
+        long start = System.currentTimeMillis();
         WriteConcern writeConcern = request.getWriteConcern();
         if (writeConcern.getReplicaAcknowledgementTagSet() != null) {
             return calculateTaggedReplicationDelay(request, nodes);
@@ -280,7 +283,8 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
 
         // look for custom delays
         TreeSet<Long> delays = findCustomDelays(request.getReceivedBy(), nodes);
-
+        long end = System.currentTimeMillis();
+        log.debug("MongoDbAnomalies,calculateReplicationDelay,{},{}",request.toString(), (end - start));
         // the primary is subtracted (-1), as it has no delay
         return calculateObservableReplicationDelay(
             writeConcern.getReplicaAcknowledgement() - 1,
@@ -296,6 +300,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @return
      */
     private long calculateTaggedReplicationDelay(ClientRequestWrite request, Set<Node> nodes) {
+        long start = System.currentTimeMillis();
         WriteConcern writeConcern = request.getWriteConcern();
 
         if (!tagSets.containsKey(writeConcern.getReplicaAcknowledgementTagSet())) {
@@ -328,7 +333,8 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
                 delay = tagDelay;
             }
         }
-
+        long end = System.currentTimeMillis();
+        log.debug("MongoDbAnomalies,calculateTaggedReplicationDelay,{},{}",request.toString(), (end - start));
         return delay;
     }
 
@@ -362,6 +368,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @return a sorted list with all delays
      */
     private TreeSet<Long> findCustomDelays(Node receivedBy, Set<Node> nodes) {
+        long start = System.currentTimeMillis();
         TreeSet<Long> delays = new TreeSet<>();
 
         // calculate the delays that occur by propagating the request to each node
@@ -393,7 +400,8 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
             long delay = requestDelay + responseDelay;
             delays.add(delay);
         }
-
+        long end = System.currentTimeMillis();
+        log.debug("MongoDbAnomalies,findCustomDelays,{},{}","", (end - start));
         return delays;
     }
 

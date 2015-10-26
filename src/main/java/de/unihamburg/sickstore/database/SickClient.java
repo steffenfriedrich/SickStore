@@ -116,7 +116,10 @@ public class SickClient extends Participant {
                     long now = System.currentTimeMillis();
                     long latency = now - sentByClientAt;
                     long diff = response.getWaitTimeout() - latency;
-                    log.debug(response.toString() + ": sendedByClientAt {}, now {}, latency {}, wait timeout {}, diff {}", sentByClientAt, now, latency, response.getWaitTimeout(), diff);
+
+                    if (latency > 10) {
+                        log.debug(response.toString() + ", latency {},wait timeout {},diff {}", latency, response.getWaitTimeout(), diff);
+                    }
                     if (diff > 0) {
                         sickclient.timeHandler.sleep(diff);
                     }

@@ -9,12 +9,14 @@ import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestWrite;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
 
 public class BasicAnomalyGenerator implements AnomalyGenerator {
-
+    private static final Logger log = LoggerFactory.getLogger("sickstore");
     private StalenessGenerator stalenessGenerator;
     private ClientDelayGenerator clientDelayGenerator;
 
@@ -78,22 +80,27 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
 
     @Override
     public Anomaly handleRequest(ClientRequest request, Set<Node> nodes) {
+        long start = System.currentTimeMillis();
         Anomaly anomaly = new Anomaly();
 
         if (request instanceof ClientRequestWrite && stalenessGenerator != null) {
             anomaly.setStalenessMap(stalenessGenerator.generateStalenessMap(nodes, request));
         }
-
+        long end = System.currentTimeMillis();
+        log.debug("BasicAnomalyGenerator,handleRequest,{},{}", request.toString(), (end - start));
         return anomaly;
     }
 
     @Override
     public void handleResponse(Anomaly anomaly, ClientRequest request, ServerResponse response,
                                Set<Node> nodes) {
+        long start = System.currentTimeMillis();
         long delay = clientDelayGenerator.calculateDelay(request, nodes);
         anomaly.setClientDelay(delay);
         response.setWaitTimeout(delay);
         response.setSentByClientAt(request.getSendedByClientAt());
+        long end = System.currentTimeMillis();
+        log.debug("BasicAnomalyGenerator,handleResponse,{},{}", delay, (end - start));
     }
 
     public StalenessGenerator getStalenessGenerator() {
