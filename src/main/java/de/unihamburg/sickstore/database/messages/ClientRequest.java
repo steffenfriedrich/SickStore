@@ -38,11 +38,11 @@ public abstract class ClientRequest {
 
     public ClientRequest() {
         super();
+        this.sendedByClientAt = System.currentTimeMillis();
     }
 
     public ClientRequest(String table, String key) {
         this();
-        this.sendedByClientAt = System.currentTimeMillis();
         this.table = table;
         this.key = key;
         this.id = counter.incrementAndGet();
@@ -50,7 +50,6 @@ public abstract class ClientRequest {
 
     public ClientRequest(String table, String key, String destinationNode) {
         this();
-        this.sendedByClientAt = System.currentTimeMillis();
         this.destinationNode = destinationNode;
         this.table = table;
         this.key = key;

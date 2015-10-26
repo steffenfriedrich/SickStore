@@ -90,12 +90,9 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     @Override
     public void handleResponse(Anomaly anomaly, ClientRequest request, ServerResponse response,
                                Set<Node> nodes) {
-        if (request instanceof ClientWriteRequest && clientDelayGenerator != null) {
-            long delay = clientDelayGenerator.calculateDelay(request, nodes);
-
-            anomaly.setClientDelay(delay);
-            response.setWaitTimeout(delay);
-        }
+        long delay = clientDelayGenerator.calculateDelay(request, nodes);
+        anomaly.setClientDelay(delay);
+        response.setWaitTimeout(delay);
         response.setSentByClientAt(request.getSendedByClientAt());
     }
 

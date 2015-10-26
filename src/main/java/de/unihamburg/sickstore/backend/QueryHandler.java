@@ -190,10 +190,12 @@ public class QueryHandler implements QueryHandlerInterface {
 	}
 
 	private ServerResponseCleanup process(ClientRequestCleanup request) {
-		long timestamp = request.getReceivedAt();
 		long clientRequestID = request.getId();
+		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		// TODO export measurement
- 		return new ServerResponseCleanup(clientRequestID);
+		ServerResponseCleanup response = new ServerResponseCleanup(clientRequestID);
+		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
+ 		return response;
 	}
 
 	/**

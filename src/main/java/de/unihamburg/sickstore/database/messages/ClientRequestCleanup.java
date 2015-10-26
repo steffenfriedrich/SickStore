@@ -11,8 +11,7 @@ public class ClientRequestCleanup extends ClientRequest {
     private String _exportFolder;
 
     @SuppressWarnings("unused")
-    private ClientRequestCleanup() {
-    }
+    private ClientRequestCleanup() { super("", "");}
 
     /**
      * @param exportFolder export measurements to a folder with the given name
@@ -25,4 +24,8 @@ public class ClientRequestCleanup extends ClientRequest {
 
     public String getExportFolder() { return _exportFolder; }
 
+    @Override
+    public String toString() {
+        return "CLEANUP";
+    }
 }
