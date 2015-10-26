@@ -48,4 +48,9 @@ public class ClientRequestScan extends ClientRequest {
     public void setRecordcount(int recordcount) {
         this.recordcount = recordcount;
     }
+
+    @Override
+    public String toString() {
+        return "SCAN";
+    }
 }

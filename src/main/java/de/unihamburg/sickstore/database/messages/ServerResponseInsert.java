@@ -11,4 +11,9 @@ public class ServerResponseInsert extends ServerResponse {
         super(clientRequestID);
     }
 
+
+    @Override
+    public String toString() {
+        return "INSERT";
+    }
 }

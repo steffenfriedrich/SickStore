@@ -7,9 +7,21 @@ queryHandler:
         combinedGenerator:
             class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
             defaultDelay: 0
+            journalCommitInterval: 0
+            clientNodeLatencies:
+                - [primary, 0]
+                - [secondary1, 0]
+                - [secondary2, 0]
+            customDelays:
+                # to, from, delay
+                - [primary, secondary1, 0]
+                - [primary, secondary2, 0]
+                - [secondary1, primary, 0]
+                - [secondary2, primary, 0]
             tagSets:
                 foobar:
                     A: 1
+                    B: 2
     nodes:
         -
             class: de.unihamburg.sickstore.database.Node
@@ -17,6 +29,7 @@ queryHandler:
             primary: true
             tags:
                 - A
+                - B
         -
             class: de.unihamburg.sickstore.database.Node
             name: secondary1
@@ -26,4 +39,4 @@ queryHandler:
             class: de.unihamburg.sickstore.database.Node
             name: secondary2
             tags:
-                - A
+                - B

@@ -7,7 +7,7 @@ import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
-import de.unihamburg.sickstore.database.messages.ClientWriteRequest;
+import de.unihamburg.sickstore.database.messages.ClientRequestWrite;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
 import java.util.Map;
@@ -80,7 +80,7 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     public Anomaly handleRequest(ClientRequest request, Set<Node> nodes) {
         Anomaly anomaly = new Anomaly();
 
-        if (request instanceof ClientWriteRequest && stalenessGenerator != null) {
+        if (request instanceof ClientRequestWrite && stalenessGenerator != null) {
             anomaly.setStalenessMap(stalenessGenerator.generateStalenessMap(nodes, request));
         }
 

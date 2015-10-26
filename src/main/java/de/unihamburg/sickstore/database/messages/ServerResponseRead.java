@@ -22,4 +22,9 @@ public class ServerResponseRead extends ServerResponse {
     public void setVersion(Version version) {
         this.version = version;
     }
+
+    @Override
+    public String toString() {
+        return "READ";
+    }
 }

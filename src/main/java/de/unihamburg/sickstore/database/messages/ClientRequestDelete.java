@@ -2,7 +2,7 @@ package de.unihamburg.sickstore.database.messages;
 
 import de.unihamburg.sickstore.database.WriteConcern;
 
-public class ClientRequestDelete extends ClientWriteRequest {
+public class ClientRequestDelete extends ClientRequestWrite {
 
     @SuppressWarnings("unused")
     private ClientRequestDelete() {
@@ -22,5 +22,10 @@ public class ClientRequestDelete extends ClientWriteRequest {
 
     public ClientRequestDelete(String table, String key, WriteConcern writeConcern, String destinationNode) {
         super(table, key, writeConcern, destinationNode);
+    }
+
+    @Override
+    public String toString() {
+        return "DELETE";
     }
 }

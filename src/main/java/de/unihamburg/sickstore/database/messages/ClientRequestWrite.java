@@ -2,28 +2,28 @@ package de.unihamburg.sickstore.database.messages;
 
 import de.unihamburg.sickstore.database.WriteConcern;
 
-public abstract class ClientWriteRequest extends ClientRequest {
+public abstract class ClientRequestWrite extends ClientRequest {
 
     private WriteConcern writeConcern = new WriteConcern();
 
-    public ClientWriteRequest() {
+    public ClientRequestWrite() {
     }
 
-    public ClientWriteRequest(String table, String key) {
+    public ClientRequestWrite(String table, String key) {
         super(table, key);
     }
 
-    public ClientWriteRequest(String table, String key, String destinationNode) {
+    public ClientRequestWrite(String table, String key, String destinationNode) {
         super(table, key, destinationNode);
     }
 
-    public ClientWriteRequest(String table, String key, WriteConcern writeConcern) {
+    public ClientRequestWrite(String table, String key, WriteConcern writeConcern) {
         super(table, key);
 
         this.writeConcern = writeConcern;
     }
 
-    public ClientWriteRequest(String table, String key, WriteConcern writeConcern, String destinationNode) {
+    public ClientRequestWrite(String table, String key, WriteConcern writeConcern, String destinationNode) {
         super(table, key, destinationNode);
 
         this.writeConcern = writeConcern;
@@ -35,5 +35,10 @@ public abstract class ClientWriteRequest extends ClientRequest {
 
     public void setWriteConcern(WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
+    }
+
+    @Override
+    public String toString() {
+        return "WRITE";
     }
 }

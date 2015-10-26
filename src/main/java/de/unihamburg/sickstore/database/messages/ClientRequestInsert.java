@@ -3,7 +3,7 @@ package de.unihamburg.sickstore.database.messages;
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.database.WriteConcern;
 
-public class ClientRequestInsert extends ClientWriteRequest {
+public class ClientRequestInsert extends ClientRequestWrite {
     private Version version;
 
     @SuppressWarnings("unused")
@@ -36,5 +36,10 @@ public class ClientRequestInsert extends ClientWriteRequest {
 
     public void setVersion(Version version) {
         this.version = version;
+    }
+
+    @Override
+    public String toString() {
+        return "INSERT";
     }
 }

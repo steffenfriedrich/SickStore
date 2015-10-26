@@ -39,4 +39,8 @@ public class ServerResponseException extends ServerResponse {
         }
     }
 
+    @Override
+    public String toString() {
+        return "Exception";
+    }
 }

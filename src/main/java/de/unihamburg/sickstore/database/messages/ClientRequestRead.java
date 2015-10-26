@@ -26,4 +26,9 @@ public class ClientRequestRead extends ClientRequest {
     public void setFields(Set<String> fields) {
         this.fields = fields;
     }
+
+    @Override
+    public String toString() {
+        return "READ";
+    }
 }

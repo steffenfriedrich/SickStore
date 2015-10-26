@@ -9,7 +9,9 @@ import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
-import de.unihamburg.sickstore.database.messages.ClientWriteRequest;
+import de.unihamburg.sickstore.database.messages.ClientRequestWrite;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -17,6 +19,8 @@ import java.util.*;
  * This class calculates a delay for write request which is caused by a MongoDB-like replication.
  */
 public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerator {
+
+    private static final Logger log = LoggerFactory.getLogger("sickstore");
 
     /** time needed to contact a replica until the response arrives */
     private long defaultDelay = 0;
@@ -157,12 +161,11 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
     @Override
     public long calculateDelay(ClientRequest request, Set<Node> nodes) {
         long clientServerDelay = calculateClientServerDelay(request, nodes);
-
-        if (request instanceof ClientWriteRequest) {
-            return clientServerDelay + calculateWriteDelay((ClientWriteRequest) request, nodes);
+        long writeDelay = 0;
+        if (request instanceof ClientRequestWrite) {
+            writeDelay = calculateWriteDelay((ClientRequestWrite) request, nodes);
         }
-
-        return clientServerDelay;
+        return clientServerDelay + writeDelay;
     }
 
     /**
@@ -231,7 +234,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @param nodes
      * @return
      */
-    private long calculateWriteDelay(ClientWriteRequest request, Set<Node> nodes) {
+    private long calculateWriteDelay(ClientRequestWrite request, Set<Node> nodes) {
         long replicationDelay = calculateReplicationDelay(request, nodes);
         long journalingDelay = calculateJournalingDelay(request);
 
@@ -244,7 +247,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @param request
      * @return
      */
-    private long calculateJournalingDelay(ClientWriteRequest request) {
+    private long calculateJournalingDelay(ClientRequestWrite request) {
         if (!request.getWriteConcern().isJournaling()) {
             return 0;
         }
@@ -263,7 +266,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @param nodes
      * @return
      */
-    private long calculateReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
+    private long calculateReplicationDelay(ClientRequestWrite request, Set<Node> nodes) {
         WriteConcern writeConcern = request.getWriteConcern();
         if (writeConcern.getReplicaAcknowledgementTagSet() != null) {
             return calculateTaggedReplicationDelay(request, nodes);
@@ -292,7 +295,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @param nodes
      * @return
      */
-    private long calculateTaggedReplicationDelay(ClientWriteRequest request, Set<Node> nodes) {
+    private long calculateTaggedReplicationDelay(ClientRequestWrite request, Set<Node> nodes) {
         WriteConcern writeConcern = request.getWriteConcern();
 
         if (!tagSets.containsKey(writeConcern.getReplicaAcknowledgementTagSet())) {

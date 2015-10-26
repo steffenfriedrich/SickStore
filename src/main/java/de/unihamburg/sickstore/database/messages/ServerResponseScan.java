@@ -24,4 +24,10 @@ public class ServerResponseScan extends ServerResponse {
     public void setEntries(List<Version> entries) {
         this.entries = entries;
     }
+
+    @Override
+    public String toString() {
+        return "SCAN";
+    }
+
 }

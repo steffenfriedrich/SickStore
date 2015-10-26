@@ -12,4 +12,9 @@ public class ServerResponseCleanup extends ServerResponse {
     public ServerResponseCleanup(long clientRequestID) {
         super(clientRequestID);
     }
+
+    @Override
+    public String toString() {
+        return "CLEANUP";
+    }
 }

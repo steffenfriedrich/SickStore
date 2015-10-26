@@ -81,7 +81,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>de.unihamburg.sickstore.ServerStartup</mainClass>
+							<mainClass>de.unihamburg.sickstore.YamlStartup</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>

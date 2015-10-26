@@ -10,4 +10,9 @@ public class ServerResponseDelete extends ServerResponse {
     public ServerResponseDelete(long clientRequestID) {
         super(clientRequestID);
     }
+
+    @Override
+    public String toString() {
+        return "DELETE";
+    }
 }

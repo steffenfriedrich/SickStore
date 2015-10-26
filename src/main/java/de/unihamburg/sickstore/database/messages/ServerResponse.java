@@ -49,4 +49,9 @@ public class ServerResponse {
     public void setWaitTimeout(Long waitTimeout) {
         this.waitTimeout = waitTimeout;
     }
+
+    @Override
+    public String toString() {
+        return "RESPONSE";
+    }
 }

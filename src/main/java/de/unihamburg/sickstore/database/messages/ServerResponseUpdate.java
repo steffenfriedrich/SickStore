@@ -10,4 +10,9 @@ public class ServerResponseUpdate extends ServerResponse {
     public ServerResponseUpdate(long clientRequestID) {
         super(clientRequestID);
     }
+
+    @Override
+    public String toString() {
+        return "UPDATE";
+    }
 }
