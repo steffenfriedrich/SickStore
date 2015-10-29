@@ -16,8 +16,8 @@ queryHandler:
             journalCommitInterval: 1
             clientNodeLatencies:
                 - [primary, 2]
-                - [secondary1, 2]
-                - [secondary2, 2]
+                - [secondary1, 1]
+                - [secondary2, 3]
             customDelays:
                 # to, from, delay
                 - [primary, secondary1, 1]

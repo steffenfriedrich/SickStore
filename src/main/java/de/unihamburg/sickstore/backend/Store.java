@@ -69,8 +69,6 @@ public class Store {
 
 	/**
 	 * Get a data item with all columns.
-	 *
-	 * @see Store#get(int, String, Set, long, boolean)
 	 */
 	public synchronized Version get(Node node, String key, long timestamp, boolean logStaleness) {
 		return get(node, key, (Set<String>) null, timestamp, logStaleness);
@@ -112,27 +110,27 @@ public class Store {
 		}
 
 		// log staleness informations for ClientRequestRead only
-		if (logStaleness && version != Version.NULL) {
-			if (version == versionMostRecent) {
-				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
-				Store.logStaleness.info("key;" + key + ";most recent version;"
-						+ versionMostRecent.getWrittenAt()
-						+ ";staleness in versions;" + versionStaleness
-						+ ";staleness in ms;0" + ";read-after-write lag;"
-						+ timeSinceLastUpdate);
-
-			} else {
-				Store.logStaleness.info("key;"
-						+ key
-						+ ";most recent version;"
-						+ versionMostRecent.getWrittenAt()
-						+ ";staleness in versions;"
-						+ versionStaleness
-						+ ";staleness in ms;"
-						+ (timestamp - versionMostRecent.getWrittenAt()
-						+ ";read-after-write lag;" + -1));
-			}
-		}
+//		if (logStaleness && version != Version.NULL) {
+//			if (version == versionMostRecent) {
+//				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
+//				Store.logStaleness.info("key;" + key + ";most recent version;"
+//						+ versionMostRecent.getWrittenAt()
+//						+ ";staleness in versions;" + versionStaleness
+//						+ ";staleness in ms;0" + ";read-after-write lag;"
+//						+ timeSinceLastUpdate);
+//
+//			} else {
+//				Store.logStaleness.info("key;"
+//						+ key
+//						+ ";most recent version;"
+//						+ versionMostRecent.getWrittenAt()
+//						+ ";staleness in versions;"
+//						+ versionStaleness
+//						+ ";staleness in ms;"
+//						+ (timestamp - versionMostRecent.getWrittenAt()
+//						+ ";read-after-write lag;" + -1));
+//			}
+//		}
 
 		if (!version.isNull()) {
 			try {
@@ -146,8 +144,6 @@ public class Store {
 
 	/**
 	 * Get a specific data item but only with the value of a single column.
-	 *
-	 * @see Store#get(int, String, Set, long, boolean)
 	 */
 	public synchronized Version get(Node node, String key, String column,
 			long timestamp, boolean logStaleness) {

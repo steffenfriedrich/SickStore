@@ -110,6 +110,7 @@ public class Participant {
 
         // register messages
         classes.add(WriteConcern.class);
+        classes.add(ReadPreference.class);
         classes.add(ClientRequest.class);
         classes.add(ClientRequestDelete.class);
         classes.add(ClientRequestInsert.class);

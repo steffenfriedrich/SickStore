@@ -7,11 +7,10 @@ import java.util.Set;
 
 public class Node {
 
-    private String name;
+    private String name = "primary";
     private Set<String> tags = new HashSet<>();
     private boolean primary = false;
 
-    @SuppressWarnings("unused")
     public static Node newInstanceFromConfig(Map<String, Object> config) {
         Node node = new Node();
 

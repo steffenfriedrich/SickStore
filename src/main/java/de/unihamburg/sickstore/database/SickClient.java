@@ -116,7 +116,7 @@ public class SickClient extends Participant {
                     long now = System.currentTimeMillis();
                     long latency = now - sentByClientAt;
                     long diff = response.getWaitTimeout() - latency;
-                    log.debug(response.toString() + ": sendedByClientAt {}, now {}, latency {}, wait timeout {}, diff {}", sentByClientAt, now, latency, response.getWaitTimeout(), diff);
+                    // log.debug(response.toString() + ", latency {}, wait timeout {}, diff {}", latency, response.getWaitTimeout(), diff);
                     if (diff > 0) {
                         sickclient.timeHandler.sleep(diff);
                     }
@@ -278,11 +278,11 @@ public class SickClient extends Participant {
      * @return the read version
      * @throws DatabaseException
      */
-    public Version read(String table, String key, Set<String> fields)
+    public Version read(String table, String key, Set<String> fields, ReadPreference readPreference)
             throws DatabaseException {
         checkWhetherConnected("Cannot perform read operation: not connected to server.");
 
-        ClientRequestRead request = new ClientRequestRead(table, key, fields, destinationNode);
+        ClientRequestRead request = new ClientRequestRead(table, key, fields, destinationNode, readPreference);
         client.sendTCP(request);
 
         Object ack;
@@ -300,10 +300,10 @@ public class SickClient extends Participant {
         }
     }
 
-    public List<Version> scan(String table, String startkey, int recordcount,
-            Set<String> fields) throws DatabaseException {
-        return scan(table, startkey, recordcount, fields, true);
+    public Version read(String table, String key, Set<String> fields) throws DatabaseException {
+        return read(table, key, fields, null);
     }
+
 
     /**
      * 
@@ -322,11 +322,11 @@ public class SickClient extends Participant {
      * @throws DatabaseException
      */
     public List<Version> scan(String table, String startkey, int recordcount,
-            Set<String> fields, boolean ascending) throws DatabaseException {
+            Set<String> fields, boolean ascending, ReadPreference readPreference) throws DatabaseException {
         checkWhetherConnected("Cannot perform scan operation: not connected to server.");
 
-        ClientRequestScan request = new ClientRequestScan(table, startkey, recordcount, fields, ascending, destinationNode
-        );
+        ClientRequestScan request = new ClientRequestScan(table, startkey, recordcount, fields, ascending, destinationNode,
+                readPreference);
         client.sendTCP(request);
 
         Object ack;
@@ -353,6 +353,14 @@ public class SickClient extends Participant {
         } else {
             throw new DatabaseException("Something went wrong.");
         }
+    }
+
+    public List<Version> scan(String table, String startkey, int recordcount, Set<String> fields, boolean ascending) throws DatabaseException {
+        return scan(table, startkey, recordcount, fields, ascending, null);
+    }
+
+    public List<Version> scan(String table, String startkey, int recordcount, Set<String> fields) throws DatabaseException {
+        return scan(table, startkey, recordcount, fields, true);
     }
 
     /**
