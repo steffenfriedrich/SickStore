@@ -7,13 +7,17 @@ import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
+import de.unihamburg.sickstore.database.ReadPreference;
 import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
+import de.unihamburg.sickstore.database.messages.ClientRequestRead;
+import de.unihamburg.sickstore.database.messages.ClientRequestScan;
 import de.unihamburg.sickstore.database.messages.ClientRequestWrite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class calculates a delay for write request which is caused by a MongoDB-like replication.
@@ -40,6 +44,8 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
     private Map<String, Map<String, Integer>> tagSets = new HashMap<>();
 
     private long startedAt;
+
+    private Random randomGen = new Random();
 
     @SuppressWarnings("unused")
     public static MongoDbAnomalies newInstanceFromConfig(Map<String, Object> config) {
@@ -175,11 +181,24 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      * @return
      */
     private long calculateClientServerDelay(ClientRequest request, Set<Node> nodes) {
-        Node receivedBy = request.getReceivedBy();
+        Node node = request.getReceivedBy();
+        ReadPreference readPreference = null;
+        if (request instanceof ClientRequestRead) {
+            readPreference = ((ClientRequestRead) request).getReadPreference();
+        } else if (request instanceof ClientRequestScan) {
+            readPreference = ((ClientRequestScan) request).getReadPreference();
+        }
+        if(readPreference != null && readPreference.isSlaveOk()) {
+            List<Node> secondaries = nodes.stream().filter(n -> !n.isPrimary()).collect(Collectors.toList());
+            int r = randomGen.nextInt(secondaries.size());
+            node = secondaries.get(r);
+        }
 
         for (NetworkDelay delay : clientNodeLatencies) {
-            if (delay.getTo() == receivedBy) {
-                return delay.getDelay();
+            if (delay.getTo() == node) {
+                long d = delay.getDelay();
+                // log.debug("node {}, delay {}",node.getName(), d);
+                return d;
             }
         }
         return 0;

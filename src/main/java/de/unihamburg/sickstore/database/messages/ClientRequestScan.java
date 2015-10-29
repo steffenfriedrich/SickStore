@@ -1,11 +1,15 @@
 package de.unihamburg.sickstore.database.messages;
 
+import de.unihamburg.sickstore.database.ReadPreference;
+
 import java.util.Set;
 
 public class ClientRequestScan extends ClientRequest {
     private boolean ascending = false;
     private Set<String> fields;
     private int recordcount;
+
+    private ReadPreference readPreference;
 
     @SuppressWarnings("unused")
     private ClientRequestScan() {
@@ -16,6 +20,11 @@ public class ClientRequestScan extends ClientRequest {
         this.recordcount = recordcount;
         this.fields = fields;
         this.ascending = ascending;
+    }
+
+    public ClientRequestScan(String table, String key, int recordcount, Set<String> fields, boolean ascending, String destinationNode,  ReadPreference readPreference) {
+        this(table, key, recordcount, fields, ascending, destinationNode);
+        this.readPreference = readPreference;
     }
 
     public ClientRequestScan(String table, String key, int recordcount, Set<String> fields, boolean ascending, String destinationNode) {
@@ -49,6 +58,9 @@ public class ClientRequestScan extends ClientRequest {
         this.recordcount = recordcount;
     }
 
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
     @Override
     public String toString() {
         return "SCAN";
