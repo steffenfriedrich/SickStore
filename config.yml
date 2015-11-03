@@ -12,6 +12,10 @@ queryHandler:
 #            class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
         combinedGenerator:
             class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
+            maxThroughputs:
+                - [primary, 0]
+                - [secondary1, 0]
+                - [secondary2, 0]
             defaultDelay: 100
             journalCommitInterval: 300
             clientNodeLatencies:

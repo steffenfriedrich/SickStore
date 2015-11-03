@@ -38,6 +38,8 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
     /** custom delays between two nodes */
     private Set<NetworkDelay> customDelays = new HashSet<>();
 
+    private Map<Node, Integer> maxThroughputs = new HashMap<Node, Integer>();
+
     private TimeHandler timeHandler = new SystemTimeHandler();
 
     // Tagset Name => tag + its replica acknowledgment
@@ -73,6 +75,26 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
             clientNodeLatencies.add(delay);
         }
 
+        Map<Node, Integer> maxThroughputs = new HashMap<Node, Integer>();
+
+        List<List<Object>> maxThroughputsConfig = (List<List<Object>>) config.
+                getOrDefault("maxThroughputs", new ArrayList<>());
+
+        for (List<Object> maxThroughput : maxThroughputsConfig) {
+            String serverName = (String) maxThroughput.get(0);
+            Node server = null;
+            // search nodes
+            for (Node node : nodes) {
+                if (node.getName().equals(serverName)) {
+                    server = node;
+                }
+            }
+            if (server == null) {
+                throw new RuntimeException("No node found for delay between client and server node (" + server + ")");
+            }
+            int throughput = (int) maxThroughput.get(1);
+            maxThroughputs.put(server, throughput);
+        }
 
         Set<NetworkDelay> customDelays = new HashSet<>();
 
@@ -110,8 +132,9 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
             (int) config.getOrDefault("defaultDelay", 0),
             (int) config.getOrDefault("journalCommitInterval", 0),
                 clientNodeLatencies,
-            customDelays,
-            (Map<String, Map<String, Integer>>) config.getOrDefault("tagSets", new HashMap<>())
+                customDelays,
+                maxThroughputs,
+                (Map<String, Map<String, Integer>>) config.getOrDefault("tagSets", new HashMap<>())
         );
     }
 
@@ -139,8 +162,9 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
                             long journalCommitInterval,
                             Set<NetworkDelay> clientNodeLatencies,
                             Set<NetworkDelay> customDelays,
+                            Map<Node, Integer> maxThroughputs,
                             Map<String, Map<String, Integer>> tagSets) {
-        this(defaultDelay, journalCommitInterval, clientNodeLatencies, customDelays, tagSets, new SystemTimeHandler());
+        this(defaultDelay, journalCommitInterval, clientNodeLatencies, customDelays, maxThroughputs, tagSets, new SystemTimeHandler());
     }
 
     /**
@@ -150,15 +174,22 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
                             long journalCommitInterval,
                             Set<NetworkDelay> clientNodeLatencies,
                             Set<NetworkDelay> customDelays,
+                            Map<Node, Integer> maxThroughputs,
                             Map<String, Map<String, Integer>> tagSets,
                             TimeHandler timeHandler) {
         this.defaultDelay = defaultDelay;
         this.journalCommitInterval = journalCommitInterval;
         this.clientNodeLatencies = clientNodeLatencies;
         this.customDelays = customDelays;
+        this.maxThroughputs = maxThroughputs;
         this.tagSets = tagSets;
         this.timeHandler = timeHandler;
         this.startedAt = timeHandler.getCurrentTime();
+    }
+
+
+    public double calculateActualThroughput(Node nodes, long delay) {
+        return 0.0;
     }
 
     /**
@@ -166,21 +197,20 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
      */
     @Override
     public long calculateDelay(ClientRequest request, Set<Node> nodes) {
-        long clientServerDelay = calculateClientServerDelay(request, nodes);
+        Node responsiveNode = getResponsiveNode(request, nodes);
+        long clientServerDelay = calculateClientServerDelay(responsiveNode);
         long writeDelay = 0;
         if (request instanceof ClientRequestWrite) {
             writeDelay = calculateWriteDelay((ClientRequestWrite) request, nodes);
         }
-        return clientServerDelay + writeDelay;
+        long delay = clientServerDelay + writeDelay;
+
+
+        return delay;
     }
 
-    /**
-     * Calculates the delay between client and requested node
-     * @param request
-     * @param nodes
-     * @return
-     */
-    private long calculateClientServerDelay(ClientRequest request, Set<Node> nodes) {
+
+    private Node getResponsiveNode(ClientRequest request, Set<Node> nodes) {
         Node node = request.getReceivedBy();
         ReadPreference readPreference = null;
         if (request instanceof ClientRequestRead) {
@@ -193,11 +223,16 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
             int r = randomGen.nextInt(secondaries.size());
             node = secondaries.get(r);
         }
+        return node;
+    }
 
+    /**
+     * Calculates the delay between client and requested node
+     */
+    private long calculateClientServerDelay(Node node) {
         for (NetworkDelay delay : clientNodeLatencies) {
             if (delay.getTo() == node) {
                 long d = delay.getDelay();
-                // log.debug("node {}, delay {}",node.getName(), d);
                 return d;
             }
         }
