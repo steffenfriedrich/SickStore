@@ -14,10 +14,6 @@ queryHandler:
             class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
             defaultDelay: 10
             journalCommitInterval: 10
-            clientNodeLatencies:
-                - [primary, 20]
-                - [secondary1, 20]
-                - [secondary2, 20]
             customDelays:
                 # to, from, delay
                 - [primary, secondary1, 10]
@@ -33,16 +29,22 @@ queryHandler:
             class: de.unihamburg.sickstore.database.Node
             name: primary
             primary: true
+            clientLatency: 20
+            maxThroughput: 10.0
             tags:
                 - A
                 - B
         -
             class: de.unihamburg.sickstore.database.Node
             name: secondary1
+            clientLatency: 20
+            maxThroughput: 10.0
             tags:
                 - A
         -
             class: de.unihamburg.sickstore.database.Node
             name: secondary2
+            clientLatency: 20
+            maxThroughput: 10.0
             tags:
                 - B

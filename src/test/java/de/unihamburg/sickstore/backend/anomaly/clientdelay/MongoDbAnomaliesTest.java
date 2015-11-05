@@ -30,7 +30,6 @@ public class MongoDbAnomaliesTest {
             42l,
             300,
             new HashSet<>(),
-            new HashSet<>(),
             new HashMap<>(),
             timeHandler
         );
