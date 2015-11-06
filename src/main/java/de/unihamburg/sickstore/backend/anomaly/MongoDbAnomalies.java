@@ -144,8 +144,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
             writeDelay = calculateWriteDelay((ClientRequestWrite) request, nodes);
         }
         long delay = clientServerDelay + writeDelay;
-
-
+        long correctedDelay = responsiveNode.getThroughput().correctDelay(delay);
         return delay;
     }
 

@@ -51,8 +51,8 @@ public class ThroughputTest {
         assertEquals(th2.getThroughput(), 100, 0.0);
 
 
-        Throughput th3 = new Throughput(400, 20, 20);
-        for (int i = 0; i < 10; i++) {
+        Throughput th3 = new Throughput(400, 40, 10);
+        for (int i = 0; i < 100 ; i++) {
             int r = rnd.nextInt(4);
             long cor = th3.correctDelay(r);
             int r2 = rnd.nextInt(2);
