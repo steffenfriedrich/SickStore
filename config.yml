@@ -31,9 +31,7 @@ queryHandler:
             primary: true
             clientLatency: 2
             throughput:
-                max: 200.0
-                hickupEvery: 10000
-                hickupDuration: 200
+                max: 10000.0
             tags:
                 - A
                 - B

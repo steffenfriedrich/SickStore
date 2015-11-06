@@ -14,50 +14,28 @@ public class ThroughputTest {
     @Test
     public void testRecomputeActualThroughput() throws Exception {
 
-        Throughput th1 = new Throughput(2000);
 
-        for (int i = 0; i < 100; i++) {
-            th1.correctDelay(5);
-        }
-        assertEquals(th1.getThroughput(), 200.0, 0.0);
-
-        for (int i = 0; i < 50; i++) {
-            th1.correctDelay(5);
-        }
-        assertEquals(th1.getThroughput(), 200.0, 0.0);
-
-        th1.correctDelay(500);
-        assertEquals(th1.getThroughput(), 1000.0 * 151 / 1250, 0.0);
-
-
-        Throughput th2 = new Throughput(100);
-        long cor1 = th2.correctDelay(5);
-        long cor2 = th2.correctDelay(5);
-        assertEquals(th2.getThroughput(), 100, 0.0);
-
-        long cor3 = th2.correctDelay(20);
-        long cor4 = th2.correctDelay(3);
 
         Random rnd = new Random();
-        for (int i = 0; i < 1000; i++) {
-            th2.correctDelay(rnd.nextInt(3));
-            Thread.sleep(rnd.nextInt(8));
-        }
-        assertEquals(th2.getThroughput(), 100, 0.0);
 
+        Throughput th3 = new Throughput(400, 20, 20);
+
+        long time = 0;
+        long lastTime = 0;
         for (int i = 0; i < 100; i++) {
-            th2.correctDelay(0);
-        }
-        assertEquals(th2.getThroughput(), 100, 0.0);
 
-
-        Throughput th3 = new Throughput(400, 40, 10);
-        for (int i = 0; i < 100 ; i++) {
+            long now = System.currentTimeMillis();
             int r = rnd.nextInt(4);
-            long cor = th3.correctDelay(r);
-            int r2 = rnd.nextInt(2);
-            System.out.println("delay:" + r + ", cor delay:" + cor +  ",  throughput:" + th3.getThroughput());
-            Thread.sleep(r2);
+            long latency  = (int) Math.ceil(th3.getQueueingLatency(now));
+
+            double throughput = 0;
+            if(lastTime > 0) {
+                time += now - lastTime;
+                throughput  = 1000.0 * i / time;
+            }
+            System.out.println("delay:" + r + ", latency:" + latency + ",  throughput:" + throughput);
+            lastTime = now;
+            Thread.sleep(latency + r);
         }
 
     }

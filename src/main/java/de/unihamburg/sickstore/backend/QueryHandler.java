@@ -65,7 +65,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseDelete process(ClientRequestDelete request)
 			throws NoKeyProvidedException, DeleteException {
-		long start = System.currentTimeMillis();
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
@@ -79,8 +78,6 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-		long end = System.currentTimeMillis();
-		log.debug("QueryHandler,process,{},{}", request.toString(), (end - start));
 		return response;
 	}
 
@@ -89,7 +86,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseInsert process(ClientRequestInsert request)
 			throws NoKeyProvidedException, InsertException {
-		long start = System.currentTimeMillis();
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
@@ -111,8 +107,6 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-		long end = System.currentTimeMillis();
-		log.debug("QueryHandler,process,{},{}", request.toString(), (end - start));
 		return response;
 	}
 
@@ -150,7 +144,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseScan process(ClientRequestScan request)
 			throws NoKeyProvidedException {
-		long start = System.currentTimeMillis();
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		int range = request.getRecordcount();
@@ -167,8 +160,6 @@ public class QueryHandler implements QueryHandlerInterface {
 		List<Version> versions = mediator.getRange(node, key, range, asc, columns, timestamp);
 		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-		long end = System.currentTimeMillis();
-		log.debug("QueryHandler,process,{},{}", request.toString(), (end - start));
 		return response;
 	}
 
@@ -177,7 +168,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseUpdate process(ClientRequestUpdate request)
 			throws NoKeyProvidedException, UpdateException {
-		long start = System.currentTimeMillis();
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
@@ -195,20 +185,15 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-		long end = System.currentTimeMillis();
-		log.debug("QueryHandler,process,{},{}", request.toString(), (end - start));
 		return response;
 	}
 
 	private ServerResponseCleanup process(ClientRequestCleanup request) {
-		long start = System.currentTimeMillis();
 		long clientRequestID = request.getId();
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		// TODO export measurement
 		ServerResponseCleanup response = new ServerResponseCleanup(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-		long end = System.currentTimeMillis();
-		log.debug("QueryHandler,process,{},{}", request.toString(), (end - start));
  		return response;
 	}
 

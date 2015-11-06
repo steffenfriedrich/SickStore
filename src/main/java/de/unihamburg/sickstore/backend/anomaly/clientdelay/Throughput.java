@@ -1,37 +1,23 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
+import de.unihamburg.sickstore.database.Node;
+
 import java.util.Map;
 
 /**
  * Created by Steffen Friedrich on 05.11.2015.
  */
 public class Throughput {
-    // actual ops per second
-    private double throughput = 0;
 
-    private long  time = 0;
-
-    private int operations = 0;
-
-    private long lastOpTimestamp = 0;
-
-
-    // max ops per second (0 = unlimited)
     private double maxThroughput = 0;
 
+    private long outstanding = 0;
 
-    // hickup handling
-    private long hickuptime = 0;
-
-    private int hickupoperations = 0;
+    private long lastOPReceivedAt = 0;
 
     private int hickupEvery = 0;
 
     private long hickupDuration = 0;
-
-    private long hickupDurationCountdown = 0;
-
-
 
 
     @SuppressWarnings("unused")
@@ -57,63 +43,76 @@ public class Throughput {
         this.maxThroughput = maxThroughput;
     }
 
-    public Throughput(double maxThroughput, int hickupEvery, int hickupDuration ) {
-        this.maxThroughput = maxThroughput;
+    public Throughput(double maxThroughput, int hickupEvery, int hickupDuration) {
+        this.maxThroughput = maxThroughput / 1000;
         this.hickupEvery = hickupEvery;
         this.hickupDuration = hickupDuration;
-        this.hickupDurationCountdown = hickupDuration;
     }
 
-
-    public long correctDelay(long delay){
-            long currentTime = System.currentTimeMillis();
-            operations += 1;
-            double actualThroughput = 1000.0 * operations / (time + delay);
-            long correctedDelay = delay;
-            if (maxThroughput > 0 && operations > 1 && actualThroughput > maxThroughput) {
-                correctedDelay = ((int) Math.ceil(1000.0 * operations / maxThroughput)) - time;
-            }
-            long actualTimeDelay = correctedDelay;
-            long timeBetweenRequests = 0;
-            if(lastOpTimestamp > 0)  {
-               timeBetweenRequests = currentTime - lastOpTimestamp;
-                if (timeBetweenRequests > correctedDelay) {
-                    actualTimeDelay = timeBetweenRequests;
-                }
-            }
-
-            // hickup handling ToDo Hickup
-            if(hickupEvery > 0 && ((hickuptime + timeBetweenRequests) > hickupEvery) && hickupDurationCountdown > 0) {
-                if(hickupDurationCountdown == hickupDuration) {
-                    hickupoperations = operations - 1;
-                }
-                System.out.println("hickup mode");
-
-                correctedDelay = correctedDelay + hickupDurationCountdown;
-                hickuptime += actualTimeDelay + hickupDurationCountdown;
-                time += actualTimeDelay + hickupDurationCountdown;
-                hickupDurationCountdown -=  timeBetweenRequests;
-                throughput = 1000.0 * hickupoperations / time;
-
-                if(hickupDurationCountdown <= 0)
-                {
-                    hickuptime = 0;
-                    hickupDurationCountdown = hickupDuration;
-                }
+    public double getQueueingLatency(long receivedAt) {
+        if (maxThroughput > 0) {
+            if (outstanding == 0) {
+                outstanding++;
+                return 0.0;
             } else {
-                time += actualTimeDelay;
-                hickuptime += actualTimeDelay;
-                throughput = 1000.0 * operations / time;
+                long idleTime = receivedAt - lastOPReceivedAt;
+                long consumedOPs = (long) Math.floor(maxThroughput * idleTime);
+                outstanding = Math.max(0, outstanding - consumedOPs);
+                lastOPReceivedAt = receivedAt;
+                double latency =  outstanding / maxThroughput;
+                return latency;
             }
-
-            lastOpTimestamp = currentTime;
-            // client should wait corrected delay, even if the time between requests  determines the current time
-            return correctedDelay;
+        } else {
+            return 0.0;
+        }
     }
 
-    public double getThroughput() {
-        return throughput;
-    }
+
+//    public long correctDelay(long receivedAt, long delay){
+//            operations += 1;
+//            double actualThroughput = 1000.0 * operations / (time + delay);
+//            long correctedDelay = delay;
+//            if (maxThroughput > 0 && operations > 1 && actualThroughput > maxThroughput) {
+//                correctedDelay = ((int) Math.ceil(1000.0 * operations / maxThroughput)) - time;
+//            }
+//            long actualTimeDelay = correctedDelay;
+//            long timeBetweenRequests = 1;
+//            if(lastOpTimestamp > 0)  {
+//               timeBetweenRequests = receivedAt - lastOpTimestamp;
+//                if (timeBetweenRequests > correctedDelay) {
+//                    actualTimeDelay = timeBetweenRequests;
+//                }
+//            }
+//
+//            // hickup handling ToDo Hickup
+//            if(hickupEvery > 0 && ((hickuptime + timeBetweenRequests) > hickupEvery) && hickupDurationCountdown > 0) {
+//                if(hickupDurationCountdown == hickupDuration) {
+//                    hickupoperations = operations - 1;
+//                }
+//                System.out.println("hickup mode");
+//
+//                correctedDelay = correctedDelay + hickupDurationCountdown;
+//                hickuptime += actualTimeDelay + hickupDurationCountdown;
+//                time += actualTimeDelay + hickupDurationCountdown;
+//                hickupDurationCountdown -=  timeBetweenRequests;
+//                throughput = 1000.0 * hickupoperations / time;
+//
+//                if(hickupDurationCountdown <= 0)
+//                {
+//                    hickuptime = 0;
+//                    hickupDurationCountdown = hickupDuration;
+//                }
+//            } else {
+//                time += actualTimeDelay;
+//                hickuptime += actualTimeDelay;
+//                throughput = 1000.0 * operations / time;
+//            }
+//
+//            lastOpTimestamp = receivedAt;
+//            // client should wait corrected delay, even if the time between requests  determines the current time
+//            return correctedDelay;
+//    }
+
 
     public void setMaxThroughput(double maxThroughput) {
         this.maxThroughput = maxThroughput;
@@ -123,9 +122,6 @@ public class Throughput {
         return maxThroughput;
     }
 
-    public int getOperations() {
-        return operations;
-    }
 
     public long getHickupDuration() {
         return hickupDuration;
@@ -133,7 +129,6 @@ public class Throughput {
 
     public void setHickupDuration(long hickupDuration) {
         this.hickupDuration = hickupDuration;
-        this.hickupDurationCountdown = hickupDuration;
     }
 
     public int getHickupEvery() {

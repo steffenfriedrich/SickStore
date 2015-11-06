@@ -22,16 +22,15 @@ public class MongoDbAnomaliesTest {
     private MongoDbAnomalies mongoDbAnomalies;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         timeHandler = new FakeTimeHandler();
 
         mongoDbAnomalies = new MongoDbAnomalies(
-            42l,
-            300,
-            new HashSet<>(),
-            new HashMap<>(),
-            timeHandler
+                42l,
+                300,
+                new HashSet<>(),
+                new HashMap<>(),
+                timeHandler
         );
     }
 
@@ -77,7 +76,7 @@ public class MongoDbAnomaliesTest {
 
         WriteConcern writeConcern = new WriteConcern();
         ClientRequest request = new ClientRequestInsert(
-            "", "example", new Version(), writeConcern, node1.getName()
+                "", "example", new Version(), writeConcern, node1.getName()
         );
         request.setReceivedBy(node1);
 
