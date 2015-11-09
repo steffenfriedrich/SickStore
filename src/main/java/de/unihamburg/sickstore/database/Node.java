@@ -1,15 +1,16 @@
 package de.unihamburg.sickstore.database;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import de.unihamburg.sickstore.backend.anomaly.clientdelay.Throughput;
+
+import java.util.*;
 
 public class Node {
 
     private String name = "primary";
     private Set<String> tags = new HashSet<>();
     private boolean primary = false;
+    private long  clientLatency = 0;
+    private Throughput throughput = new Throughput();
 
     public static Node newInstanceFromConfig(Map<String, Object> config) {
         Node node = new Node();
@@ -20,11 +21,17 @@ public class Node {
         if (config.get("primary") != null) {
             node.setPrimary((Boolean) config.get("primary"));
         }
+        if (config.get("clientLatency") != null) {
+            node.setClientLatency(((int) config.get("clientLatency")));
+        }
+        if (config.get("throughput") != null) {
+            Map throughputConfig = (LinkedHashMap) config.get("throughput");
+            node.setThroughput(Throughput.newInstanceFromConfig(throughputConfig));
+         }
         if (config.get("tags") != null) {
             List<String> tags = (List<String>) config.get("tags");
             node.setTags(new HashSet<>(tags));
         }
-
         return node;
     }
 
@@ -73,5 +80,20 @@ public class Node {
 
     public String toString() {
         return "Node " + name;
+    }
+
+    public long getClientLatency() {
+        return clientLatency;
+    }
+
+    public void setClientLatency(long clientLatency) {
+        this.clientLatency = clientLatency;
+    }
+
+    public void setThroughput(Throughput throughput) {
+        this.throughput = throughput;
+    }
+    public Throughput getThroughput() {
+        return throughput;
     }
 }

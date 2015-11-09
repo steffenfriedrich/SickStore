@@ -9,12 +9,14 @@ import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestWrite;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
 
 public class BasicAnomalyGenerator implements AnomalyGenerator {
-
+    private static final Logger log = LoggerFactory.getLogger("sickstore");
     private StalenessGenerator stalenessGenerator;
     private ClientDelayGenerator clientDelayGenerator;
 
@@ -83,7 +85,6 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
         if (request instanceof ClientRequestWrite && stalenessGenerator != null) {
             anomaly.setStalenessMap(stalenessGenerator.generateStalenessMap(nodes, request));
         }
-
         return anomaly;
     }
 

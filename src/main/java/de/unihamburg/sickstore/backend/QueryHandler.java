@@ -10,9 +10,11 @@ import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QueryHandler implements QueryHandlerInterface {
-
+	private static final Logger log = LoggerFactory.getLogger("sickstore");
 	private TimeHandler timeHandler = new SystemTimeHandler();
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
@@ -76,7 +78,6 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseDelete response = new ServerResponseDelete(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-
 		return response;
 	}
 
@@ -106,7 +107,6 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseInsert response = new ServerResponseInsert(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-
 		return response;
 	}
 
@@ -115,7 +115,7 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseRead process(ClientRequestRead request)
 			throws NoKeyProvidedException {
-
+		long start = System.currentTimeMillis();
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		Set<String> columns = request.getFields();
@@ -134,7 +134,8 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseRead response = new ServerResponseRead(clientRequestID, version);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-
+		long end = System.currentTimeMillis();
+		log.debug("QueryHandler,process,{},{}", request.toString(), (end - start));
 		return response;
 	}
 
@@ -159,7 +160,6 @@ public class QueryHandler implements QueryHandlerInterface {
 		List<Version> versions = mediator.getRange(node, key, range, asc, columns, timestamp);
 		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-
 		return response;
 	}
 
@@ -185,7 +185,6 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseUpdate response = new ServerResponseUpdate(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-
 		return response;
 	}
 
@@ -203,6 +202,7 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	@Override
 	public synchronized ServerResponse processQuery(ClientRequest request) {
+
 		Long id = -1l;
 		ServerResponse response = null;
 		try {

@@ -8,6 +8,7 @@ public class ClientRequestScan extends ClientRequest {
     private boolean ascending = false;
     private Set<String> fields;
     private int recordcount;
+
     private ReadPreference readPreference;
 
     @SuppressWarnings("unused")
@@ -60,7 +61,6 @@ public class ClientRequestScan extends ClientRequest {
     public ReadPreference getReadPreference() {
         return readPreference;
     }
-
     @Override
     public String toString() {
         return "SCAN";
