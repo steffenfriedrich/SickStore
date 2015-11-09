@@ -1,6 +1,10 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
+import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.Node;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -24,7 +28,7 @@ public class Throughput {
     public static Throughput newInstanceFromConfig(Map<String, Object> config) {
         Throughput throughput = new Throughput();
         if (config.get("max") != null) {
-            throughput.setMaxThroughput((double) config.get("max"));
+            throughput.setMaxThroughput(((double) config.get("max")) / 1000);
         }
         if (config.get("hickupEvery") != null) {
             throughput.setHickupEvery((int) config.get("hickupEvery"));
@@ -49,17 +53,23 @@ public class Throughput {
         this.hickupDuration = hickupDuration;
     }
 
+    private static final Logger log = LoggerFactory.getLogger("sickstore");
+
     public double getQueueingLatency(long receivedAt) {
         if (maxThroughput > 0) {
             if (outstanding == 0) {
                 outstanding++;
+                lastOPReceivedAt = receivedAt;
                 return 0.0;
             } else {
+                outstanding++;
                 long idleTime = receivedAt - lastOPReceivedAt;
                 long consumedOPs = (long) Math.floor(maxThroughput * idleTime);
                 outstanding = Math.max(0, outstanding - consumedOPs);
-                lastOPReceivedAt = receivedAt;
                 double latency =  outstanding / maxThroughput;
+                if(consumedOPs > 0) {
+                    lastOPReceivedAt = receivedAt;
+                }
                 return latency;
             }
         } else {
@@ -138,4 +148,5 @@ public class Throughput {
     public void setHickupEvery(int hickupEvery) {
         this.hickupEvery = hickupEvery;
     }
+
 }
