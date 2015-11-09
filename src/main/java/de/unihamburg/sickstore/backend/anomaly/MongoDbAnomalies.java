@@ -14,8 +14,6 @@ import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ClientRequestRead;
 import de.unihamburg.sickstore.database.messages.ClientRequestScan;
 import de.unihamburg.sickstore.database.messages.ClientRequestWrite;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,8 +22,6 @@ import java.util.stream.Collectors;
  * This class calculates a delay for write request which is caused by a MongoDB-like replication.
  */
 public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerator {
-
-    private static final Logger log = LoggerFactory.getLogger("sickstore");
 
     /** time needed to contact a replica until the response arrives */
     private long defaultDelay = 0;
