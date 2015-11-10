@@ -32,7 +32,7 @@ queryHandler:
             clientLatency: 2
             throughput:
                 max: 400.0
-                hickupEvery: 1000
+                hickupAfter: 1000
                 hickupDuration: 20
             tags:
                 - A

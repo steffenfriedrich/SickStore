@@ -2,11 +2,12 @@ package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
 import de.unihamburg.sickstore.backend.measurement.Measurements;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
-import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
+
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.junit.Test;
 
-import java.util.Random;
+import java.io.InputStream;
+
 
 import static org.junit.Assert.*;
 
@@ -48,26 +49,40 @@ public class ThroughputTest {
 
 
 
-        Throughput th = new Throughput(20, 20000, 10000);
+        int maxThroughput = 1200;
+        Throughput th = new Throughput(maxThroughput, 100, 100);
         long startTime = 1447071367828l;
+        long hickupStarTime = 0;
+        boolean firstHickupOp = true;
         timeHandler.sleep(startTime);
         long ops = 0;
         long now = timeHandler.getCurrentTime();
-        double latency = 0.0;
-        latency = th.getQueueingLatency(now);
+        double latency = th.getQueueingLatency(now);
         ops++;
-        double throughput = 1000.0 * ops / (now - startTime);
 
-        timeHandler.sleep(200);
-        for (int i = 0; i < 1000 ; i++) {
-            timeHandler.sleep(200);
+        timeHandler.sleep(2);
+        for (int i = 0; i < 200 ; i++) {
+            timeHandler.sleep(2);
             now = timeHandler.getCurrentTime();
             latency = th.getQueueingLatency(now);
-            measurements.measure("INSERT", Math.max(1000, (int) Math.ceil(latency)));
+
+            if(firstHickupOp && latency > 0.0) {
+                firstHickupOp = false;
+                hickupStarTime = timeHandler.getCurrentTime();
+            } else if(!firstHickupOp && latency == 0.0) {
+                firstHickupOp = true;
+                System.out.println(timeHandler.getCurrentTime() - hickupStarTime);
+            }
+
+            measurements.measure("TEST", (int) Math.ceil(latency));
             ops++;
-            throughput = 1000.0 * ops / (now - startTime);
-            System.out.println((now - startTime)  + ";" + latency + ";" + throughput);
+
+            //System.out.println((now - startTime)  + ";" + latency);
         }
+
+
+        // measurement output
+        measurements.finishMeasurement(maxThroughput + "");
 
         // coordinated omission !
         assertEquals(2,2);

@@ -15,11 +15,7 @@ public class Throughput {
 
     private double maxThroughput = 0;
 
-    private long outstanding = 0;
-
-    private long lastOPReceivedAt = 0;
-
-    private int hickupEvery = 0;
+    private int hickupAfter = 0;
 
     private int hickupTime = 0;
 
@@ -33,7 +29,7 @@ public class Throughput {
             throughput.setMaxThroughput(((double) config.get("max")) / 1000);
         }
         if (config.get("hickupEvery") != null) {
-            throughput.setHickupEvery((int) config.get("hickupEvery"));
+            throughput.setHickupAfter((int) config.get("hickupAfter"));
         }
         if (config.get("hickupDuration") != null) {
             throughput.setHickupDuration((int) config.get("hickupDuration"));
@@ -51,11 +47,13 @@ public class Throughput {
 
     public Throughput(double maxThroughput, int hickupEvery, int hickupDuration) {
         this.maxThroughput = maxThroughput / 1000;
-        this.hickupEvery = hickupEvery;
+        this.hickupAfter = hickupEvery;
         this.hickupDuration = hickupDuration;
     }
 
-    private static final Logger log = LoggerFactory.getLogger("sickstore");
+    private long outstanding = 0;
+
+    private long lastOPReceivedAt = 0;
 
     public double getQueueingLatency(long receivedAt) {
         if (maxThroughput > 0) {
@@ -66,9 +64,9 @@ public class Throughput {
             } else {
                 long idleTime = receivedAt - lastOPReceivedAt;
                 hickupTime += idleTime;
-                if(hickupEvery > 0 && hickupTime > hickupEvery) {
-                    outstanding += (maxThroughput * hickupDuration);
-                    hickupEvery = 0;
+                if(hickupAfter > 0 && hickupTime > hickupAfter) {
+                    outstanding += maxThroughput * hickupDuration;
+                    hickupAfter = 0;
                     hickupTime = 0;
                 }
                 long consumedOPs = (long) Math.floor(maxThroughput * idleTime);
@@ -103,12 +101,12 @@ public class Throughput {
         this.hickupDuration = hickupDuration;
     }
 
-    public int getHickupEvery() {
-        return hickupEvery;
+    public int getHickupAfter() {
+        return hickupAfter;
     }
 
-    public void setHickupEvery(int hickupEvery) {
-        this.hickupEvery = hickupEvery;
+    public void setHickupAfter(int hickupEvery) {
+        this.hickupAfter = hickupEvery;
     }
 
 }
