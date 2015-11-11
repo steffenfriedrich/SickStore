@@ -1,11 +1,4 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
-
-import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
-import de.unihamburg.sickstore.backend.timer.TimeHandler;
-import de.unihamburg.sickstore.database.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 
 /**
@@ -51,7 +44,7 @@ public class Throughput {
         this.hickupDuration = hickupDuration;
     }
 
-    private long outstanding = 0;
+    private double outstanding = 0;
 
     private long lastOPReceivedAt = 0;
 
@@ -69,12 +62,13 @@ public class Throughput {
                     hickupAfter = 0;
                     hickupTime = 0;
                 }
-                long consumedOPs = (long) Math.floor(maxThroughput * idleTime);
-                outstanding = Math.max(0, outstanding - consumedOPs);
-                double latency =  outstanding / maxThroughput;
-                if(consumedOPs > 0) {
+                double consumedOPs =  maxThroughput * idleTime;
+                if(consumedOPs > 0.0) {
                     lastOPReceivedAt = receivedAt;
+                    outstanding = Math.max(0, outstanding - consumedOPs);
                 }
+                double latency = outstanding / maxThroughput;
+
                 outstanding++;
                 return latency;
             }

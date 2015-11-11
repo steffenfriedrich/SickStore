@@ -62,20 +62,25 @@ public class Measurements {
     }
 
     public void finishMeasurement() throws IOException {
-        exportMeasurements(formatTimestamp(timestamp));
+        exportMeasurements(formatTimestamp(timestamp), formatTimestamp(timestamp));
         _singleton = new Measurements();
     }
 
     public void finishMeasurement(String output) throws IOException {
-        exportMeasurements(output);
+        exportMeasurements(output, output);
+        _singleton = new Measurements();
+    }
+
+    public void finishMeasurement(String outputFolder, String ouputName) throws IOException {
+        exportMeasurements(outputFolder, ouputName);
         _singleton = new Measurements();
     }
 
 
-    public void exportMeasurements(String output) throws IOException
+    public void exportMeasurements(String outputFolder, String ouputName) throws IOException
     {
         for (String key :_measurements.keySet()) {
-            File file = new File("results/" + output + "/percentiles-" + key.toLowerCase() + "-" + output + ".dat");
+            File file = new File("results/" + outputFolder + "/percentiles-" + key.toLowerCase() + "-" + ouputName + ".dat");
             FileUtils.forceMkdir(file.getParentFile());
 
             Recorder measurement = _measurements.get(key);
@@ -95,7 +100,7 @@ public class Measurements {
                 }
             });
 
-            FileOutputStream compressedHistogram = new FileOutputStream("results/" + output + "/hdrhistogram-" + key.toLowerCase() + "-" + ".dat");
+            FileOutputStream compressedHistogram = new FileOutputStream("results/" + outputFolder + "/hdrhistogram-" + key.toLowerCase() + "-" + ouputName + ".dat");
             PrintStream log = new PrintStream(compressedHistogram, false, "UTF-8");
             HistogramLogWriter histogramLogWriter = new HistogramLogWriter(log);
             histogramLogWriter.outputIntervalHistogram(histogram);
