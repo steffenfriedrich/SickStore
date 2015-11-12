@@ -32,6 +32,8 @@ queryHandler:
             clientLatency: 2
             throughput:
                 max: 1000.0
+                hickupAfter: 100
+                hickupDuration: 100
             tags:
                 - A
                 - B
@@ -41,6 +43,8 @@ queryHandler:
             clientLatency: 2
             throughput:
                 max: 1000.0
+                hickupAfter: 100
+                hickupDuration: 100
             tags:
                 - A
         -
@@ -49,5 +53,7 @@ queryHandler:
             clientLatency: 2
             throughput:
                 max: 1000.0
+                hickupAfter: 100
+                hickupDuration: 100
             tags:
                 - B

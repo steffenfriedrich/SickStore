@@ -21,7 +21,7 @@ public class Throughput {
         if (config.get("max") != null) {
             throughput.setMaxThroughput(((double) config.get("max")) / 1000);
         }
-        if (config.get("hickupEvery") != null) {
+        if (config.get("hickupAfter") != null) {
             throughput.setHickupAfter((int) config.get("hickupAfter"));
         }
         if (config.get("hickupDuration") != null) {

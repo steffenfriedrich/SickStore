@@ -1,6 +1,7 @@
 package de.unihamburg.sickstore.backend.measurement;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.HdrHistogram.AbstractHistogram;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.HistogramLogWriter;
@@ -11,6 +12,7 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -62,7 +64,7 @@ public class Measurements {
     }
 
     public void finishMeasurement() throws IOException {
-        exportMeasurements(formatTimestamp(timestamp), formatTimestamp(timestamp));
+        exportMeasurements( formatTimestamp(timestamp) + "-sickstore", formatTimestamp(timestamp));
         _singleton = new Measurements();
     }
 
@@ -79,6 +81,9 @@ public class Measurements {
 
     public void exportMeasurements(String outputFolder, String ouputName) throws IOException
     {
+
+        HashMap<String, HashMap<String, String>> summaries = new HashMap<String, HashMap<String, String>>();
+
         for (String key :_measurements.keySet()) {
             File file = new File("results/" + outputFolder + "/percentiles-" + key.toLowerCase() + "-" + ouputName + ".dat");
             FileUtils.forceMkdir(file.getParentFile());
@@ -86,26 +91,33 @@ public class Measurements {
             Recorder measurement = _measurements.get(key);
 
             Histogram histogram = measurement.getIntervalHistogram();
-            AbstractHistogram.Percentiles percentiles = histogram.percentiles(2);
 
-            FileUtils.writeStringToFile(file, "percentile;count;latency" + System.lineSeparator(), true);
-            percentiles.forEach((i) -> {
-                long valueIteratedFrom = i.getValueIteratedTo();
-                double p = i.getPercentileLevelIteratedTo();
-                long count = i.getCountAtValueIteratedTo();
-                try {
-                    FileUtils.writeStringToFile(file, p + ";" + count + ";" + valueIteratedFrom + System.lineSeparator(), true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
+            // Summary
+            HashMap<String, String> summary = new HashMap<String, String>();
+            summary.put("Count", "" + histogram.getTotalCount());
+            summary.put("MaxValue(ms)", "" + histogram.getMaxValue());
+            summary.put("MinValue(ms)", "" + histogram.getMinValue());
+            summary.put("Mean(ms)", "" + histogram.getMean());
+            summary.put("StdDeviation(ms)", "" + histogram.getStdDeviation());
+            summary.put("90Percentile(ms)", "" + histogram.getValueAtPercentile(90));
+            summary.put("99Percentile(ms)", "" + histogram.getValueAtPercentile(99.9) );
+            summary.put("99.9Percentile(ms)", "" + histogram.getValueAtPercentile(99.9));
+            summary.put("99.99Percentile(ms)", "" + histogram.getValueAtPercentile(99.99));
+            summaries.put(key, summary);
 
-            FileOutputStream compressedHistogram = new FileOutputStream("results/" + outputFolder + "/hdrhistogram-" + key.toLowerCase() + "-" + ouputName + ".dat");
+            // percentile distribution
+            histogram.outputPercentileDistribution(new PrintStream(file), 2, 1.0, true);
+
+            FileOutputStream compressedHistogram = new FileOutputStream("results/" + outputFolder + "/hdrhistogram-" + key.toLowerCase() + "-" + ouputName + ".hdr");
             PrintStream log = new PrintStream(compressedHistogram, false, "UTF-8");
             HistogramLogWriter histogramLogWriter = new HistogramLogWriter(log);
             histogramLogWriter.outputIntervalHistogram(histogram);
             log.close();
         }
+        // export summary
+        File summaryFile = new File("results/" + outputFolder + "/summary.json");
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(summaryFile, summaries);
     }
 
 

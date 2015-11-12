@@ -1,9 +1,11 @@
 package de.unihamburg.sickstore.backend;
 
+import java.io.IOException;
 import java.util.*;
 
 import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
+import de.unihamburg.sickstore.backend.measurement.Measurements;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.config.InstanceFactory;
@@ -191,7 +193,11 @@ public class QueryHandler implements QueryHandlerInterface {
 	private ServerResponseCleanup process(ClientRequestCleanup request) {
 		long clientRequestID = request.getId();
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
-		// TODO export measurement
+		try {
+			Measurements.getMeasurements().finishMeasurement();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		ServerResponseCleanup response = new ServerResponseCleanup(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
  		return response;
@@ -207,7 +213,6 @@ public class QueryHandler implements QueryHandlerInterface {
 		ServerResponse response = null;
 		try {
 			request.setReceivedAt(timeHandler.getCurrentTime());
-
 			id = request.getId();
 
 			// Find destination node
@@ -216,7 +221,6 @@ public class QueryHandler implements QueryHandlerInterface {
 				for (Node node : getNodes()) {
 					if (node.isPrimary()) {
 						request.setReceivedBy(node);
-
 						break;
 					}
 				}
@@ -252,6 +256,19 @@ public class QueryHandler implements QueryHandlerInterface {
 				throw new UnknownMessageTypeException(
 						"Cannot process request; unknown message type: "
 								+ request.getClass());
+			}
+
+			if (request instanceof ClientRequestDelete
+					|| request instanceof ClientRequestInsert
+					|| request instanceof ClientRequestRead
+					|| request instanceof ClientRequestScan
+					|| request instanceof ClientRequestUpdate) {
+				Measurements measurements = Measurements.getMeasurements();
+				long latency = 0;
+				latency = response.getWaitTimeout();
+				log.debug(request.toString() + ":" + latency);
+				measurements.measure(response.toString(), latency);
+				measurements.measure("ALL", latency);
 			}
 		} catch (Exception e) {
 			response = new ServerResponseException(id, e);
