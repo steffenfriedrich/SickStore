@@ -5,12 +5,14 @@ import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 import static org.junit.Assert.*;
@@ -96,5 +98,14 @@ public class ThroughputTest {
             lastRecoveryTime = recoveryTime;
         }
 
+    }
+
+
+    @Test
+    public void testExponential() throws Exception {
+        ExponentialDistribution exp = new ExponentialDistribution(4);
+        for (int i = 0; i < 1000 ; i++) {
+
+        }
     }
 }

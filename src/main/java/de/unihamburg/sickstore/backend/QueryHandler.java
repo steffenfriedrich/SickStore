@@ -21,6 +21,9 @@ public class QueryHandler implements QueryHandlerInterface {
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
 	private AnomalyGenerator anomalyGenerator;
+	private int warmup = 0;
+	private int warmupCounter = 0;
+
 
 	@SuppressWarnings("unused")
 	public static QueryHandlerInterface newInstanceFromConfig(Map<String, Object> config) {
@@ -34,28 +37,33 @@ public class QueryHandler implements QueryHandlerInterface {
 			nodes.add((Node) InstanceFactory.newInstanceFromConfig(node));
 		}
 
+		int warmup = (int) config.get("warmup");
+
 		// add nodes into parameters, so that anomaly generators are aware of the available nodes
 		anomalyGeneratorConfig.put("nodes", nodes);
 		AnomalyGenerator anomalyGenerator = (AnomalyGenerator) InstanceFactory
 			.newInstanceFromConfig(anomalyGeneratorConfig);
 
-		return new QueryHandler(new Store(), anomalyGenerator, nodes);
+		return new QueryHandler(new Store(), anomalyGenerator, nodes, warmup);
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
 						Set<Node> nodes,
-						TimeHandler timeHandler) {
-		this(mediator, anomalyGenerator, nodes);
+						TimeHandler timeHandler,
+						int warmup) {
+		this(mediator, anomalyGenerator, nodes, warmup);
 		this.timeHandler = timeHandler;
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
-						Set<Node> nodes) {
+						Set<Node> nodes, int warmup) {
 		this.mediator = mediator;
 		this.anomalyGenerator = anomalyGenerator;
 		this.nodes = nodes;
+		this.warmup = warmup;
+		this.warmupCounter = warmup;
 	}
 
 	public synchronized Set<Node> getNodes() {
@@ -117,7 +125,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseRead process(ClientRequestRead request)
 			throws NoKeyProvidedException {
-		long start = System.currentTimeMillis();
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		Set<String> columns = request.getFields();
@@ -136,8 +143,6 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		ServerResponseRead response = new ServerResponseRead(clientRequestID, version);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
-		long end = System.currentTimeMillis();
-		log.debug("QueryHandler,process,{},{}", request.toString(), (end - start));
 		return response;
 	}
 
@@ -194,10 +199,15 @@ public class QueryHandler implements QueryHandlerInterface {
 		long clientRequestID = request.getId();
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		try {
+			warmupCounter = warmup;
 			Measurements.getMeasurements().finishMeasurement();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		getNodes().forEach(node -> {
+			node.getThroughput().cleanUp();
+		});
+
 		ServerResponseCleanup response = new ServerResponseCleanup(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
  		return response;
@@ -258,17 +268,21 @@ public class QueryHandler implements QueryHandlerInterface {
 								+ request.getClass());
 			}
 
-			if (request instanceof ClientRequestDelete
-					|| request instanceof ClientRequestInsert
-					|| request instanceof ClientRequestRead
-					|| request instanceof ClientRequestScan
-					|| request instanceof ClientRequestUpdate) {
-				Measurements measurements = Measurements.getMeasurements();
-				long latency = 0;
-				latency = response.getWaitTimeout();
-				log.debug(request.toString() + ":" + latency);
-				measurements.measure(response.toString(), latency);
-				measurements.measure("ALL", latency);
+			if(warmupCounter > 0) {
+				warmupCounter -= 1;
+			}
+			else {
+				if (request instanceof ClientRequestDelete
+						|| request instanceof ClientRequestInsert
+						|| request instanceof ClientRequestRead
+						|| request instanceof ClientRequestScan
+						|| request instanceof ClientRequestUpdate) {
+					Measurements measurements = Measurements.getMeasurements();
+					long latency = 0;
+					latency = response.getWaitTimeout();
+					measurements.measure(response.toString(), latency);
+					measurements.measure("ALL", latency);
+				}
 			}
 		} catch (Exception e) {
 			response = new ServerResponseException(id, e);

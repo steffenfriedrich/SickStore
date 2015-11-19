@@ -6,14 +6,23 @@ import java.util.Map;
  */
 public class Throughput {
 
+    // immutable config parameter
     private double maxThroughput = 0;
 
     private int hickupAfter = 0;
 
-    private int hickupTime = 0;
-
     private long hickupDuration = 0;
 
+    private boolean periodically = false;
+
+    // mutable properties
+    private int hickupTime = 0;
+
+    private int hickupDeltaAfter = 0;
+
+    private double outstanding = 0;
+
+    private long lastOPReceivedAt = 0;
 
     @SuppressWarnings("unused")
     public static Throughput newInstanceFromConfig(Map<String, Object> config) {
@@ -23,9 +32,13 @@ public class Throughput {
         }
         if (config.get("hickupAfter") != null) {
             throughput.setHickupAfter((int) config.get("hickupAfter"));
+            throughput.setHickupDeltaAfter((int) config.get("hickupAfter"));
         }
         if (config.get("hickupDuration") != null) {
             throughput.setHickupDuration((int) config.get("hickupDuration"));
+        }
+        if (config.get("periodically") != null) {
+            throughput.setPeriodically((boolean) config.get("periodically"));
         }
         return throughput;
     }
@@ -41,12 +54,9 @@ public class Throughput {
     public Throughput(double maxThroughput, int hickupEvery, int hickupDuration) {
         this.maxThroughput = maxThroughput / 1000;
         this.hickupAfter = hickupEvery;
+        this.hickupDeltaAfter = hickupAfter;
         this.hickupDuration = hickupDuration;
     }
-
-    private double outstanding = 0;
-
-    private long lastOPReceivedAt = 0;
 
     public double getQueueingLatency(long receivedAt) {
         if (maxThroughput > 0) {
@@ -57,9 +67,9 @@ public class Throughput {
             } else {
                 long idleTime = receivedAt - lastOPReceivedAt;
                 hickupTime += idleTime;
-                if(hickupAfter > 0 && hickupTime > hickupAfter) {
+                if(hickupDeltaAfter > 0 && hickupTime > hickupDeltaAfter) {
                     outstanding += maxThroughput * hickupDuration;
-                    hickupAfter = 0;
+                    if(!periodically) { hickupDeltaAfter = 0; }
                     hickupTime = 0;
                 }
                 double consumedOPs =  maxThroughput * idleTime;
@@ -101,6 +111,21 @@ public class Throughput {
 
     public void setHickupAfter(int hickupEvery) {
         this.hickupAfter = hickupEvery;
+    }
+
+    public void setHickupDeltaAfter(int hickupDeltaAfter) {
+        this.hickupDeltaAfter = hickupDeltaAfter;
+    }
+
+    public void setPeriodically(boolean periodically) {
+        this.periodically = periodically;
+    }
+
+    public void cleanUp() {
+        hickupDeltaAfter = hickupAfter;
+        hickupTime = 0;
+        outstanding = 0;
+        lastOPReceivedAt = 0;
     }
 
 }

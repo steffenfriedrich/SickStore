@@ -163,7 +163,8 @@ public class ServerStartup {
             new Store(timeHandler),
             anomalyGenerator,
             nodes,
-            timeHandler
+            timeHandler,
+                0
         );
 
         log.info("Starting Sick server on port " + port);
