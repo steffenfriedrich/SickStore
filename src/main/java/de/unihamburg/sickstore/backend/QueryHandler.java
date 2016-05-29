@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class QueryHandler implements QueryHandlerInterface {
 	private static final Logger log = LoggerFactory.getLogger("sickstore");
+	private Boolean logStaleness = false;
 	private TimeHandler timeHandler = new SystemTimeHandler();
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
@@ -39,31 +40,34 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		int warmup = (int) config.get("warmup");
 
+		Boolean logStaleness = (Boolean) config.get("logstaleness");
+
 		// add nodes into parameters, so that anomaly generators are aware of the available nodes
 		anomalyGeneratorConfig.put("nodes", nodes);
 		AnomalyGenerator anomalyGenerator = (AnomalyGenerator) InstanceFactory
 			.newInstanceFromConfig(anomalyGeneratorConfig);
 
-		return new QueryHandler(new Store(), anomalyGenerator, nodes, warmup);
+		return new QueryHandler(new Store(), anomalyGenerator, nodes, warmup, logStaleness);
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
 						Set<Node> nodes,
 						TimeHandler timeHandler,
-						int warmup) {
-		this(mediator, anomalyGenerator, nodes, warmup);
+						int warmup, Boolean logStaleness) {
+		this(mediator, anomalyGenerator, nodes, warmup, logStaleness);
 		this.timeHandler = timeHandler;
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
-						Set<Node> nodes, int warmup) {
+						Set<Node> nodes, int warmup, Boolean logStaleness) {
 		this.mediator = mediator;
 		this.anomalyGenerator = anomalyGenerator;
 		this.nodes = nodes;
 		this.warmup = warmup;
 		this.warmupCounter = warmup;
+		if(logStaleness != null) this.logStaleness = logStaleness;
 	}
 
 	public synchronized Set<Node> getNodes() {
@@ -136,7 +140,7 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 
-		Version version = mediator.get(node, key, columns, timestamp, true);
+		Version version = mediator.get(node, key, columns, timestamp, logStaleness);
 		if (version == null) {
 			throw new NullPointerException("Version must not be null!");
 		}

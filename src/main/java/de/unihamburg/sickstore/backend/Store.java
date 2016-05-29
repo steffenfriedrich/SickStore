@@ -110,27 +110,27 @@ public class Store {
 		}
 
 		// log staleness informations for ClientRequestRead only
-//		if (logStaleness && version != Version.NULL) {
-//			if (version == versionMostRecent) {
-//				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
-//				Store.logStaleness.info("key;" + key + ";most recent version;"
-//						+ versionMostRecent.getWrittenAt()
-//						+ ";staleness in versions;" + versionStaleness
-//						+ ";staleness in ms;0" + ";read-after-write lag;"
-//						+ timeSinceLastUpdate);
-//
-//			} else {
-//				Store.logStaleness.info("key;"
-//						+ key
-//						+ ";most recent version;"
-//						+ versionMostRecent.getWrittenAt()
-//						+ ";staleness in versions;"
-//						+ versionStaleness
-//						+ ";staleness in ms;"
-//						+ (timestamp - versionMostRecent.getWrittenAt()
-//						+ ";read-after-write lag;" + -1));
-//			}
-//		}
+		if (logStaleness && version != Version.NULL) {
+			if (version == versionMostRecent) {
+				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
+				Store.logStaleness.info("key;" + key + ";most recent version;"
+						+ versionMostRecent.getWrittenAt()
+						+ ";staleness in versions;" + versionStaleness
+						+ ";staleness in ms;0" + ";read-after-write lag;"
+						+ timeSinceLastUpdate);
+
+			} else {
+				Store.logStaleness.info("key;"
+						+ key
+						+ ";most recent version;"
+						+ versionMostRecent.getWrittenAt()
+						+ ";staleness in versions;"
+						+ versionStaleness
+						+ ";staleness in ms;"
+						+ (timestamp - versionMostRecent.getWrittenAt()
+						+ ";read-after-write lag;" + -1));
+			}
+		}
 
 		if (!version.isNull()) {
 			try {

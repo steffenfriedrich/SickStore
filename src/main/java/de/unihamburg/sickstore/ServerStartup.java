@@ -164,7 +164,8 @@ public class ServerStartup {
             anomalyGenerator,
             nodes,
             timeHandler,
-                0
+                0,
+                false
         );
 
         log.info("Starting Sick server on port " + port);
