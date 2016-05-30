@@ -1,6 +1,7 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
 import de.unihamburg.sickstore.backend.Version;
+import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
@@ -41,18 +42,18 @@ public class MongoDbAnomaliesTest {
 
         WriteConcern writeConcern = new WriteConcern();
         ClientRequest request = new ClientRequestInsert("", "example", new Version(), writeConcern, "");
-
+        Anomaly anomaly = new Anomaly();
         // no other nodes -> delay is 0
-        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes,anomaly));
 
         // another node, but min acknowledgement is 1 -> delay is 0
         nodes.add(new Node("name"));
-        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
 
         // another node, min acknowledgement = 2
         // delay is based on default delay (42 + 42, request to + response from replica)
         writeConcern.setReplicaAcknowledgement(2);
-        assertEquals(84, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(84, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
     }
 
     @Test
@@ -67,6 +68,7 @@ public class MongoDbAnomaliesTest {
         customDelays.add(new NetworkDelay(node2, node1, 25l)); // 50 ms delay from node 2 to node 1
 
         mongoDbAnomalies.setCustomDelays(customDelays);
+        Anomaly anomaly = new Anomaly();
 
         Set<Node> nodes = new HashSet<>();
         nodes.add(node1);
@@ -80,17 +82,19 @@ public class MongoDbAnomaliesTest {
         );
         request.setReceivedBy(node1);
 
+        anomaly.setResponsiveNode(mongoDbAnomalies.getResponsiveNode(request,nodes));
+
         // no min acknowledgements -> delay is 0
         writeConcern.setReplicaAcknowledgement(0);
-        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
 
         // acknowledgement of the primary -> delay is 0
         writeConcern.setReplicaAcknowledgement(1);
-        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(0, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
 
         // with acknowledgement of additional node -> delay is 150 (primary to replica and back)
         writeConcern.setReplicaAcknowledgement(2);
-        assertEquals(75, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(75, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
 
         // add more custom delays
         // we want to find the shortest delay which fulfills the min acknowledgements
@@ -100,44 +104,45 @@ public class MongoDbAnomaliesTest {
         customDelays.add(new NetworkDelay(node1, node4, 50l));
         customDelays.add(new NetworkDelay(node4, node1, 10l)); // replication to node 4 takes 50 + 10 = 60 ms
 
-        assertEquals(60, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(60, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
 
         // more min acknowledgements than custom delays
         // but the highest custom delay is higher than the default delay, so we expect 75
         writeConcern.setReplicaAcknowledgement(10);
-        assertEquals(75, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(75, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
 
         // no custom delay for response from node 3 to node 1, so the default delay will be used
         // 10 + 1000 = 1010 is expected
         mongoDbAnomalies.setDefaultDelay(1000l);
-        assertEquals(1010, mongoDbAnomalies.calculateDelay(request, nodes));
+        assertEquals(1010, mongoDbAnomalies.calculateDelay(request, nodes, anomaly));
     }
 
     @Test
     public void testJournaling() {
         WriteConcern writeConcern = new WriteConcern(0, true, 0);
         ClientRequest request = new ClientRequestInsert("", "example", new Version(), writeConcern);
+        Anomaly anomaly = new Anomaly();
 
-        long delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>());
+        long delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>(),anomaly);
         assertEquals(100, delay);
 
         timeHandler.sleep(50);
-        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>());
+        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>(),anomaly);
         assertEquals(50, delay);
 
         timeHandler.sleep(49);
-        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>());
+        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>(),anomaly);
         assertEquals(1, delay);
 
         // commit is running, we need to wait for the next one
         timeHandler.sleep(1);
-        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>());
+        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>(),anomaly);
         assertEquals(100, delay);
 
         // change journal commit interval
         // current time is 100 -> next commit in 32
         mongoDbAnomalies.setJournalCommitInterval(100);
-        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>());
+        delay = mongoDbAnomalies.calculateDelay(request, new HashSet<>(),anomaly);
         assertEquals(32, delay);
     }
 
@@ -178,17 +183,20 @@ public class MongoDbAnomaliesTest {
         ClientRequest request = new ClientRequestInsert("", "example", new Version(), writeConcern, "Primary");
         request.setReceivedBy(primary);
 
-        long delay = mongoDbAnomalies.calculateDelay(request, nodes);
+        Anomaly anomaly = new Anomaly();
+        anomaly.setResponsiveNode(mongoDbAnomalies.getResponsiveNode(request, nodes));
+
+        long delay = mongoDbAnomalies.calculateDelay(request, nodes, anomaly);
         assertEquals(52, delay);
 
         // expect three acks for B
         tagConcern.put("B", 3);
-        delay = mongoDbAnomalies.calculateDelay(request, nodes);
+        delay = mongoDbAnomalies.calculateDelay(request, nodes, anomaly);
         assertEquals(62, delay);
 
         // no custom delays, expect the default
         customDelays.clear();
-        delay = mongoDbAnomalies.calculateDelay(request, nodes);
+        delay = mongoDbAnomalies.calculateDelay(request, nodes, anomaly);
         assertEquals(84, delay);
     }
 

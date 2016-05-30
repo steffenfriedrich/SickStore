@@ -129,7 +129,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseRead process(ClientRequestRead request)
 			throws NoKeyProvidedException {
-		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		Set<String> columns = request.getFields();
 		long timestamp = request.getReceivedAt();
@@ -139,6 +138,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		}
 
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		Node node = anomaly.getResponsiveNode();
 
 		Version version = mediator.get(node, key, columns, timestamp, logStaleness);
 		if (version == null) {
@@ -155,7 +155,6 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	private ServerResponseScan process(ClientRequestScan request)
 			throws NoKeyProvidedException {
-		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		int range = request.getRecordcount();
 		boolean asc = request.isAscending();
@@ -168,6 +167,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		}
 
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
+		Node node = anomaly.getResponsiveNode();
 		List<Version> versions = mediator.getRange(node, key, range, asc, columns, timestamp);
 		ServerResponseScan response = new ServerResponseScan(clientRequestID, versions);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());

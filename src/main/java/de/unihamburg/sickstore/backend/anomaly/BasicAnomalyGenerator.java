@@ -6,9 +6,7 @@ import de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness;
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessGenerator;
 import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.Node;
-import de.unihamburg.sickstore.database.messages.ClientRequest;
-import de.unihamburg.sickstore.database.messages.ClientRequestWrite;
-import de.unihamburg.sickstore.database.messages.ServerResponse;
+import de.unihamburg.sickstore.database.messages.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,13 +83,16 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
         if (request instanceof ClientRequestWrite && stalenessGenerator != null) {
             anomaly.setStalenessMap(stalenessGenerator.generateStalenessMap(nodes, request));
         }
+        if (request instanceof ClientRequestRead || request instanceof ClientRequestScan) {
+            anomaly.setResponsiveNode(clientDelayGenerator.getResponsiveNode(request, nodes));
+        }
         return anomaly;
     }
 
     @Override
     public void handleResponse(Anomaly anomaly, ClientRequest request, ServerResponse response,
                                Set<Node> nodes) {
-        long delay = clientDelayGenerator.calculateDelay(request, nodes);
+        long delay = clientDelayGenerator.calculateDelay(request, nodes, anomaly);
         anomaly.setClientDelay(delay);
         response.setWaitTimeout(delay);
         response.setSentByClientAt(request.getSendedByClientAt());

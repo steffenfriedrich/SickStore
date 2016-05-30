@@ -54,7 +54,6 @@ public class ConstantStaleness implements StalenessGenerator {
                 delay.put(node, foreignReads);
             }
         }
-
         return delay;
     }
 }

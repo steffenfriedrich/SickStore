@@ -85,7 +85,7 @@ public class Measurements {
         HashMap<String, HashMap<String, String>> summaries = new HashMap<String, HashMap<String, String>>();
 
         for (String key :_measurements.keySet()) {
-            File file = new File("results/" + outputFolder + "/percentiles-" + key.toLowerCase() + "-" + ouputName + ".dat");
+            File file = new File("results/sickstore/" + outputFolder + "/percentiles-" + key.toLowerCase() + "-" + ouputName + ".dat");
             FileUtils.forceMkdir(file.getParentFile());
 
             Recorder measurement = _measurements.get(key);
@@ -100,7 +100,7 @@ public class Measurements {
             summary.put("Mean(ms)", "" + histogram.getMean());
             summary.put("StdDeviation(ms)", "" + histogram.getStdDeviation());
             summary.put("90Percentile(ms)", "" + histogram.getValueAtPercentile(90));
-            summary.put("99Percentile(ms)", "" + histogram.getValueAtPercentile(99.9) );
+            summary.put("99Percentile(ms)", "" + histogram.getValueAtPercentile(99) );
             summary.put("99.9Percentile(ms)", "" + histogram.getValueAtPercentile(99.9));
             summary.put("99.99Percentile(ms)", "" + histogram.getValueAtPercentile(99.99));
             summaries.put(key, summary);
@@ -108,14 +108,14 @@ public class Measurements {
             // percentile distribution
             histogram.outputPercentileDistribution(new PrintStream(file), 2, 1.0, true);
 
-            FileOutputStream compressedHistogram = new FileOutputStream("results/" + outputFolder + "/hdrhistogram-" + key.toLowerCase() + "-" + ouputName + ".hdr");
+            FileOutputStream compressedHistogram = new FileOutputStream("results/sickstore/" + outputFolder + "/hdrhistogram-" + key.toLowerCase() + "-" + ouputName + ".hdr");
             PrintStream log = new PrintStream(compressedHistogram, false, "UTF-8");
             HistogramLogWriter histogramLogWriter = new HistogramLogWriter(log);
             histogramLogWriter.outputIntervalHistogram(histogram);
             log.close();
         }
         // export summary
-        File summaryFile = new File("results/" + outputFolder + "/summary.json");
+        File summaryFile = new File("results/sickstore/" + outputFolder + "/summary.json");
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.writeValue(summaryFile, summaries);
     }

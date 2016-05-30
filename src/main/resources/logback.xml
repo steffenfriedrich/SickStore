@@ -58,15 +58,16 @@
 			  class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>logs/staleness.log</file>
 		<encoder>
-			<pattern>%date{ISO8601} | %-5level | %msg%n</pattern>
+			<pattern>%msg%n</pattern>
 		</encoder>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/staleness-%d{yyyy-MM-dd}.log</fileNamePattern>
-			<maxHistory>30</maxHistory>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>logs/staleness.%i.log</fileNamePattern>
+			<minIndex>1</minIndex>
+			<maxIndex>20</maxIndex>
 		</rollingPolicy>
 		<triggeringPolicy
 				class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-			<maxFileSize>20MB</maxFileSize>
+			<maxFileSize>50MB</maxFileSize>
 		</triggeringPolicy>
 	</appender>
 

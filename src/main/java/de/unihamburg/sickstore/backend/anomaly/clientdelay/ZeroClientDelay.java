@@ -1,5 +1,6 @@
 package de.unihamburg.sickstore.backend.anomaly.clientdelay;
 
+import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.database.Node;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 
@@ -14,7 +15,14 @@ public class ZeroClientDelay implements ClientDelayGenerator {
     }
 
     @Override
-    public long calculateDelay(ClientRequest request, Set<Node> nodes) {
+    public long calculateDelay(ClientRequest request, Set<Node> nodes, Anomaly anomaly) {
         return 0;
     }
+
+    @Override
+    public Node getResponsiveNode(ClientRequest request, Set<Node> nodes) {
+        return request.getReceivedBy();
+    }
+
+
 }

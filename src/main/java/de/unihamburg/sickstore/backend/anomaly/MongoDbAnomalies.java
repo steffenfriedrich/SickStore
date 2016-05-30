@@ -130,14 +130,15 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
 
 
     /**
-     * @see ClientDelayGenerator#calculateDelay(ClientRequest, Set)
+     * @see ClientDelayGenerator#calculateDelay(ClientRequest, Set, Anomaly)
      */
     @Override
-    public long calculateDelay(ClientRequest request, Set<Node> nodes) {
+    public long calculateDelay(ClientRequest request, Set<Node> nodes, Anomaly anomaly) {
         long clientServerDelay = 0;
         long queueingLatency = 0;
         long writeDelay = 0;
-        Node responsiveNode = getResponsiveNode(request, nodes);
+        Node responsiveNode = anomaly.getResponsiveNode();
+
         if(responsiveNode != null) {
             clientServerDelay = responsiveNode.getClientLatency();
             long receivedAt = request.getReceivedAt();
@@ -150,7 +151,7 @@ public class MongoDbAnomalies implements ClientDelayGenerator, StalenessGenerato
         return clientServerDelay + writeDelay + queueingLatency;
     }
 
-    private Node getResponsiveNode(ClientRequest request, Set<Node> nodes) {
+    public Node getResponsiveNode(ClientRequest request, Set<Node> nodes) {
         Node node = request.getReceivedBy();
         ReadPreference readPreference = null;
         if (request instanceof ClientRequestRead) {

@@ -94,8 +94,7 @@ public class Store {
 		Version version = Version.NULL;
 		Version versionMostRecent = Version.NULL;
 		int versionStaleness = 0;
-		// find the version that was up-to-date (most recent) at the given
-		// timestamp
+		// find the version that was up-to-date (moss
 		if (versions != null) {
 			versionMostRecent = versions.get(0);
 			for (int i = 0; i < versions.size(); i++) {
@@ -113,8 +112,7 @@ public class Store {
 		if (logStaleness && version != Version.NULL) {
 			if (version == versionMostRecent) {
 				long timeSinceLastUpdate = timestamp - version.getWrittenAt();
-				Store.logStaleness.info("key;" + key + ";most recent version;"
-						+ versionMostRecent.getWrittenAt()
+				Store.logStaleness.info("key;" + key
 						+ ";staleness in versions;" + versionStaleness
 						+ ";staleness in ms;0" + ";read-after-write lag;"
 						+ timeSinceLastUpdate);
@@ -122,8 +120,6 @@ public class Store {
 			} else {
 				Store.logStaleness.info("key;"
 						+ key
-						+ ";most recent version;"
-						+ versionMostRecent.getWrittenAt()
 						+ ";staleness in versions;"
 						+ versionStaleness
 						+ ";staleness in ms;"
@@ -252,7 +248,6 @@ public class Store {
 		StalenessMap stalenessWindows = version.getVisibility();
 		long writeTimestamp = version.getWrittenAt();
 		Long staleness = stalenessWindows.get(node);
-
 		if (staleness == null) {
 			return -1l;
 		} else {
