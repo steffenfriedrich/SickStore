@@ -13,6 +13,7 @@
       <fileMode>0644</fileMode>
       <includes>
         <include>README.md</include>
+        <include>LICENSE</include>
       </includes>
     </fileSet>
     <fileSet>
