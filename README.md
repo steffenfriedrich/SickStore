@@ -1,9 +1,6 @@
 ![SickStore](src/resources/sickstore.png "SickStore")
 =========
-<b>S</b>ingle-node <b>i</b>n<b>c</b>onsistent <b>k</b>ey-value <b>store</b> developed to validate measurement methods of NoSQL benchmarking frameworks.
-Originally developed to validate staleness measurement approaches for our paper titled
-[Who Watches the Watchmen? On the Lack of Validation in NoSQL Benchmarking](http://subs.emis.de/LNI/Proceedings/Proceedings241/351.pdf),
-it can also simulate various aspects of system behavior and corresponding anomalies to validate measurement methods.
+<b>S</b>ingle-node <b>i</b>n<b>c</b>onsistent <b>k</b>ey-value <b>store</b> developed to validate measurement methods of NoSQL benchmarking frameworks.Originally developed to validate staleness measurement approaches for our paper titled [Who Watches the Watchmen? On the Lack of Validation in NoSQL Benchmarking](http://subs.emis.de/LNI/Proceedings/Proceedings241/351.pdf), it can also simulate various aspects of system behavior and corresponding anomalies to validate measurement methods.
 
 More information is available at: <http://nosqlmark.informatik.uni-hamburg.de>
 
@@ -52,7 +49,4 @@ or under Windows:
     $ bin\sickstore.bat config/$CONFIG.yml
 
 #### Benchmarking SickStore
-If you want to validate your own measurement extension for YCSB
-(e.g. an approach for measuring time-based staleness) you can use our
-[YCSB-binding](https://github.com/steffenfriedrich/YCSB) or use the sickstore-client
-in your own project by adding the maven dependency.
+If you want to validate your own measurement extension for YCSB (e.g. an approach for measuring time-based staleness) you can use our [YCSB-binding](https://github.com/steffenfriedrich/YCSB) or use the sickstore-client in your own project by adding the maven dependency.
