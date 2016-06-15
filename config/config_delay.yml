@@ -2,18 +2,20 @@ class: de.unihamburg.sickstore.database.SickServer
 port: 54000
 queryHandler:
     class: de.unihamburg.sickstore.backend.QueryHandler
+    warmup: 0
+    logstaleness: true
     anomalyGenerator:
         class: de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator
         combinedGenerator:
             class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
-            defaultDelay: 1
-            journalCommitInterval: 1
+            defaultDelay: 0
+            journalCommitInterval: 0
             customDelays:
                 # to, from, delay
-                - [primary, secondary1, 1]
-                - [primary, secondary2, 2]
-                - [secondary1, primary, 1]
-                - [secondary2, primary, 2]
+                - [primary, secondary1, 2]
+                - [primary, secondary2, 4]
+                - [secondary1, primary, 2]
+                - [secondary2, primary, 4]
             tagSets:
                 foobar:
                     A: 1
@@ -25,7 +27,9 @@ queryHandler:
             primary: true
             clientLatency: 2
             throughput:
-                max: 1000.0
+                max: 10000.0
+                hickupAfter: 0
+                hickupDuration: 0
             tags:
                 - A
                 - B
@@ -34,7 +38,9 @@ queryHandler:
             name: secondary1
             clientLatency: 2
             throughput:
-                max: 1000.0
+                max: 10000.0
+                hickupAfter: 0
+                hickupDuration: 0
             tags:
                 - A
         -
@@ -42,6 +48,8 @@ queryHandler:
             name: secondary2
             clientLatency: 2
             throughput:
-                max: 1000.0
+                max: 10000.0
+                hickupAfter: 0
+                hickupDuration: 0
             tags:
                 - B

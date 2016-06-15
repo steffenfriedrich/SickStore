@@ -1,20 +1,21 @@
 class: de.unihamburg.sickstore.database.SickServer
 port: 54000
 queryHandler:
-    class: de.unihamburg.sickstore.backend.
+    class: de.unihamburg.sickstore.backend.QueryHandler
     warmup: 0
+    logstaleness: true
     anomalyGenerator:
         class: de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator
         combinedGenerator:
             class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
-            defaultDelay: 100
-            journalCommitInterval: 300
+            defaultDelay: 0
+            journalCommitInterval: 0
             customDelays:
                 # to, from, delay
-                - [primary, secondary1, 50]
-                - [primary, secondary2, 20]
-                - [secondary1, primary, 60]
-                - [secondary2, primary, 20]
+                - [primary, secondary1, 200]
+                - [primary, secondary2, 60]
+                - [secondary1, primary, 0]
+                - [secondary2, primary, 0]
             tagSets:
                 foobar:
                     A: 1
@@ -24,22 +25,34 @@ queryHandler:
             class: de.unihamburg.sickstore.database.Node
             name: primary
             primary: true
-            clientLatency: 2
+            clientLatency: 0
             throughput:
-                max: 10000.0
+                max: 1000.0
+                hickupAfter: 0
+                hickupDuration: 0
+                periodically: false
             tags:
                 - A
                 - B
         -
             class: de.unihamburg.sickstore.database.Node
             name: secondary1
-            clientLatency: 1
+            clientLatency: 0
+            throughput:
+                max: 1000.0
+                hickupAfter: 0
+                hickupDuration: 0
+                periodically: false
             tags:
                 - A
         -
             class: de.unihamburg.sickstore.database.Node
             name: secondary2
-            clientLatency: 3
-            maxThroughput: 200.0
+            clientLatency: 0
+            throughput:
+                max: 1000.0
+                hickupAfter: 0
+                hickupDuration: 0
+                periodically: false
             tags:
                 - B

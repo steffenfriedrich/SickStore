@@ -6,12 +6,6 @@ queryHandler:
     logstaleness: true
     anomalyGenerator:
         class: de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator
-#        stalenessGenerator:
-#            class: de.unihamburg.sickstore.backend.anomaly.staleness.ConstantStaleness
-#            foreignReads: 500
-#            ownReads: 0
-#        clientDelayGenerator:
-#            class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
         combinedGenerator:
             class: de.unihamburg.sickstore.backend.anomaly.MongoDbAnomalies
             defaultDelay: 0
@@ -33,9 +27,9 @@ queryHandler:
             primary: true
             clientLatency: 0
             throughput:
-                max: 1000.0
-                hickupAfter: 10000
-                hickupDuration: 1000
+                max: 10000.0
+                hickupAfter: 0
+                hickupDuration: 0
             tags:
                 - A
                 - B
@@ -44,9 +38,9 @@ queryHandler:
             name: secondary1
             clientLatency: 0
             throughput:
-                max: 1000.0
-                hickupAfter: 10000
-                hickupDuration: 1000
+                max: 10000.0
+                hickupAfter: 0
+                hickupDuration: 0
             tags:
                 - A
         -
@@ -54,8 +48,8 @@ queryHandler:
             name: secondary2
             clientLatency: 0
             throughput:
-                max: 1000.0
-                hickupAfter: 10000
-                hickupDuration: 1000
+                max: 10000.0
+                hickupAfter: 0
+                hickupDuration: 0
             tags:
                 - B
