@@ -79,13 +79,10 @@ public class BasicAnomalyGenerator implements AnomalyGenerator {
     @Override
     public Anomaly handleRequest(ClientRequest request, Set<Node> nodes) {
         Anomaly anomaly = new Anomaly();
-
         if (request instanceof ClientRequestWrite && stalenessGenerator != null) {
             anomaly.setStalenessMap(stalenessGenerator.generateStalenessMap(nodes, request));
         }
-        if (request instanceof ClientRequestRead || request instanceof ClientRequestScan) {
-            anomaly.setResponsiveNode(clientDelayGenerator.getResponsiveNode(request, nodes));
-        }
+        anomaly.setResponsiveNode(clientDelayGenerator.getResponsiveNode(request, nodes));
         return anomaly;
     }
 
