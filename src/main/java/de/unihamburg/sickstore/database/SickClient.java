@@ -10,8 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage;
-import com.esotericsoftware.kryonet.Listener;
 
+import com.esotericsoftware.kryonet.Listener;
+import com.esotericsoftware.kryonet.Listener.ThreadedListener;
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
@@ -89,13 +90,13 @@ public class SickClient extends Participant {
 
     private void initConnection() throws IOException {
         client = new Client();
-        client.start();
-
         // For consistency, the classes to be sent over the network are
         // registered by the same method for both the client and server.
         Participant.register(client);
 
-        client.addListener(new Listener() {
+        new Thread(client).start();
+
+        client.addListener(new ThreadedListener(new Listener() {
             @Override
             public void connected(Connection connection) {
                 System.out.println("Connected to server.");
@@ -105,7 +106,6 @@ public class SickClient extends Participant {
             public void disconnected(Connection c) {
                 System.out.println("Disconnected from server.");
             }
-
 
             @Override
             public void received(Connection c, Object object) {
@@ -153,8 +153,10 @@ public class SickClient extends Participant {
                             + object);
                 }
             }
-        });
+        }));
     }
+
+
 
     /**
      * Checks whether the client is connected to a server; if not, throws an

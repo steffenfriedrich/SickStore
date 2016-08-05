@@ -4,7 +4,7 @@
 	<groupId>de.unihamburg</groupId>
 	<artifactId>sickstore</artifactId>
 	<packaging>jar</packaging>
-	<version>1.5</version>
+	<version>1.5.1</version>
 	<name>Sickstore</name>
 
 	<properties>
@@ -20,8 +20,19 @@
 		</dependency>
 		<dependency>
 			<groupId>com.esotericsoftware</groupId>
+			<artifactId>kryo</artifactId>
+			<version>3.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.esotericsoftware</groupId>
 			<artifactId>kryonet</artifactId>
 			<version>2.22.0-RC1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.esotericsoftware.kryo</groupId>
+					<artifactId>kryo</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
@@ -37,11 +48,6 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>18.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.reflections</groupId>
-			<artifactId>reflections</artifactId>
-			<version>0.9.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

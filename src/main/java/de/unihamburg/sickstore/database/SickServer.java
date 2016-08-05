@@ -9,7 +9,7 @@ import com.esotericsoftware.kryonet.FrameworkMessage;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
-import de.unihamburg.sickstore.backend.QueryHandler;
+import com.esotericsoftware.minlog.Log;
 import de.unihamburg.sickstore.backend.QueryHandlerInterface;
 import de.unihamburg.sickstore.config.InstanceFactory;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
@@ -57,6 +57,7 @@ public class SickServer extends Participant {
      * Start the server process.
      */
     public void start() throws IOException {
+        Log.set(Log.LEVEL_DEBUG);
         server = new Server();
 
         // For consistency, the classes to be sent over the network are
