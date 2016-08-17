@@ -1,12 +1,12 @@
-![SickStore](src/main/resources/sickstore.png "SickStore")
+![SickStore](src/resources/sickstore.png "SickStore")
 =========
-<b>S</b>ingle-node <b>i</b>n<b>c</b>onsistent <b>k</b>ey-value <b>store</b> designed to validate measurement methods of NoSQL benchmarking frameworks.Originally developed to validate staleness measurement approaches for our paper titled [Who Watches the Watchmen? On the Lack of Validation in NoSQL Benchmarking](http://subs.emis.de/LNI/Proceedings/Proceedings241/351.pdf), it can also simulate various aspects of system behavior and corresponding anomalies to validate measurement methods.
+<b>S</b>ingle-node <b>i</b>n<b>c</b>onsistent <b>k</b>ey-value <b>store</b> developed to validate measurement methods of NoSQL benchmarking frameworks.Originally developed to validate staleness measurement approaches for our paper titled [Who Watches the Watchmen? On the Lack of Validation in NoSQL Benchmarking](http://subs.emis.de/LNI/Proceedings/Proceedings241/351.pdf), it can also simulate various aspects of system behavior and corresponding anomalies to validate measurement methods.
 
 More information is available at: <http://nosqlmark.informatik.uni-hamburg.de>
 
 ## Download
 
-Download the latest Release [sickstore-1.5.1.tar.gz](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.5.1.tar.gz), [sickstore-1.5.1.zip](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.5.1.zip)  or grab dependency via Maven:
+Download the latest Release [sickstore-1.9.tar.gz](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.tar.gz), [sickstore-1.9.zip](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.zip)  or grab dependency via Maven:
 
 ```xml
 <repository>
@@ -20,7 +20,7 @@ Download the latest Release [sickstore-1.5.1.tar.gz](http://nosqlmark.informatik
 <dependency>
     <groupId>de.uni-hamburg.informatik.nosqlmark</groupId>
     <artifactId>sickstore</artifactId>
-    <version>1.5.1</version>
+    <version>1.9</version>
 </dependency>
 ```
 

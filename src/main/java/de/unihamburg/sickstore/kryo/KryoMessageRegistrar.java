@@ -1,4 +1,4 @@
-package de.unihamburg.sickstore.database;
+package de.unihamburg.sickstore.kryo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,15 +13,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryonet.EndPoint;
 import com.google.common.reflect.ClassPath;
 
 import de.unihamburg.sickstore.backend.Version;
+import de.unihamburg.sickstore.database.ReadPreference;
+import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.*;
-import de.unihamburg.sickstore.database.messages.exception.*;
+import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
+import de.unihamburg.sickstore.database.messages.exception.DeleteException;
+import de.unihamburg.sickstore.database.messages.exception.DoubleVersionException;
+import de.unihamburg.sickstore.database.messages.exception.InsertException;
+import de.unihamburg.sickstore.database.messages.exception.NoColumnProvidedException;
+import de.unihamburg.sickstore.database.messages.exception.NoKeyProvidedException;
+import de.unihamburg.sickstore.database.messages.exception.NoValueProvidedException;
+import de.unihamburg.sickstore.database.messages.exception.NotConnectedException;
+import de.unihamburg.sickstore.database.messages.exception.UnknownMessageTypeException;
+import de.unihamburg.sickstore.database.messages.exception.UpdateException;
 
 // This class is a convenient place to keep things common to both the client and server.
-public class Participant {
+public class KryoMessageRegistrar {
     /**
      * 
      * @param c
@@ -78,7 +88,7 @@ public class Participant {
     }
 
     // This registers objects that are going to be sent over the network.
-    static public void register(EndPoint endPoint) throws IOException {
+    static public void register(Kryo kryo) {
         List<Class<?>> classes = new ArrayList<Class<?>>();
 
         // register some primitives etc.
@@ -100,26 +110,33 @@ public class Participant {
         classes.add(TreeMap.class);
 
         // register messages
+        classes.add(WriteConcern.class);
+        classes.add(ReadPreference.class);
         classes.add(ClientRequest.class);
-        classes.add(ClientRequestCleanup.class);
         classes.add(ClientRequestDelete.class);
         classes.add(ClientRequestInsert.class);
         classes.add(ClientRequestRead.class);
         classes.add(ClientRequestScan.class);
         classes.add(ClientRequestUpdate.class);
-        classes.add(ClientRequestWrite.class);
+        classes.add(ClientRequestCleanup.class);
+        classes.add(DatabaseException.class);
+        classes.add(DeleteException.class);
+        classes.add(DoubleVersionException.class);
+        classes.add(InsertException.class);
+        classes.add(NoColumnProvidedException.class);
+        classes.add(NoKeyProvidedException.class);
+        classes.add(NoValueProvidedException.class);
+        classes.add(NotConnectedException.class);
         classes.add(ServerResponse.class);
-        classes.add(ServerResponseCleanup.class);
         classes.add(ServerResponseDelete.class);
         classes.add(ServerResponseException.class);
         classes.add(ServerResponseInsert.class);
         classes.add(ServerResponseRead.class);
         classes.add(ServerResponseScan.class);
         classes.add(ServerResponseUpdate.class);
-
-        classes.add(WriteConcern.class);
-        classes.add(ReadPreference.class);
-
+        classes.add(ServerResponseCleanup.class);
+        classes.add(UnknownMessageTypeException.class);
+        classes.add(UpdateException.class);
 
         // register exceptions
         classes.add(DatabaseException.class);
@@ -128,13 +145,11 @@ public class Participant {
         classes.add(InsertException.class);
         classes.add(NoColumnProvidedException.class);
         classes.add(NoKeyProvidedException.class);
-        classes.add(NotConnectedException.class);
         classes.add(NoValueProvidedException.class);
+        classes.add(NotConnectedException.class);
         classes.add(UnknownMessageTypeException.class);
         classes.add(UpdateException.class);
-        classes.add(WriteForbiddenException.class);
 
-        Kryo kryo = endPoint.getKryo();
         for (Class<?> c : classes) {
             kryo.register(c);
         }

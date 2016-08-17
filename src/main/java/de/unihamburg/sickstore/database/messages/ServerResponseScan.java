@@ -12,7 +12,7 @@ public class ServerResponseScan extends ServerResponse {
         super();
     }
 
-    public ServerResponseScan(long clientRequestID, List<Version> entries) {
+    public ServerResponseScan(int clientRequestID, List<Version> entries) {
         super(clientRequestID);
         this.entries = entries;
     }

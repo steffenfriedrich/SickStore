@@ -3,13 +3,12 @@
  */
 package de.unihamburg.sickstore.database;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 
 import de.unihamburg.sickstore.SickstoreTestCase;
+import de.unihamburg.sickstore.database.client.SickStoreClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,10 +24,10 @@ import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
  */
 public class SickServerTest extends SickstoreTestCase {
 
-    private SickClient c1;
-    private SickClient c2;
-    private SickClient c3;
-    private SickServer server;
+    private SickStoreClient c1;
+    private SickStoreClient c2;
+    private SickStoreClient c3;
+    private SickStoreServer server;
 
     /**
      * @throws java.lang.Exception
@@ -40,16 +39,17 @@ public class SickServerTest extends SickstoreTestCase {
         int timeout = 12000;
         int tcpPort = 54000;
 
-        server = new SickServer(tcpPort, queryHandler);
+        server = new SickStoreServer(tcpPort, queryHandler);
         server.start();
 
         // Connect clients
-        c1 = new SickClient(timeout, host, tcpPort, "node1", timeHandler);
+        c1 = new SickStoreClient(host, tcpPort, "node1", timeHandler);
+        c2 = new SickStoreClient(host, tcpPort, "node2", timeHandler);
+        c3 = new SickStoreClient(host, tcpPort, "node3", timeHandler);
         c1.connect();
-        c2 = new SickClient(timeout, host, tcpPort, "node2", timeHandler);
         c2.connect();
-        c3 = new SickClient(timeout, host, tcpPort, "node3", timeHandler);
         c3.connect();
+        Thread.sleep(2000);
     }
 
     /**
@@ -63,8 +63,8 @@ public class SickServerTest extends SickstoreTestCase {
         server.shutdown();
     }
 
-    private void checkClientStainless(Version insert, SickClient writer,
-            String key) throws DatabaseException {
+    private void checkClientStainless(Version insert, SickStoreClient writer,
+            String key) throws Exception {
         Version copyC1 = null;
         Version copyC2 = null;
         Version copyC3 = null;

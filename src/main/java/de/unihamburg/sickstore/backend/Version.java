@@ -10,7 +10,6 @@ import java.util.TreeMap;
 
 import de.unihamburg.sickstore.backend.anomaly.staleness.StalenessMap;
 import de.unihamburg.sickstore.database.Node;
-import de.unihamburg.sickstore.database.SickServer;
 
 /**
  * @author Wolfram Wingerath

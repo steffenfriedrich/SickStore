@@ -1,5 +1,7 @@
 package de.unihamburg.sickstore.database.messages;
 
+import com.sun.corba.se.spi.activation.Server;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ServerResponse {
@@ -7,7 +9,7 @@ public class ServerResponse {
     protected static final AtomicLong counter = new AtomicLong();
 
     /** The request ID of the client request that triggered this response */
-    protected Long clientRequestID;
+    protected int clientRequestID;
 
     /** Atomic ID of this response (which increases with each response) */
     protected Long responseId;
@@ -18,19 +20,18 @@ public class ServerResponse {
     /** Indicates how long the requesting client needs to delay after this response (to simulate write latencies) */
     protected Long waitTimeout = 0l;
 
+
     public ServerResponse() {
         super();
-
         this.responseId = counter.incrementAndGet();
     }
 
-    public ServerResponse(long clientRequestID) {
+    public ServerResponse(int clientRequestID) {
         this();
-
         this.clientRequestID = clientRequestID;
     }
 
-    public Long getClientRequestID() {
+    public int getClientRequestID() {
         return clientRequestID;
     }
 
@@ -53,5 +54,14 @@ public class ServerResponse {
     @Override
     public String toString() {
         return "RESPONSE";
+    }
+
+    public ServerResponse setStreamId(int streamId) {
+        this.clientRequestID = streamId;
+        return this;
+    }
+
+    public int getStreamId() {
+        return clientRequestID;
     }
 }

@@ -7,7 +7,7 @@ public class ServerResponseDelete extends ServerResponse {
         super();
     }
 
-    public ServerResponseDelete(long clientRequestID) {
+    public ServerResponseDelete(int clientRequestID) {
         super(clientRequestID);
     }
 

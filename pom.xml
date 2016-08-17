@@ -4,7 +4,7 @@
 	<groupId>de.unihamburg</groupId>
 	<artifactId>sickstore</artifactId>
 	<packaging>jar</packaging>
-	<version>1.5.1</version>
+	<version>1.9</version>
 	<name>Sickstore</name>
 
 	<properties>
@@ -19,20 +19,14 @@
 			<version>4.12</version>
 		</dependency>
 		<dependency>
-			<groupId>com.esotericsoftware</groupId>
-			<artifactId>kryo</artifactId>
+		<groupId>com.esotericsoftware</groupId>
+		<artifactId>kryo-shaded</artifactId>
 			<version>3.0.3</version>
 		</dependency>
 		<dependency>
-			<groupId>com.esotericsoftware</groupId>
-			<artifactId>kryonet</artifactId>
-			<version>2.22.0-RC1</version>
-			<exclusions>
-				<exclusion>
-					<groupId>com.esotericsoftware.kryo</groupId>
-					<artifactId>kryo</artifactId>
-				</exclusion>
-			</exclusions>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>4.0.4.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
@@ -47,7 +41,12 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>18.0</version>
+			<version>19.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.9.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -62,7 +61,7 @@
 		<dependency>
 			<groupId>org.hdrhistogram</groupId>
 			<artifactId>HdrHistogram</artifactId>
-			<version>2.1.7</version>
+			<version>2.1.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.yaml</groupId>

@@ -1,7 +1,7 @@
 package de.unihamburg.sickstore;
 
 import de.unihamburg.sickstore.config.InstanceFactory;
-import de.unihamburg.sickstore.database.SickServer;
+import de.unihamburg.sickstore.database.SickStoreServer;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
@@ -19,7 +19,7 @@ public class ServerStartup {
         Yaml yaml = new Yaml();
         Map<String, Object> config = (Map<String, Object>) yaml.load(ios);
 
-        SickServer server = (SickServer) InstanceFactory.newInstanceFromConfig(config);
+        SickStoreServer server = (SickStoreServer) InstanceFactory.newInstanceFromConfig(config);
         server.start();
     }
 }

@@ -82,7 +82,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
-		long clientRequestID = request.getId();
+		int clientRequestID = request.getId();
 		if (key == null) {
 			throw new NoKeyProvidedException("Cannot process delete request; no key was provided.");
 		}
@@ -103,7 +103,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
-		long clientRequestID = request.getId();
+		int clientRequestID = request.getId();
 		Version version = request.getVersion();
 
 		if (key == null) {
@@ -132,7 +132,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		String key = request.getKey();
 		Set<String> columns = request.getFields();
 		long timestamp = request.getReceivedAt();
-		long clientRequestID = request.getId();
+		int clientRequestID = request.getId();
 		if (key == null) {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
 		}
@@ -160,7 +160,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		boolean asc = request.isAscending();
 		Set<String> columns = request.getFields();
 		long timestamp = request.getReceivedAt();
-		long clientRequestID = request.getId();
+		int clientRequestID = request.getId();
 		if (key == null) {
 			throw new NoKeyProvidedException(
 					"Cannot process get request; no key was provided.");
@@ -182,7 +182,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		Node node = request.getReceivedBy();
 		String key = request.getKey();
 		long timestamp = request.getReceivedAt();
-		long clientRequestID = request.getId();
+		int clientRequestID = request.getId();
 		Version version = request.getVersion();
 		if (key == null) {
 			throw new NoKeyProvidedException("Cannot process get request; no key was provided.");
@@ -200,7 +200,7 @@ public class QueryHandler implements QueryHandlerInterface {
 	}
 
 	private ServerResponseCleanup process(ClientRequestCleanup request) {
-		long clientRequestID = request.getId();
+		int clientRequestID = request.getId();
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		try {
 			warmupCounter = warmup;
@@ -223,7 +223,7 @@ public class QueryHandler implements QueryHandlerInterface {
 	@Override
 	public synchronized ServerResponse processQuery(ClientRequest request) {
 
-		Long id = -1l;
+		int id = -1;
 		ServerResponse response = null;
 		try {
 			request.setReceivedAt(timeHandler.getCurrentTime());

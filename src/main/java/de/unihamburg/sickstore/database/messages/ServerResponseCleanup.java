@@ -9,7 +9,7 @@ public class ServerResponseCleanup extends ServerResponse {
         super();
     }
 
-    public ServerResponseCleanup(long clientRequestID) {
+    public ServerResponseCleanup(int clientRequestID) {
         super(clientRequestID);
     }
 

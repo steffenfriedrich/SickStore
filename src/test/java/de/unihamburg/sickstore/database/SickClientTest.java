@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.unihamburg.sickstore.SickstoreTestCase;
+import de.unihamburg.sickstore.database.client.SickStoreClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,8 +28,8 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
  */
 public class SickClientTest extends SickstoreTestCase {
 
-    private SickClient c1;
-    private SickServer server;
+    private SickStoreClient c1;
+    private SickStoreServer server;
 
     /**
      * @throws java.lang.Exception
@@ -41,11 +42,12 @@ public class SickClientTest extends SickstoreTestCase {
         int tcpPort = 54999;
 
         // Create and start server and clients
-        server = new SickServer(tcpPort, queryHandler);
+        server = new SickStoreServer(tcpPort, queryHandler);
         server.start();
 
-        c1 = new SickClient(timeout, host, tcpPort, "node1", timeHandler);
+        c1 = new SickStoreClient(host, tcpPort, "node1", timeHandler);
         c1.connect();
+        Thread.sleep(2000);
     }
 
     /**

@@ -7,7 +7,7 @@ public class ServerResponseInsert extends ServerResponse {
         super();
     }
 
-    public ServerResponseInsert(long clientRequestID) {
+    public ServerResponseInsert(int clientRequestID) {
         super(clientRequestID);
     }
 

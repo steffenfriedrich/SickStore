@@ -1,20 +1,23 @@
-package de.unihamburg.sickstore.database;
+package de.unihamburg.sickstore.database.client;
 
-import com.esotericsoftware.kryonet.Connection;
 import de.unihamburg.sickstore.backend.LocalQueryHandler;
 import de.unihamburg.sickstore.backend.QueryHandler;
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
+import de.unihamburg.sickstore.database.ReadPreference;
+import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
+import de.unihamburg.sickstore.kryo.KryoMessageRegistrar;
+
 import java.util.List;
 import java.util.Set;
 
 /**
  * Created by Steffen Friedrich on 03.12.2015.
  */
-public class LocalSickClient extends Participant {
+public class LocalSickClient extends KryoMessageRegistrar {
     String destinationNode;
     QueryHandler queryHandler;
     private TimeHandler timeHandler;

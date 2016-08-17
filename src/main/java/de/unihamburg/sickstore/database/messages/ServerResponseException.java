@@ -12,7 +12,7 @@ public class ServerResponseException extends ServerResponse {
         super();
     }
 
-    public ServerResponseException(long clientRequestID, Exception e) {
+    public ServerResponseException(int clientRequestID, Exception e) {
         super(clientRequestID);
         this.message = e.getMessage();
         this.className = e.getClass().getCanonicalName();

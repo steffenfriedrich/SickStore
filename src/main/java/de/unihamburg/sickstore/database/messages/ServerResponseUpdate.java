@@ -7,7 +7,7 @@ public class ServerResponseUpdate extends ServerResponse {
         super();
     }
 
-    public ServerResponseUpdate(long clientRequestID) {
+    public ServerResponseUpdate(int clientRequestID) {
         super(clientRequestID);
     }
 

@@ -8,7 +8,7 @@ public abstract class ClientRequest {
 
     protected static final AtomicLong counter = new AtomicLong();
 
-    protected Long id;
+    private volatile int id = -1;
 
     protected String key;
 
@@ -45,7 +45,6 @@ public abstract class ClientRequest {
         this();
         this.table = table;
         this.key = key;
-        this.id = counter.incrementAndGet();
     }
 
     public ClientRequest(String table, String key, String destinationNode) {
@@ -53,10 +52,9 @@ public abstract class ClientRequest {
         this.destinationNode = destinationNode;
         this.table = table;
         this.key = key;
-        this.id = counter.incrementAndGet();
     }
 
-    public Long getId() {
+    public int getId() {
         return id;
     }
 
@@ -80,7 +78,7 @@ public abstract class ClientRequest {
         return receivedBy;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -106,5 +104,14 @@ public abstract class ClientRequest {
 
     public void setDestinationNode(String destinationNode) {
         this.destinationNode = destinationNode;
+    }
+
+    public ClientRequest setStreamId(int streamId) {
+        this.id = streamId;
+        return this;
+    }
+
+    public int getStreamId() {
+        return id;
     }
 }

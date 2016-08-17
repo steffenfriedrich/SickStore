@@ -10,7 +10,7 @@ public class ServerResponseRead extends ServerResponse {
         super();
     }
 
-    public ServerResponseRead(long clientRequestID, Version version) {
+    public ServerResponseRead(int clientRequestID, Version version) {
         super(clientRequestID);
         this.version = version;
     }
