@@ -1,4 +1,4 @@
-![SickStore](src/resources/sickstore.png "SickStore")
+![SickStore](src/main/resources/sickstore.png "SickStore")
 =========
 <b>S</b>ingle-node <b>i</b>n<b>c</b>onsistent <b>k</b>ey-value <b>store</b> developed to validate measurement methods of NoSQL benchmarking frameworks.Originally developed to validate staleness measurement approaches for our paper titled [Who Watches the Watchmen? On the Lack of Validation in NoSQL Benchmarking](http://subs.emis.de/LNI/Proceedings/Proceedings241/351.pdf), it can also simulate various aspects of system behavior and corresponding anomalies to validate measurement methods.
 
