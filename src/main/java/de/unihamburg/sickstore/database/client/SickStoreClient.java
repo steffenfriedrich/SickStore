@@ -33,9 +33,6 @@ public class SickStoreClient {
 
     Connection.ConnectionFactory connectionFactory;
 
-    ListeningExecutorService executor;
-    LinkedBlockingQueue<Runnable> executorQueue;
-
     ListeningExecutorService blockingExecutor;
     LinkedBlockingQueue<Runnable> blockingExecutorQueue;
 
@@ -56,10 +53,8 @@ public class SickStoreClient {
     }
 
     synchronized public boolean connect() {
-        this.executorQueue = new LinkedBlockingQueue<Runnable>();
-        this.executor = makeExecutor(6, "worker", executorQueue);
         this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
-        this.blockingExecutor = makeExecutor(2, "blocking-task-worker", blockingExecutorQueue);
+        this.blockingExecutor = makeExecutor(6, "blocking-task-worker", blockingExecutorQueue);
 
         this.connectionFactory = new Connection.ConnectionFactory(this);
 
@@ -67,6 +62,9 @@ public class SickStoreClient {
             connectionPool = new ConnectionPool(this);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        while(connectionPool.connections.size() < maxConnections) {
+
         }
         return true;
     }
