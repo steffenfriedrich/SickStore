@@ -31,7 +31,7 @@ public class ConnectionPool {
                while(addConnectionIfUnderMaximum()) {
 
                }
-                System.out.println(String.format("Connection established with SickStore %s:%s , initializing transport", client.getHost(), client.getPort() ));
+                System.out.println(String.format("Connection established with SickStore %s:%s, initializing transport", client.getHost(), client.getPort() ));
             }
         };
         client.blockingExecutor().submit(newConnectionTask);

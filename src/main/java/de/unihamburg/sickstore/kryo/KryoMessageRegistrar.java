@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.google.common.reflect.ClassPath;
 
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.database.ReadPreference;
@@ -32,60 +31,6 @@ import de.unihamburg.sickstore.database.messages.exception.UpdateException;
 
 // This class is a convenient place to keep things common to both the client and server.
 public class KryoMessageRegistrar {
-    /**
-     * 
-     * @param c
-     *            a class
-     * @return all classes that are part of the same package as <code>c</code>
-     * @throws IOException
-     */
-    private static Set<Class<? extends Object>> getClassesInPackageOf(Class<?> c)
-            throws IOException {
-        String pack = c.getPackage().getName();
-        final ClassLoader loader = Thread.currentThread()
-                .getContextClassLoader();
-
-        Set<Class<? extends Object>> allClasses = new HashSet<Class<? extends Object>>();
-
-        for (final ClassPath.ClassInfo info : ClassPath.from(loader)
-                .getTopLevelClasses()) {
-            if (info.getName().startsWith(pack)) {
-                final Class<?> clazz = info.load();
-                allClasses.add(clazz);
-            }
-        }
-        return allClasses;
-    }
-
-    public static void main(String[] args) throws Exception {
-        printClasses();
-    }
-
-    private static void printClasses() throws IOException {
-        List<String> classes = new ArrayList<String>();
-
-        System.out.println();
-        System.out.println("// register messages");
-        for (Class<? extends Object> c : getClassesInPackageOf(ClientRequest.class)) {
-            classes.add("classes.add(" + c.getSimpleName() + ".class);");
-        }
-        Collections.sort(classes);
-        for (String string : classes) {
-            System.out.println(string);
-        }
-        classes.clear();
-
-        System.out.println();
-        System.out.println("// register exceptions");
-        for (Class<? extends Object> c : getClassesInPackageOf(DatabaseException.class)) {
-            classes.add("classes.add(" + c.getSimpleName() + ".class);");
-        }
-        Collections.sort(classes);
-        for (String string : classes) {
-            System.out.println(string);
-        }
-        classes.clear();
-    }
 
     // This registers objects that are going to be sent over the network.
     static public void register(Kryo kryo) {

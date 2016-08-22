@@ -70,7 +70,7 @@ public class Connection {
             throw e;
         }
 
-        Executor initExecutor = MoreExecutors.directExecutor();
+        Executor initExecutor = MoreExecutors.sameThreadExecutor();
 
         ListenableFuture<Void> initFuture = Futures.withFallback(channelReadyFuture, new FutureFallback<Void>() {
             @Override
