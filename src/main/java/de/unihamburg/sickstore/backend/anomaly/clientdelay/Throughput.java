@@ -48,7 +48,7 @@ public class Throughput {
     }
 
     public Throughput(double maxThroughput) {
-        this.maxThroughput = maxThroughput;
+        this.maxThroughput = maxThroughput / 1000;
     }
 
     public Throughput(double maxThroughput, int hickupEvery, int hickupDuration) {
