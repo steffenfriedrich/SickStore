@@ -18,7 +18,6 @@ public class ConnectionPool {
     private final int maxConnections;
     final List<Connection> connections;
     private final AtomicInteger open;
-    protected final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     public ConnectionPool(SickStoreClient client) {
         this.client = client;

@@ -2,6 +2,7 @@ package de.unihamburg.sickstore.database.client;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.AbstractFuture;
 import de.unihamburg.sickstore.kryo.KryoMessageRegistrar;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.kryo.KryoDecoder;
@@ -35,7 +36,7 @@ public class Connection {
     private final ConnectionPool pool;
 
     private final AtomicInteger inFlight;
-    private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
+    private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     public Connection(ConnectionPool pool, String name, InetSocketAddress address, ConnectionFactory connectionFactory) {
         this.pool = pool;
@@ -98,7 +99,7 @@ public class Connection {
     }
 
     CloseFuture close() {
-        ConnectionCloseFuture future = new ConnectionCloseFuture();
+        CloseFuture future = new CloseFuture(this);
         if (!closeFuture.compareAndSet(null, future)) {
             // close had already been called, return the existing future
             return closeFuture.get();
@@ -110,7 +111,7 @@ public class Connection {
 
     boolean tryTerminate(boolean force) {
         assert isClosed();
-        ConnectionCloseFuture future = closeFuture.get();
+        CloseFuture future = closeFuture.get();
 
         if (future.isDone()) {
             return true;
@@ -154,6 +155,14 @@ public class Connection {
         return inFlight;
     }
 
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public ConnectionFactory getConnectionFactory() {
+        return connectionFactory;
+    }
+
     static class ConnectionFactory {
         final SickStoreClient client;
         final EventLoopGroup eventLoopGroup;
@@ -166,6 +175,10 @@ public class Connection {
         ConnectionFactory(SickStoreClient client) {
             this.client = client;
             this.eventLoopGroup = new NioEventLoopGroup(0, threadFactory("nio-worker"));
+        }
+
+        public ChannelGroup getAllChannels() {
+            return allChannels;
         }
 
         /**
@@ -268,31 +281,5 @@ public class Connection {
     public static abstract class FailureCallback<V> implements FutureCallback<V> {
         @Override
         public void onSuccess(V result) { /* nothing */ }
-    }
-
-    private class ConnectionCloseFuture extends CloseFuture {
-
-        @Override
-        public ConnectionCloseFuture force() {
-            // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
-
-            // This method can be thrown during initialization, at which point channel is not yet set. This is ok.
-            if (channel == null) {
-                set(null);
-                return this;
-            }
-
-            ChannelFuture future = channel.close();
-            future.addListener(new ChannelFutureListener() {
-                public void operationComplete(ChannelFuture future) {
-                    connectionFactory.allChannels.remove(channel);
-                    if (future.cause() != null) {
-                        ConnectionCloseFuture.this.setException(future.cause());
-                    } else
-                        ConnectionCloseFuture.this.set(null);
-                }
-            });
-            return this;
-        }
     }
 }
