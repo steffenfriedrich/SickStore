@@ -28,9 +28,9 @@ queryHandler:
            primary: true
            clientLatency: 0
            throughput:
-               max: 10.0
-               hickupAfter: 20000
-               hickupDuration: 2000
+               max: 4100.0
+               hickupAfter: 30000
+               hickupDuration: 200
                periodically: true
            tags:
                - A
@@ -40,9 +40,9 @@ queryHandler:
            name: secondary1
            clientLatency: 0
            throughput:
-               max: 10.0
-               hickupAfter: 20000
-               hickupDuration: 2000
+               max: 4100.0
+               hickupAfter: 30000
+               hickupDuration: 200
                periodically: true
            tags:
                - A
@@ -51,9 +51,9 @@ queryHandler:
            name: secondary2
            clientLatency: 0
            throughput:
-               max: 10.0
-               hickupAfter: 20000
-               hickupDuration: 2000
+               max: 4100.0
+               hickupAfter: 30000
+               hickupDuration: 200
                periodically: true
            tags:
                - B

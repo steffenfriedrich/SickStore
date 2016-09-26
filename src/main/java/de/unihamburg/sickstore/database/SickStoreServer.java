@@ -106,7 +106,7 @@ public class SickStoreServer {
         nodes.add(new Node("node1"));
         nodes.add(new Node("node2"));
         nodes.add(new Node("node3"));
-        QueryHandlerInterface queryHandler = new QueryHandler(store, anomalyGenerator, nodes, timeHandler, 0, false);
+        QueryHandlerInterface queryHandler = new QueryHandler(store, anomalyGenerator, nodes, timeHandler, 0, false, false);
 
 
         SickStoreServer endpoint = new SickStoreServer(port, queryHandler);

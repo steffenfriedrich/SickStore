@@ -40,6 +40,6 @@ public abstract class SickstoreTestCase {
         );
 
         Store store = new Store(timeHandler);
-        queryHandler = new QueryHandler(store, anomalyGenerator, nodes, timeHandler, 0, false);
+        queryHandler = new QueryHandler(store, anomalyGenerator, nodes, timeHandler, 0, false, false);
     }
 }

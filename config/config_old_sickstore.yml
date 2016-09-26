@@ -2,6 +2,8 @@ class: de.unihamburg.sickstore.database.SickStoreServer
 port: 54000
 queryHandler:
     class: de.unihamburg.sickstore.backend.QueryHandler
+    logstaleness: true
+    loglatency: true
     anomalyGenerator:
         class: de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator
         stalenessGenerator:

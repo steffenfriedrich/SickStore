@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 public class QueryHandler implements QueryHandlerInterface {
 	private static final Logger log = LoggerFactory.getLogger("sickstore");
 	private Boolean logStaleness = false;
+	private Boolean loglatency = false;
 	private TimeHandler timeHandler = new SystemTimeHandler();
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
@@ -40,6 +41,8 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		int warmup = (int) config.get("warmup");
 
+
+		Boolean loglatency = (Boolean) config.get("loglatency");
 		Boolean logStaleness = (Boolean) config.get("logstaleness");
 
 		// add nodes into parameters, so that anomaly generators are aware of the available nodes
@@ -47,27 +50,28 @@ public class QueryHandler implements QueryHandlerInterface {
 		AnomalyGenerator anomalyGenerator = (AnomalyGenerator) InstanceFactory
 			.newInstanceFromConfig(anomalyGeneratorConfig);
 
-		return new QueryHandler(new Store(), anomalyGenerator, nodes, warmup, logStaleness);
+		return new QueryHandler(new Store(), anomalyGenerator, nodes, warmup, logStaleness,loglatency);
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
 						Set<Node> nodes,
 						TimeHandler timeHandler,
-						int warmup, Boolean logStaleness) {
-		this(mediator, anomalyGenerator, nodes, warmup, logStaleness);
+						int warmup, Boolean logStaleness,Boolean loglatency) {
+		this(mediator, anomalyGenerator, nodes, warmup, logStaleness, loglatency);
 		this.timeHandler = timeHandler;
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
-						Set<Node> nodes, int warmup, Boolean logStaleness) {
+						Set<Node> nodes, int warmup, Boolean logStaleness,Boolean loglatency) {
 		this.mediator = mediator;
 		this.anomalyGenerator = anomalyGenerator;
 		this.nodes = nodes;
 		this.warmup = warmup;
 		this.warmupCounter = warmup;
 		if(logStaleness != null) this.logStaleness = logStaleness;
+		if(loglatency != null) this.loglatency = logStaleness;
 	}
 
 	public synchronized Set<Node> getNodes() {
@@ -282,8 +286,10 @@ public class QueryHandler implements QueryHandlerInterface {
 						|| request instanceof ClientRequestScan
 						|| request instanceof ClientRequestUpdate) {
 					Measurements measurements = Measurements.getMeasurements();
-					long latency = 0;
-					latency = response.getWaitTimeout();
+					long latency = response.getWaitTimeout();
+					if(loglatency) {
+						log.info("{};{};{}",System.currentTimeMillis(),response.toString(),latency);
+					}
 					measurements.measure(response.toString(), latency);
 					measurements.measure("ALL", latency);
 				}

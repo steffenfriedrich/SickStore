@@ -4,6 +4,7 @@ queryHandler:
     class: de.unihamburg.sickstore.backend.QueryHandler
     warmup: 0
     logstaleness: true
+    loglatency: true
     anomalyGenerator:
         class: de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator
         combinedGenerator:
