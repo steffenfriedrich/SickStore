@@ -59,32 +59,26 @@ public class Throughput {
     }
 
     public double getQueueingLatency(long receivedAt) {
+        double latency = 0.0;
         if (maxThroughput > 0) {
-            if (outstanding == 0) {
-                outstanding++;
-                lastOPReceivedAt = receivedAt;
-                return 0.0;
-            } else {
+            if (outstanding > 0) {
                 long idleTime = receivedAt - lastOPReceivedAt;
                 hickupTime += idleTime;
-                if(hickupDeltaAfter > 0 && hickupTime > hickupDeltaAfter) {
+                if (hickupDeltaAfter > 0 && hickupTime > hickupDeltaAfter) {
                     outstanding += maxThroughput * hickupDuration;
-                    if(!periodically) { hickupDeltaAfter = 0; }
+                    hickupDeltaAfter = periodically ? hickupDeltaAfter : 0;
                     hickupTime = 0;
                 }
-                double consumedOPs =  maxThroughput * idleTime;
-                if(consumedOPs > 0.0) {
-                    lastOPReceivedAt = receivedAt;
-                    outstanding = Math.max(0, outstanding - consumedOPs);
-                }
-                double latency = outstanding / maxThroughput;
+                double consumedOPs = maxThroughput * idleTime;
+                outstanding = Math.max(0.0, outstanding - consumedOPs);
+                latency = outstanding / maxThroughput;
 
-                outstanding++;
-                return latency;
+                if(outstanding == 0.0) { System.out.println(outstanding + "   " + maxThroughput + " latency: " + latency);}
             }
-        } else {
-            return 0.0;
+            outstanding++;
+            lastOPReceivedAt = receivedAt;
         }
+        return latency;
     }
 
 
