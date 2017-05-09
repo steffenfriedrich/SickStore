@@ -53,7 +53,7 @@ public class ThroughputTest {
         for (int k = 0; k < 10; k++) {
             int maxThroughput = 1000 + 100 * k;
 
-            Measurements measurements = Measurements.getMeasurements();
+            Measurements measurements = new Measurements(false);
             File file = new File("results/queueing_latency_test/timeseries-queueing_latency-" + maxThroughput + ".dat");
             FileUtils.forceMkdir(file.getParentFile());
 

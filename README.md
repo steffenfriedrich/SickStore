@@ -6,7 +6,7 @@ More information is available at: <http://nosqlmark.informatik.uni-hamburg.de>
 
 ## Download
 
-Download the latest Release [sickstore-1.9.1.tar.gz](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.1.tar.gz), [sickstore-1.9.1.zip](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.zip)  or grab dependency via Maven:
+Download the latest Release [sickstore-1.9.2.tar.gz](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.1.tar.gz), [sickstore-1.9.2.zip](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.zip)  or grab dependency via Maven:
 
 ```xml
 <repository>
@@ -44,7 +44,7 @@ To start the server you have to provide a configuration YAML:
 
     $ sh bin/sickstore config/$CONFIG.yml
 
-or under Windows:
+or under Windows (cmd):
 
     $ bin\sickstore.bat config/$CONFIG.yml
 
