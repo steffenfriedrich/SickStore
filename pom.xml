@@ -4,7 +4,7 @@
 	<groupId>de.unihamburg</groupId>
 	<artifactId>sickstore</artifactId>
 	<packaging>jar</packaging>
-	<version>1.9</version>
+	<version>1.9.1</version>
 	<name>Sickstore</name>
 
 	<properties>
@@ -21,7 +21,7 @@
 		<dependency>
 		<groupId>com.esotericsoftware</groupId>
 		<artifactId>kryo-shaded</artifactId>
-			<version>3.0.3</version>
+			<version>4.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>

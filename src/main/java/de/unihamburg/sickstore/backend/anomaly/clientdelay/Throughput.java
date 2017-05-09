@@ -72,8 +72,6 @@ public class Throughput {
                 double consumedOPs = maxThroughput * idleTime;
                 outstanding = Math.max(0.0, outstanding - consumedOPs);
                 latency = outstanding / maxThroughput;
-
-                if(outstanding == 0.0) { System.out.println(outstanding + "   " + maxThroughput + " latency: " + latency);}
             }
             outstanding++;
             lastOPReceivedAt = receivedAt;

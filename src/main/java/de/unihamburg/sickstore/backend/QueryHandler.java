@@ -2,6 +2,8 @@ package de.unihamburg.sickstore.backend;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import de.unihamburg.sickstore.backend.anomaly.Anomaly;
 import de.unihamburg.sickstore.backend.anomaly.AnomalyGenerator;
@@ -17,14 +19,20 @@ import org.slf4j.LoggerFactory;
 
 public class QueryHandler implements QueryHandlerInterface {
 	private static final Logger log = LoggerFactory.getLogger("sickstore");
-	private Boolean logStaleness = false;
+	private Boolean logstaleness = false;
 	private Boolean loglatency = false;
+	private Boolean printstatus = false;
+	Measurements measurements;
 	private TimeHandler timeHandler = new SystemTimeHandler();
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
 	private AnomalyGenerator anomalyGenerator;
 	private int warmup = 0;
 	private int warmupCounter = 0;
+	private Boolean firstRequest = true;
+	private int requestCounter = 0;
+	private long startTime = 0;
+	private long scheduleTimeNanos = 0;
 
 
 	@SuppressWarnings("unused")
@@ -41,37 +49,40 @@ public class QueryHandler implements QueryHandlerInterface {
 
 		int warmup = (int) config.get("warmup");
 
-
 		Boolean loglatency = (Boolean) config.get("loglatency");
-		Boolean logStaleness = (Boolean) config.get("logstaleness");
+		Boolean logstaleness = (Boolean) config.get("logstaleness");
+		Boolean printstatus = (Boolean) config.get("printstatus");
 
 		// add nodes into parameters, so that anomaly generators are aware of the available nodes
 		anomalyGeneratorConfig.put("nodes", nodes);
 		AnomalyGenerator anomalyGenerator = (AnomalyGenerator) InstanceFactory
 			.newInstanceFromConfig(anomalyGeneratorConfig);
 
-		return new QueryHandler(new Store(), anomalyGenerator, nodes, warmup, logStaleness,loglatency);
+		return new QueryHandler(new Store(), anomalyGenerator, nodes, warmup, logstaleness, loglatency,printstatus);
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
 						Set<Node> nodes,
 						TimeHandler timeHandler,
-						int warmup, Boolean logStaleness,Boolean loglatency) {
-		this(mediator, anomalyGenerator, nodes, warmup, logStaleness, loglatency);
+						int warmup, Boolean logstaleness,Boolean loglatency, Boolean printstatus) {
+		this(mediator, anomalyGenerator, nodes, warmup, logstaleness, loglatency,printstatus);
 		this.timeHandler = timeHandler;
 	}
 
 	public QueryHandler(Store mediator,
 						AnomalyGenerator anomalyGenerator,
-						Set<Node> nodes, int warmup, Boolean logStaleness,Boolean loglatency) {
+						Set<Node> nodes, int warmup, Boolean logstaleness,Boolean loglatency, Boolean printstatus) {
 		this.mediator = mediator;
 		this.anomalyGenerator = anomalyGenerator;
 		this.nodes = nodes;
 		this.warmup = warmup;
 		this.warmupCounter = warmup;
-		if(logStaleness != null) this.logStaleness = logStaleness;
-		if(loglatency != null) this.loglatency = logStaleness;
+		if(logstaleness != null) this.logstaleness = logstaleness;
+		if(loglatency != null) this.loglatency = logstaleness;
+
+		if(printstatus != null) this.printstatus = printstatus;
+		measurements = new Measurements(this.printstatus);
 	}
 
 	public synchronized Set<Node> getNodes() {
@@ -144,7 +155,7 @@ public class QueryHandler implements QueryHandlerInterface {
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		Node node = anomaly.getResponsiveNode();
 
-		Version version = mediator.get(node, key, columns, timestamp, logStaleness);
+		Version version = mediator.get(node, key, columns, timestamp, logstaleness);
 		if (version == null) {
 			throw new NullPointerException("Version must not be null!");
 		}
@@ -208,13 +219,15 @@ public class QueryHandler implements QueryHandlerInterface {
 		Anomaly anomaly = anomalyGenerator.handleRequest(request, getNodes());
 		try {
 			warmupCounter = warmup;
-			Measurements.getMeasurements().finishMeasurement();
+			measurements.finishMeasurement();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		getNodes().forEach(node -> {
 			node.getThroughput().cleanUp();
 		});
+		requestCounter = 0;
+		firstRequest = true;
 
 		ServerResponseCleanup response = new ServerResponseCleanup(clientRequestID);
 		anomalyGenerator.handleResponse(anomaly, request, response, getNodes());
@@ -226,7 +239,14 @@ public class QueryHandler implements QueryHandlerInterface {
 	 */
 	@Override
 	public synchronized ServerResponse processQuery(ClientRequest request) {
-
+		if(firstRequest) {
+			startTime = System.nanoTime();
+			scheduleTimeNanos = startTime;
+			firstRequest = false;
+		}
+		if(this.printstatus) {
+			report();
+		}
 		int id = -1;
 		ServerResponse response = null;
 		try {
@@ -285,20 +305,41 @@ public class QueryHandler implements QueryHandlerInterface {
 						|| request instanceof ClientRequestRead
 						|| request instanceof ClientRequestScan
 						|| request instanceof ClientRequestUpdate) {
-					Measurements measurements = Measurements.getMeasurements();
-					long latency = response.getWaitTimeout();
-					if(loglatency) {
-						log.info("{};{};{}",System.currentTimeMillis(),response.toString(),latency);
+					long waitTimeout = response.getWaitTimeout();
+
+					long sendByClientAt = request.getSendedByClientAt();
+					long receivedAt = request.getReceivedAt();
+					long servicetime =  System.currentTimeMillis() - receivedAt;
+					long networkDelay = receivedAt - sendByClientAt;
+					long estimatedClientLatency = 2 * networkDelay + servicetime;
+					if(waitTimeout > estimatedClientLatency) {
+						estimatedClientLatency = waitTimeout;
 					}
-					measurements.measure(response.toString(), latency);
-					measurements.measure("ALL", latency);
+
+					if(loglatency) {
+						log.info("{};{};{};{}",System.currentTimeMillis(),response.toString(),waitTimeout,estimatedClientLatency);
+					}
+
+					measurements.measure(response.toString(), waitTimeout);
+					measurements.measure("SERVICE_TIME", servicetime);
+					measurements.measure("ESTIMATED_LATENCY", estimatedClientLatency);
 				}
 			}
 		} catch (Exception e) {
 			response = new ServerResponseException(id, e);
 			e.printStackTrace();
 		}
+		requestCounter++;
 		return response;
+	}
+
+	private void report() {
+		long now = System.nanoTime();
+		if(now - scheduleTimeNanos >= 10000000000L) {
+			scheduleTimeNanos = now;
+			Double throughput = 1000000000.0 * requestCounter / (now - startTime);
+			measurements.report(requestCounter, throughput);
+		}
 	}
 
 	public synchronized void setTimeHandler(TimeHandler timeHandler) {
