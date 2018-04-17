@@ -4,7 +4,7 @@
 	<groupId>de.unihamburg</groupId>
 	<artifactId>sickstore</artifactId>
 	<packaging>jar</packaging>
-	<version>1.9.2</version>
+	<version>1.9.3</version>
 	<name>Sickstore</name>
 
 	<properties>
@@ -107,6 +107,48 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<artifactSet>
+					<excludes>
+						<exclude>junit:junit</exclude>
+						<exclude>org.hamcrest:hamcrest-core</exclude>
+						<exclude>com.esotericsoftware:kryo-shaded</exclude>
+						<exclude>com.esotericsoftware:minlog</exclude>
+						<exclude>org.objenesis:objenesis</exclude>
+						<exclude>commons-cli:commons-cli</exclude>
+						<exclude>commons-io:commons-io</exclude>
+						<exclude>com.google.guava:guava</exclude>
+						<exclude>org.slf4j:slf4j-api</exclude>
+						<exclude>ch.qos.logback:logback-classic</exclude>
+						<exclude>ch.qos.logback:logback-core</exclude>
+						<exclude>org.hdrhistogram:HdrHistogram</exclude>
+						<exclude>org.yaml:snakeyaml</exclude>
+						<exclude>com.fasterxml.jackson.core:jackson-databind</exclude>
+						<exclude>com.fasterxml.jackson.core:jackson-core</exclude>
+						<exclude>com.fasterxml.jackson.core:jackson-annotations</exclude>
+						<exclude>org.apache.commons:commons-math3</exclude>
+					</excludes>
+					</artifactSet>
+					<relocations>
+						<relocation>
+							<pattern>io.netty</pattern>
+							<shadedPattern>de.unihamburg.io.netty</shadedPattern>
+						</relocation>
+					</relocations>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.5.5</version>
 				<configuration>
@@ -128,3 +170,4 @@
 		</plugins>
 	</build>
 </project>
+ p
