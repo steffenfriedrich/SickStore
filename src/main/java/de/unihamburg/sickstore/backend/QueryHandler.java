@@ -22,7 +22,7 @@ public class QueryHandler implements QueryHandlerInterface {
 	private Boolean logstaleness = false;
 	private Boolean loglatency = false;
 	private Boolean printstatus = false;
-	Measurements measurements;
+	private static Measurements measurements = null;
 	private TimeHandler timeHandler = new SystemTimeHandler();
 	private Store mediator;
 	protected Set<Node> nodes = new HashSet<>();
@@ -80,9 +80,11 @@ public class QueryHandler implements QueryHandlerInterface {
 		this.warmupCounter = warmup;
 		if(logstaleness != null) this.logstaleness = logstaleness;
 		if(loglatency != null) this.loglatency = logstaleness;
-
 		if(printstatus != null) this.printstatus = printstatus;
-		measurements = new Measurements(this.printstatus);
+
+		if (measurements == null) {
+			measurements = new Measurements(this.printstatus);
+		}
 	}
 
 	public synchronized Set<Node> getNodes() {

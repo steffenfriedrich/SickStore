@@ -105,7 +105,7 @@ public class Connection {
             return closeFuture.get();
         }
         assert isClosed();
-        boolean terminated = tryTerminate(false);
+        boolean terminated = tryTerminate(true);
         return future;
     }
 

@@ -1,5 +1,6 @@
 package de.unihamburg.sickstore.database.client;
 
+import java.io.Closeable;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +81,10 @@ public class ConnectionPool {
     }
 
     public void close() {
-        connections.forEach(connection -> connection.close());
+        connections.forEach(connection -> {
+            CloseFuture cf = connection.close();
+            System.out.println(String.format("Connection established with SickStore %s:%s, initializing transport", connection.getName(), connection.getChannel()));
+        });
     }
 
 }

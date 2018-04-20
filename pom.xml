@@ -4,7 +4,7 @@
 	<groupId>de.unihamburg</groupId>
 	<artifactId>sickstore</artifactId>
 	<packaging>jar</packaging>
-	<version>1.9.3</version>
+	<version>1.9.4</version>
 	<name>Sickstore</name>
 
 	<properties>
@@ -76,7 +76,7 @@
 	</dependencies>
 
 	<build>
-		<sourceDirectory>src/</sourceDirectory>
+		<sourceDirectory>src/main/java</sourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -170,4 +170,3 @@
 		</plugins>
 	</build>
 </project>
- p

@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Steffen Friedrich on 20.10.2015.
@@ -24,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Measurements {
     private ConcurrentHashMap<String, Recorder> _measurements = new ConcurrentHashMap<String, Recorder>();
     private ConcurrentHashMap<String, Histogram> _totalHistograms = new ConcurrentHashMap<String, Histogram>();
+    private static final AtomicInteger CONNECTION_COUNT = new AtomicInteger(0);
     private long timestamp = 0;
     private boolean printstatus = false;
 

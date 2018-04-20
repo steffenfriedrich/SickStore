@@ -27,6 +27,11 @@ public class SickStoreServerHandler extends SimpleChannelInboundHandler<Object> 
         System.out.println("Client connected on port" + ctx.channel().remoteAddress());
     }
 
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        System.out.println("Client disconnected on port" + ctx.channel().remoteAddress());
+    }
+
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -55,4 +60,6 @@ public class SickStoreServerHandler extends SimpleChannelInboundHandler<Object> 
         cause.printStackTrace();
         ctx.close();
     }
+
+
 }
