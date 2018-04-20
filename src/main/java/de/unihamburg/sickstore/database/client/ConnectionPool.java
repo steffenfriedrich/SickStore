@@ -81,10 +81,7 @@ public class ConnectionPool {
     }
 
     public void close() {
-        connections.forEach(connection -> {
-            CloseFuture cf = connection.close();
-            System.out.println(String.format("Connection established with SickStore %s:%s, initializing transport", connection.getName(), connection.getChannel()));
-        });
+        connections.forEach(connection -> connection.close());
     }
 
 }
