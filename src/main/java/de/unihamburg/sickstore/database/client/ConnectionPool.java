@@ -1,5 +1,8 @@
 package de.unihamburg.sickstore.database.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -53,8 +56,6 @@ public class ConnectionPool {
             return true;
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (ConnectException e) {
-            e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
@@ -65,14 +66,19 @@ public class ConnectionPool {
         int minInFlight = Integer.MAX_VALUE;
         Connection leastBusy = null;
         for (Connection connection : connections) {
-            int inFlight = connection.getInFlight().get();
+            int inFlight = connection.inFlight.get();
             if (inFlight < minInFlight) {
                 minInFlight = inFlight;
                 leastBusy = connection;
             }
         }
-        int inFlight = leastBusy.getInFlight().get();
-        leastBusy.getInFlight().compareAndSet(inFlight, inFlight + 1);
+        while (true) {
+            int inFlight = leastBusy.inFlight.get();
+            if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1)) {
+                break;
+            }
+        }
+
         return leastBusy;
     }
 

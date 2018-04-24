@@ -13,6 +13,7 @@ import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ConnectException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,19 +53,20 @@ public class SickStoreClient {
         this.maxConnections = maxConnections;
     }
 
-    synchronized public boolean connect() {
+    synchronized public boolean connect() throws ConnectException {
         this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
         this.blockingExecutor = makeExecutor(6, "blocking-task-worker", blockingExecutorQueue);
 
         this.connectionFactory = new Connection.ConnectionFactory(this);
 
-        try {
-            connectionPool = new ConnectionPool(this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        while(connectionPool.connections.size() < maxConnections) {
+        connectionPool = new ConnectionPool(this);
 
+
+        long startTime = System.currentTimeMillis();
+        while(connectionPool.connections.size() < maxConnections) {
+            if((System.currentTimeMillis()-startTime)>5000) {
+                throw new ConnectException("SickStore connection timeout ...");
+            }
         }
         return true;
     }
@@ -81,12 +83,12 @@ public class SickStoreClient {
         return blockingExecutor;
     }
 
-    public ServerResponse send(ClientRequest request) throws ExecutionException {
+    public ServerResponse send(ClientRequest request) throws ExecutionException, ConnectException {
         return executeAsync(request).getUninterruptibly();
     }
 
 
-    public ServerResponseFuture executeAsync(ClientRequest request) {
+    public ServerResponseFuture executeAsync(ClientRequest request) throws ConnectException {
         ServerResponseFuture future = new ServerResponseFuture(this, request);
         new RequestHandler(this, future, request).send();
         return future;

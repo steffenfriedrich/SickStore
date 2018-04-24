@@ -35,7 +35,7 @@ public class Connection {
     private final Dispatcher dispatcher;
     private final ConnectionPool pool;
 
-    private final AtomicInteger inFlight;
+    public final AtomicInteger inFlight;
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     public Connection(ConnectionPool pool, String name, InetSocketAddress address, ConnectionFactory connectionFactory) {
@@ -151,10 +151,6 @@ public class Connection {
         return name;
     }
 
-    public AtomicInteger getInFlight() {
-        return inFlight;
-    }
-
     public Channel getChannel() {
         return channel;
     }
@@ -186,9 +182,8 @@ public class Connection {
          *
          * @return the newly created (and initialized) connection.
          * @throws InterruptedException
-         * @throws ConnectException
          */
-        Connection open(ConnectionPool pool, String host) throws InterruptedException, ConnectException, ExecutionException {
+        Connection open(ConnectionPool pool, String host) throws InterruptedException, ExecutionException {
             InetSocketAddress address = new InetSocketAddress(host, getPort());
             Connection connection = new Connection(pool, buildConnectionName(address), address, this);
             connection.initAsync().get();
