@@ -46,7 +46,7 @@ public class SickClientTest extends SickstoreTestCase {
         server.start();
 
         c1 = new SickStoreClient(host, tcpPort, "node1", timeHandler);
-        c1.connect();
+        c1.connectPool();
         Thread.sleep(2000);
     }
 

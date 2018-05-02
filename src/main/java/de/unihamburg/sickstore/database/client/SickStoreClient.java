@@ -53,7 +53,21 @@ public class SickStoreClient {
         this.maxConnections = maxConnections;
     }
 
-    synchronized public boolean connect() throws ConnectException {
+    synchronized public boolean connect() {
+        connectionFactory = new Connection.ConnectionFactory(this);
+        Connection connection = null;
+        try {
+            connection = connectionFactory.open(host);
+            return true;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    synchronized public boolean connectPool() throws ConnectException {
         this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
         this.blockingExecutor = makeExecutor(6, "blocking-task-worker", blockingExecutorQueue);
 
@@ -331,33 +345,6 @@ public class SickStoreClient {
                 Thread.currentThread().interrupt();
             }
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.err.println(
-                    "Usage: " + SickStoreClient.class.getSimpleName() +
-                            " <host> <port>");
-            return;
-        }
-
-        final String host = args[0];
-        final int port = Integer.parseInt(args[1]);
-
-        TimeHandler timehandler = new SystemTimeHandler();
-        SickStoreClient client = new SickStoreClient(host, port, "node1", timehandler);
-
-        Thread.sleep(2000);
-
-        Version bob = new Version();
-        bob.put("name", "bob");
-        bob.put("hair", "brown");
-        bob.put("age", 25);
-        System.out.println(client.insert("a", "bob", bob));
-
-        HashSet fields = new HashSet<String>();
-        fields.add("name");
-        System.out.println(client.read("a", "bob", fields));
     }
 }
 

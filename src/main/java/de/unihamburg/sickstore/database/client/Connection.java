@@ -47,6 +47,15 @@ public class Connection {
         this.inFlight = new AtomicInteger(0);
     }
 
+    public Connection(String name, InetSocketAddress address, ConnectionFactory connectionFactory) {
+        this.pool = null;
+        this.name = name;
+        this.address = address;
+        this.connectionFactory = connectionFactory;
+        this.dispatcher = new Dispatcher(this);
+        this.inFlight = new AtomicInteger(0);
+    }
+
     ListenableFuture<Void> initAsync() {
         final SettableFuture<Void> channelReadyFuture = SettableFuture.create();
         try {
@@ -186,6 +195,13 @@ public class Connection {
         Connection open(ConnectionPool pool, String host) throws InterruptedException, ExecutionException {
             InetSocketAddress address = new InetSocketAddress(host, getPort());
             Connection connection = new Connection(pool, buildConnectionName(address), address, this);
+            connection.initAsync().get();
+            return connection;
+        }
+
+        Connection open(String host) throws InterruptedException, ExecutionException {
+            InetSocketAddress address = new InetSocketAddress(host, getPort());
+            Connection connection = new Connection(buildConnectionName(address), address, this);
             connection.initAsync().get();
             return connection;
         }
