@@ -53,21 +53,7 @@ public class SickStoreClient {
         this.maxConnections = maxConnections;
     }
 
-    synchronized public boolean connect() {
-        connectionFactory = new Connection.ConnectionFactory(this);
-        Connection connection = null;
-        try {
-            connection = connectionFactory.open(host);
-            return true;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
-
-    synchronized public boolean connectPool() throws ConnectException {
+    synchronized public boolean connect() throws ConnectException {
         this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
         this.blockingExecutor = makeExecutor(6, "blocking-task-worker", blockingExecutorQueue);
 
