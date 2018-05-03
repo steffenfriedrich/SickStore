@@ -13,11 +13,11 @@ import java.util.concurrent.ExecutionException;
  */
 class ServerResponseFuture   extends AbstractFuture<ServerResponse> implements  RequestHandler.Callback, ListenableFuture<ServerResponse> {
 
-    private final SickStoreClient client;
+    private final Client client;
     private final ClientRequest request;
     private RequestHandler handler;
 
-    ServerResponseFuture(SickStoreClient client, ClientRequest request) {
+    ServerResponseFuture(Client client, ClientRequest request) {
         this.client = client;
         this.request = request;
     }

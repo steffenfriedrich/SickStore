@@ -3,6 +3,7 @@ package de.unihamburg.sickstore.database.client;
 import com.esotericsoftware.kryo.Kryo;
 import com.google.common.util.concurrent.*;
 import com.google.common.util.concurrent.AbstractFuture;
+import com.zaxxer.hikari.pool.ProxyConnection;
 import de.unihamburg.sickstore.kryo.KryoMessageRegistrar;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.kryo.KryoDecoder;
@@ -20,6 +21,7 @@ import io.netty.util.concurrent.*;
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.sql.SQLException;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,28 +29,17 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Created by Steffen Friedrich on 16.08.2016.
  */
-public class Connection {
+public class Connection implements AutoCloseable{
     private final String name;
     private final InetSocketAddress address;
     private final ConnectionFactory connectionFactory;
     private volatile Channel channel;
     private final Dispatcher dispatcher;
-    private final ConnectionPool pool;
 
     public final AtomicInteger inFlight;
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    public Connection(ConnectionPool pool, String name, InetSocketAddress address, ConnectionFactory connectionFactory) {
-        this.pool = pool;
-        this.name = name;
-        this.address = address;
-        this.connectionFactory = connectionFactory;
-        this.dispatcher = new Dispatcher(this);
-        this.inFlight = new AtomicInteger(0);
-    }
-
     public Connection(String name, InetSocketAddress address, ConnectionFactory connectionFactory) {
-        this.pool = null;
         this.name = name;
         this.address = address;
         this.connectionFactory = connectionFactory;
@@ -70,7 +61,7 @@ public class Connection {
                     if (!future.isSuccess()) {
                         System.out.println(String.format("Error connecting to %s%s", Connection.this.address, extractMessage(future.cause())));
                     } else {
-                        channel.closeFuture().addListener(future1 -> Connection.this.close());
+                        channel.closeFuture().addListener(future1 -> Connection.this.closeAsync());
                         channelReadyFuture.set(null);
                     }
                 }
@@ -86,7 +77,7 @@ public class Connection {
             @Override
             public ListenableFuture<Void> create(Throwable t) throws Exception {
                 SettableFuture<Void> f = SettableFuture.create();
-                close().force();
+                closeAsync().force();
                 f.setException(t);
                 return f;
             }
@@ -95,7 +86,7 @@ public class Connection {
             @Override
             public void onFailure(Throwable t) {
                 if (!isClosed()) {
-                    close().force();
+                    closeAsync().force();
                 }
             }
         });
@@ -107,7 +98,14 @@ public class Connection {
         return closeFuture.get() != null;
     }
 
-    CloseFuture close() {
+    /** {@inheritDoc} */
+    @Override
+    public final void close() throws SQLException
+    {
+            closeAsync();
+    }
+
+    public CloseFuture closeAsync() {
         CloseFuture future = new CloseFuture(this);
         if (!closeFuture.compareAndSet(null, future)) {
             // close had already been called, return the existing future
@@ -168,8 +166,8 @@ public class Connection {
         return connectionFactory;
     }
 
-    static class ConnectionFactory {
-        final SickStoreClient client;
+    public static class ConnectionFactory {
+        final Client client;
         final EventLoopGroup eventLoopGroup;
 
         private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -177,7 +175,7 @@ public class Connection {
         private final AtomicInteger idGenerator = new AtomicInteger(1);
         private volatile boolean isShutdown;
 
-        ConnectionFactory(SickStoreClient client) {
+        ConnectionFactory(Client client) {
             this.client = client;
             this.eventLoopGroup = new NioEventLoopGroup(0, threadFactory("nio-worker"));
         }
@@ -192,20 +190,12 @@ public class Connection {
          * @return the newly created (and initialized) connection.
          * @throws InterruptedException
          */
-        Connection open(ConnectionPool pool, String host) throws InterruptedException, ExecutionException {
-            InetSocketAddress address = new InetSocketAddress(host, getPort());
-            Connection connection = new Connection(pool, buildConnectionName(address), address, this);
-            connection.initAsync().get();
-            return connection;
-        }
-
-        Connection open(String host) throws InterruptedException, ExecutionException {
+        public Connection open(String host) throws InterruptedException, ExecutionException {
             InetSocketAddress address = new InetSocketAddress(host, getPort());
             Connection connection = new Connection(buildConnectionName(address), address, this);
             connection.initAsync().get();
             return connection;
         }
-
 
         void shutdown() {
             // Make sure we skip creating connection from now on.

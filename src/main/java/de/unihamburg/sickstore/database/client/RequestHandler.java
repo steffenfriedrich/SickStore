@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
+import java.sql.SQLException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,13 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RequestHandler {
     final String id;
-    private final SickStoreClient client;
+    private final Client client;
     private final Callback callback;
     private final ClientRequest request;
     private final AtomicInteger executionCount = new AtomicInteger();
     private final Set<Execution> runningExecutions = Sets.newCopyOnWriteArraySet();
 
-    public RequestHandler(SickStoreClient client, Callback callback, ClientRequest request) {
+    public RequestHandler(Client client, Callback callback, ClientRequest request) {
         this.id = Long.toString(System.identityHashCode(this));
         this.client = client;
         this.callback = callback;
@@ -27,7 +28,7 @@ public class RequestHandler {
         this.callback.register(this);
     }
 
-    public void send() {
+    public void send() throws SQLException {
         ClientRequest request = callback.request();
         int position = executionCount.incrementAndGet();
         Execution execution = new Execution(request, position);
@@ -54,7 +55,7 @@ public class RequestHandler {
             this.request = request;
         }
 
-        void sendRequest() {
+        void sendRequest() throws SQLException {
             Connection connection = client.getConnection();
             connection.write(this);
         }

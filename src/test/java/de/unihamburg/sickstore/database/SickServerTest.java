@@ -46,9 +46,9 @@ public class SickServerTest extends SickstoreTestCase {
         c1 = new SickStoreClient(host, tcpPort, "node1", timeHandler);
         c2 = new SickStoreClient(host, tcpPort, "node2", timeHandler);
         c3 = new SickStoreClient(host, tcpPort, "node3", timeHandler);
-        c1.connectPool();
-        c2.connectPool();
-        c3.connectPool();
+        c1.connect();
+        c2.connect();
+        c3.connect();
         Thread.sleep(2000);
     }
 

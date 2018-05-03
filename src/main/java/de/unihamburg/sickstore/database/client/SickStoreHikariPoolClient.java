@@ -3,11 +3,13 @@ package de.unihamburg.sickstore.database.client;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.zaxxer.hikari.HikariConfig;
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.ReadPreference;
 import de.unihamburg.sickstore.database.WriteConcern;
+import de.unihamburg.sickstore.database.hikari.HikariPool;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import org.slf4j.Logger;
@@ -15,70 +17,98 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by Steffen Friedrich on 16.08.2016.
  */
-public class SickStoreClient implements Client {
-    private static final Logger logger = LoggerFactory.getLogger(SickStoreClient.class);
+public class SickStoreHikariPoolClient implements Client {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SickStoreHikariPoolClient.class);
 
     private final String host;
     private final int port;
     private final String destinationNode;
-    private final TimeHandler timeHandler;
-    private ConnectionPool connectionPool;
-    private final int maxConnections;
+    private final TimeHandler timeHandler = new SystemTimeHandler();
+    private volatile HikariPool pool;
+    private final AtomicBoolean isShutdown = new AtomicBoolean();
 
     Connection.ConnectionFactory connectionFactory;
-
     ListeningExecutorService blockingExecutor;
     LinkedBlockingQueue<Runnable> blockingExecutorQueue;
 
-    public SickStoreClient(String host, int port, String destinationNode) {
-        this(host, port, destinationNode, new SystemTimeHandler(), 64);
+    public SickStoreHikariPoolClient(String host, int port, String destinationNode) {
+        this(host, port, destinationNode, new HikariConfig());
     }
 
-    public SickStoreClient(String host, int port, String destinationNode, TimeHandler timeHandler) {
-        this(host, port, destinationNode, timeHandler, 64);
-    }
 
-    public SickStoreClient(String host, int port, String destinationNode, TimeHandler timeHandler, int maxConnections) {
+    public SickStoreHikariPoolClient(String host, int port, String destinationNode,
+                                     int maximumPoolSize, int minimumIdle) {
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setMaximumPoolSize(maximumPoolSize);
+        hikariConfig.setMinimumIdle(minimumIdle);
         this.host = host;
         this.port = port;
         this.destinationNode = destinationNode;
-        this.timeHandler = timeHandler;
-        this.maxConnections = maxConnections;
+        this.pool = new HikariPool(this, hikariConfig);
+        this.connectionFactory = new Connection.ConnectionFactory(this);
     }
 
-    synchronized public boolean connect() throws ConnectException {
-        this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
-        this.blockingExecutor = makeExecutor(6, "blocking-task-worker", blockingExecutorQueue);
-
+    public SickStoreHikariPoolClient(String host, int port, String destinationNode, HikariConfig hikariConfig) {
+        this.host = host;
+        this.port = port;
+        this.destinationNode = destinationNode;
+        this.pool = new HikariPool(this, hikariConfig);
         this.connectionFactory = new Connection.ConnectionFactory(this);
+    }
 
-        connectionPool = new ConnectionPool(this);
 
-
-        long startTime = System.currentTimeMillis();
-        while(connectionPool.connections.size() < maxConnections) {
-            if((System.currentTimeMillis()-startTime)>5000) {
-                throw new ConnectException("SickStore connection timeout ...");
+    public Connection getConnection() throws SQLException {
+        HikariPool result = pool;
+        if (result == null) {
+            synchronized (this) {
+                result = pool;
+                if (result == null) {
+                    LOGGER.info("{} - Starting...", pool.getPoolName());
+                    try {
+                        pool = result = new HikariPool(this, new HikariConfig());
+                    }
+                    catch (HikariPool.PoolInitializationException pie) {
+                        if (pie.getCause() instanceof SQLException) {
+                            throw (SQLException) pie.getCause();
+                        }
+                        else {
+                            throw pie;
+                        }
+                    }
+                    LOGGER.info("{} - Start completed.", pool.getPoolName());
+                }
             }
         }
-        return true;
+        return result.getConnection();
     }
 
     synchronized public void disconnect() {
-        this.connectionPool.close();
+        if (isShutdown.getAndSet(true)) {
+            return;
+        }
+
+       HikariPool p = pool;
+        if (p != null) {
+            try {
+                LOGGER.info("{} - Shutdown initiated...", pool.getPoolName());
+                p.shutdown();
+                LOGGER.info("{} - Shutdown completed.", pool.getPoolName());
+            }
+            catch (InterruptedException e) {
+                LOGGER.warn("{} - Interrupted during closing", pool.getPoolName(), e);
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
-    public Connection getConnection() throws SQLException {
-        return connectionPool.borrowConnection();
-    }
 
     ListeningExecutorService blockingExecutor() {
         return blockingExecutor;
@@ -126,15 +156,6 @@ public class SickStoreClient implements Client {
     public TimeHandler getTimeHandler() {
         return timeHandler;
     }
-
-    public int getMaxConnections() {
-        return maxConnections;
-    }
-
-    public Connection.ConnectionFactory getConnectionFactory() {
-        return connectionFactory;
-    }
-
 
     /**
      * Inserts field/value pairs into the database
@@ -319,6 +340,9 @@ public class SickStoreClient implements Client {
         }
     }
 
+    public Connection.ConnectionFactory getConnectionFactory() {
+        return connectionFactory;
+    }
 
     public void waitForServerHickup(ServerResponse response) {
         long sentByClientAt = response.getSentByClientAt();

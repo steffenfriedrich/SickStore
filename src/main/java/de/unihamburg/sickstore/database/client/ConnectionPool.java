@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.net.ConnectException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -51,7 +52,7 @@ public class ConnectionPool {
         }
         Connection newConnection = null;
         try {
-            newConnection = client.getConnectionFactory().open(this, client.getHost());
+            newConnection = client.getConnectionFactory().open(client.getHost());
             connections.add(newConnection);
             return true;
         } catch (InterruptedException e) {
@@ -62,7 +63,7 @@ public class ConnectionPool {
         return false;
     }
 
-    public Connection borrowConnection()  {
+    public Connection borrowConnection() throws SQLException {
         int minInFlight = Integer.MAX_VALUE;
         Connection leastBusy = null;
         for (Connection connection : connections) {
@@ -83,11 +84,11 @@ public class ConnectionPool {
     }
 
     private void close(final Connection connection) {
-        connection.close();
+        connection.closeAsync();
     }
 
     public void close() {
-        connections.forEach(connection -> connection.close());
+        connections.forEach(connection -> connection.closeAsync());
     }
 
 }
