@@ -3,9 +3,11 @@ package de.unihamburg.sickstore.database.client;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import de.unihamburg.sickstore.database.hikari.HikariPool;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
+import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -32,8 +34,13 @@ class ServerResponseFuture   extends AbstractFuture<ServerResponse> implements  
         onSet(connection, response, null);
     }
 
-    public ServerResponse getUninterruptibly() throws ExecutionException {
-        return Uninterruptibles.getUninterruptibly(this);
+    public ServerResponse getUninterruptibly() throws SQLException {
+        try {
+            return Uninterruptibles.getUninterruptibly(this);
+        } catch  (ExecutionException e) {
+            throw new SQLException("SickStore response error",e);
+
+        }
     }
 
     public void register(RequestHandler handler) {
