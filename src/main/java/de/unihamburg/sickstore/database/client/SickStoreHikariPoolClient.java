@@ -3,21 +3,22 @@ package de.unihamburg.sickstore.database.client;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.zaxxer.hikari.HikariConfig;
 import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
 import de.unihamburg.sickstore.database.ReadPreference;
 import de.unihamburg.sickstore.database.WriteConcern;
+import de.unihamburg.sickstore.database.hikari.HikariConfig;
 import de.unihamburg.sickstore.database.hikari.HikariPool;
 import de.unihamburg.sickstore.database.messages.*;
 import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.applet.Main;
 
-import java.net.ConnectException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,6 +37,7 @@ public class SickStoreHikariPoolClient implements Client {
     private final AtomicBoolean isShutdown = new AtomicBoolean();
 
     Connection.ConnectionFactory connectionFactory;
+
     ListeningExecutorService blockingExecutor;
     LinkedBlockingQueue<Runnable> blockingExecutorQueue;
 
@@ -49,19 +51,21 @@ public class SickStoreHikariPoolClient implements Client {
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setMaximumPoolSize(maximumPoolSize);
         hikariConfig.setMinimumIdle(minimumIdle);
+        hikariConfig.validate();
         this.host = host;
         this.port = port;
         this.destinationNode = destinationNode;
+        connectionFactory = new Connection.ConnectionFactory(this);
         this.pool = new HikariPool(this, hikariConfig);
-        this.connectionFactory = new Connection.ConnectionFactory(this);
     }
 
     public SickStoreHikariPoolClient(String host, int port, String destinationNode, HikariConfig hikariConfig) {
+        hikariConfig.validate();
         this.host = host;
         this.port = port;
         this.destinationNode = destinationNode;
+        connectionFactory = new Connection.ConnectionFactory(this);
         this.pool = new HikariPool(this, hikariConfig);
-        this.connectionFactory = new Connection.ConnectionFactory(this);
     }
 
 
@@ -356,6 +360,24 @@ public class SickStoreHikariPoolClient implements Client {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        String url =  "localhost";
+        int port = 54000;
+
+        int maxconnections = 8;
+        int minimumidle = 2;
+
+        // configure write concern
+        WriteConcern writeConcern = new WriteConcern();
+        writeConcern.setReplicaAcknowledgement(1);
+        writeConcern.setJournaling(false);
+        String destinationNode = "primary";
+        ReadPreference readPreference = new ReadPreference(ReadPreference.PRIMARY);
+
+        Client client = new SickStoreHikariPoolClient(url, port, destinationNode, maxconnections, minimumidle);
     }
 }
 

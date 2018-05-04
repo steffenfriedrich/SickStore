@@ -1,6 +1,5 @@
 package de.unihamburg.sickstore.database.hikari;
 
-import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.metrics.IMetricsTracker;
 import de.unihamburg.sickstore.database.client.Connection;
 import de.unihamburg.sickstore.database.client.SickStoreHikariPoolClient;

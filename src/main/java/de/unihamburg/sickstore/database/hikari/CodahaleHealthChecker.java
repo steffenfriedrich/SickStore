@@ -22,7 +22,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import com.zaxxer.hikari.HikariConfig;
 import de.unihamburg.sickstore.database.client.Connection;
 
 import java.sql.SQLException;
