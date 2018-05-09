@@ -8,7 +8,7 @@ import java.util.List;
 import de.unihamburg.sickstore.backend.timer.FakeTimeHandler;
 
 import de.unihamburg.sickstore.SickstoreTestCase;
-import de.unihamburg.sickstore.database.client.SickStoreClient;
+import de.unihamburg.sickstore.database.client.SickStoreConnectionPool;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,9 +24,9 @@ import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
  */
 public class SickServerTest extends SickstoreTestCase {
 
-    private SickStoreClient c1;
-    private SickStoreClient c2;
-    private SickStoreClient c3;
+    private SickStoreConnectionPool c1;
+    private SickStoreConnectionPool c2;
+    private SickStoreConnectionPool c3;
     private SickStoreServer server;
 
     /**
@@ -43,12 +43,9 @@ public class SickServerTest extends SickstoreTestCase {
         server.start();
 
         // Connect clients
-        c1 = new SickStoreClient(host, tcpPort, "node1", timeHandler);
-        c2 = new SickStoreClient(host, tcpPort, "node2", timeHandler);
-        c3 = new SickStoreClient(host, tcpPort, "node3", timeHandler);
-        c1.connect();
-        c2.connect();
-        c3.connect();
+        c1 = new SickStoreConnectionPool(host, tcpPort, "node1", timeHandler);
+        c2 = new SickStoreConnectionPool(host, tcpPort, "node2", timeHandler);
+        c3 = new SickStoreConnectionPool(host, tcpPort, "node3", timeHandler);
         Thread.sleep(2000);
     }
 
@@ -63,7 +60,7 @@ public class SickServerTest extends SickstoreTestCase {
         server.shutdown();
     }
 
-    private void checkClientStainless(Version insert, SickStoreClient writer,
+    private void checkClientStainless(Version insert, SickStoreConnectionPool writer,
             String key) throws Exception {
         Version copyC1 = null;
         Version copyC2 = null;

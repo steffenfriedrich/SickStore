@@ -7,9 +7,9 @@ import io.netty.channel.ChannelFutureListener;
 
 
 public class CloseFuture extends AbstractFuture<Void> {
-    private final Connection connection;
+    private final SickConnection connection;
 
-    CloseFuture(Connection connection) {
+    CloseFuture(SickConnection connection) {
         this.connection = connection;
     }
 
@@ -23,7 +23,7 @@ public class CloseFuture extends AbstractFuture<Void> {
         }
 
         Channel channel = connection.getChannel();
-        Connection.ConnectionFactory connectionFactory = connection.getConnectionFactory();
+        SickConnection.ConnectionFactory connectionFactory = connection.getConnectionFactory();
 
         ChannelFuture future = channel.close();
         future.addListener(new ChannelFutureListener() {

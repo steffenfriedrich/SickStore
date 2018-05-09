@@ -16,20 +16,21 @@ import java.util.concurrent.ExecutionException;
 
 
 abstract public class SickClient implements Client {
-    private static final Logger logger = LoggerFactory.getLogger(SickStoreClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(SickStoreConnectionPool.class);
 
     private final String host;
     private final int port;
     private final String destinationNode;
     private final TimeHandler timeHandler;
 
-    Connection.ConnectionFactory connectionFactory;
+    SickConnection.ConnectionFactory connectionFactory;
 
     public SickClient(String host, int port, String destinationNode, TimeHandler timeHandler) {
         this.host = host;
         this.port = port;
         this.destinationNode = destinationNode;
         this.timeHandler = timeHandler;
+        this.connectionFactory = new SickConnection.ConnectionFactory(this);
     }
 
     abstract public Connection getConnection() throws SQLException;
@@ -52,10 +53,11 @@ abstract public class SickClient implements Client {
         return timeHandler;
     }
 
-    public Connection.ConnectionFactory getConnectionFactory() {
+    public SickConnection.ConnectionFactory getConnectionFactory() {
         return connectionFactory;
     }
 
+    abstract public void disconnect();
 
     /**
      * Inserts field/value pairs into the database

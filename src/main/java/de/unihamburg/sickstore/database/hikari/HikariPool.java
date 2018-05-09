@@ -11,6 +11,7 @@ import com.zaxxer.hikari.util.ConcurrentBag;
 import com.zaxxer.hikari.util.ConcurrentBag.IBagStateListener;
 import com.zaxxer.hikari.util.SuspendResumeLock;
 import de.unihamburg.sickstore.database.client.Connection;
+import de.unihamburg.sickstore.database.client.SickConnection;
 import com.codahale.metrics.health.HealthCheckRegistry;
 
 import java.sql.SQLException;
@@ -31,7 +32,7 @@ import static java.util.Collections.unmodifiableCollection;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import de.unihamburg.sickstore.database.client.SickStoreHikariPoolClient;
+import de.unihamburg.sickstore.database.client.SickStoreHikariPool;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ public class HikariPool extends PoolBase implements HikariPoolMXBean, IBagStateL
     private final ScheduledExecutorService houseKeepingExecutorService;
     private ScheduledFuture<?> houseKeeperTask;
 
-    public HikariPool(SickStoreHikariPoolClient client, final HikariConfig config) {
+    public HikariPool(SickStoreHikariPool client, final HikariConfig config) {
         super(client, config);
         this.connectionBag = new ConcurrentBag<>(this);
         this.suspendResumeLock = config.isAllowPoolSuspension() ? new SuspendResumeLock() : SuspendResumeLock.FAUX_LOCK;
@@ -138,7 +139,7 @@ public class HikariPool extends PoolBase implements HikariPoolMXBean, IBagStateL
                 }
                 else {
                     metricsTracker.recordBorrowStats(poolEntry, startTime);
-                    return poolEntry.connection;
+                    return poolEntry.createProxyConnection(leakTaskFactory.schedule(poolEntry), now);
                 }
             } while (timeout > 0L);
 
@@ -328,7 +329,7 @@ public class HikariPool extends PoolBase implements HikariPoolMXBean, IBagStateL
     void closeConnection(final PoolEntry poolEntry, final String closureReason)
     {
         if (connectionBag.remove(poolEntry)) {
-            final Connection connection = poolEntry.close();
+            final SickConnection connection = poolEntry.close();
             closeConnectionExecutor.execute(() -> {
                 quietlyCloseConnection(connection, closureReason);
                 if (poolState == POOL_NORMAL) {
@@ -351,6 +352,8 @@ public class HikariPool extends PoolBase implements HikariPoolMXBean, IBagStateL
     }
 
     public void recycle(PoolEntry poolEntry) {
+        metricsTracker.recordConnectionUsage(poolEntry);
+        connectionBag.requite(poolEntry);
     }
 
     /** {@inheritDoc} */

@@ -3,7 +3,6 @@ package de.unihamburg.sickstore.database.client;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-import de.unihamburg.sickstore.database.hikari.HikariPool;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
 
@@ -25,12 +24,12 @@ class ServerResponseFuture   extends AbstractFuture<ServerResponse> implements  
     }
 
     @Override
-    public void onSet(Connection connection, ServerResponse response, ClientRequest request) {
+    public void onSet(SickConnection connection, ServerResponse response, ClientRequest request) {
         set(response);
     }
 
     @Override
-    public void onSet(Connection connection, ServerResponse response) {
+    public void onSet(SickConnection connection, ServerResponse response) {
         onSet(connection, response, null);
     }
 

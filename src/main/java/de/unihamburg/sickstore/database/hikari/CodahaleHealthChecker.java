@@ -23,6 +23,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import de.unihamburg.sickstore.database.client.Connection;
+import de.unihamburg.sickstore.database.client.SickConnection;
 
 import java.sql.SQLException;
 import java.util.Properties;

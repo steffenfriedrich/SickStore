@@ -3,53 +3,46 @@ package de.unihamburg.sickstore.database.client;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.backend.timer.TimeHandler;
-import de.unihamburg.sickstore.database.ReadPreference;
-import de.unihamburg.sickstore.database.WriteConcern;
 import de.unihamburg.sickstore.database.messages.*;
-import de.unihamburg.sickstore.database.messages.exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.*;
 
 /**
  * Created by Steffen Friedrich on 16.08.2016.
  */
-public class SickStoreClient extends SickClient implements Client {
-    private static final Logger logger = LoggerFactory.getLogger(SickStoreClient.class);
+public class SickStoreConnectionPool extends SickClient implements Client {
+    private static final Logger logger = LoggerFactory.getLogger(SickStoreConnectionPool.class);
 
     private ConnectionPool connectionPool;
     private final int maxConnections;
 
-    Connection.ConnectionFactory connectionFactory;
+    SickConnection.ConnectionFactory connectionFactory;
 
     ListeningExecutorService blockingExecutor;
     LinkedBlockingQueue<Runnable> blockingExecutorQueue;
 
-    public SickStoreClient(String host, int port, String destinationNode) throws  ConnectException {
+    public SickStoreConnectionPool(String host, int port, String destinationNode) throws  ConnectException {
         this(host, port, destinationNode, new SystemTimeHandler(), 84);
     }
 
-    public SickStoreClient(String host, int port, String destinationNode, TimeHandler timeHandler) throws  ConnectException {
+    public SickStoreConnectionPool(String host, int port, String destinationNode, TimeHandler timeHandler) throws  ConnectException {
         this(host, port, destinationNode, timeHandler, 84);
     }
 
-    public SickStoreClient(String host, int port, String destinationNode, TimeHandler timeHandler, int maxConnections) throws  ConnectException {
+    public SickStoreConnectionPool(String host, int port, String destinationNode, TimeHandler timeHandler, int maxConnections) throws  ConnectException {
         super(host, port, destinationNode, new SystemTimeHandler());
         this.maxConnections = maxConnections;
 
         this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
         this.blockingExecutor = makeExecutor(6, "blocking-task-worker", blockingExecutorQueue);
 
-        this.connectionFactory = new Connection.ConnectionFactory(this);
+        this.connectionFactory = new SickConnection.ConnectionFactory(this);
 
         connectionPool = new ConnectionPool(this);
 
@@ -67,7 +60,7 @@ public class SickStoreClient extends SickClient implements Client {
         this.connectionPool.close();
     }
 
-    public Connection getConnection() throws SQLException {
+    public SickConnection getConnection() throws SQLException {
         return connectionPool.borrowConnection();
     }
 

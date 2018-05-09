@@ -1,6 +1,6 @@
 package de.unihamburg.sickstore.database.client;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
+import de.unihamburg.sickstore.backend.Version;
 import de.unihamburg.sickstore.backend.timer.SystemTimeHandler;
 import de.unihamburg.sickstore.database.ReadPreference;
 import de.unihamburg.sickstore.database.WriteConcern;
@@ -11,43 +11,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.zaxxer.hikari.util.UtilityElf.quietlySleep;
 
 /**
  * Created by Steffen Friedrich on 16.08.2016.
  */
-public class SickStoreHikariPoolClient extends SickClient {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SickStoreHikariPoolClient.class);
+public class SickStoreHikariPool extends SickClient {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SickStoreHikariPool.class);
 
     private volatile HikariPool pool;
     private final AtomicBoolean isShutdown = new AtomicBoolean();
 
-    Connection.ConnectionFactory connectionFactory;
+    SickConnection.ConnectionFactory connectionFactory;
 
-    ListeningExecutorService blockingExecutor;
-    LinkedBlockingQueue<Runnable> blockingExecutorQueue;
-
-    public SickStoreHikariPoolClient(String host, int port, String destinationNode) {
-        this(host, port, destinationNode, new HikariConfig());
-    }
-
-
-    public SickStoreHikariPoolClient(String host, int port, String destinationNode,
-                                     int maximumPoolSize, int minimumIdle) {
+    public SickStoreHikariPool(String host, int port, String destinationNode,
+                               int maximumPoolSize, int minimumIdle) {
         super(host, port, destinationNode, new SystemTimeHandler());
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setMaximumPoolSize(maximumPoolSize);
         hikariConfig.setMinimumIdle(minimumIdle);
+        hikariConfig.setInitializationFailTimeout(100L);
+        hikariConfig.setIdleTimeout(30000);
+        hikariConfig.setLeakDetectionThreshold(60 * 1000);
         hikariConfig.validate();
-        connectionFactory = new Connection.ConnectionFactory(this);
+        connectionFactory = new SickConnection.ConnectionFactory(this);
         this.pool = new HikariPool(this, hikariConfig);
     }
 
-    public SickStoreHikariPoolClient(String host, int port, String destinationNode, HikariConfig hikariConfig) {
+    public SickStoreHikariPool(String host, int port, String destinationNode, HikariConfig hikariConfig) {
         super(host, port, destinationNode, new SystemTimeHandler());
         hikariConfig.validate();
-        connectionFactory = new Connection.ConnectionFactory(this);
+        this.connectionFactory = new SickConnection.ConnectionFactory(this);
         this.pool = new HikariPool(this, hikariConfig);
     }
 
@@ -96,11 +92,6 @@ public class SickStoreHikariPoolClient extends SickClient {
         }
     }
 
-
-    ListeningExecutorService blockingExecutor() {
-        return blockingExecutor;
-    }
-
     public ServerResponse send(ClientRequest request) throws SQLException {
         return executeAsync(request).getUninterruptibly();
     }
@@ -127,7 +118,22 @@ public class SickStoreHikariPoolClient extends SickClient {
         String destinationNode = "primary";
         ReadPreference readPreference = new ReadPreference(ReadPreference.PRIMARY);
 
-        Client client = new SickStoreHikariPoolClient(url, port, destinationNode, maxconnections, minimumidle);
+        SickStoreHikariPool client = new SickStoreHikariPool(url, port, destinationNode, maxconnections, minimumidle);
+
+
+        for (int i = 0; i < 10000; i++) {
+            try {
+                Version version = new Version();
+                version.put("id", String.valueOf(i));
+                client.insert("user", String.valueOf(i), version, writeConcern);
+                quietlySleep(2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        client.disconnect();
+
+        System.exit(0);
     }
 }
 

@@ -14,20 +14,20 @@ class Dispatcher extends SimpleChannelInboundHandler<Object> {
 
     final IDGenerator idGenerator;
 
-    private final ConcurrentMap<Integer, Connection.ResponseHandler> pending = new ConcurrentHashMap<Integer, Connection.ResponseHandler>();
-    private final Connection connection;
+    private final ConcurrentMap<Integer, SickConnection.ResponseHandler> pending = new ConcurrentHashMap<Integer, SickConnection.ResponseHandler>();
+    private final SickConnection connection;
 
-    Dispatcher(Connection connection) {
+    Dispatcher(SickConnection connection) {
         idGenerator = IDGenerator.newInstance();
         this.connection = connection;
     }
 
-    void add(Connection.ResponseHandler handler) {
-        Connection.ResponseHandler old = pending.put(handler.streamId, handler);
+    void add(SickConnection.ResponseHandler handler) {
+        SickConnection.ResponseHandler old = pending.put(handler.streamId, handler);
         assert old == null;
     }
 
-    void removeHandler(Connection.ResponseHandler handler, boolean releaseStreamId) {
+    void removeHandler(SickConnection.ResponseHandler handler, boolean releaseStreamId) {
         if (!releaseStreamId) {
             idGenerator.mark(handler.streamId);
         }
@@ -44,7 +44,7 @@ class Dispatcher extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    public ConcurrentMap<Integer, Connection.ResponseHandler> getPending() {
+    public ConcurrentMap<Integer, SickConnection.ResponseHandler> getPending() {
         return pending;
     }
     @Override
@@ -52,7 +52,7 @@ class Dispatcher extends SimpleChannelInboundHandler<Object> {
         if (object instanceof ServerResponse) {
             ServerResponse response = (ServerResponse) object;
             int streamId = response.getStreamId();
-            Connection.ResponseHandler handler = pending.remove(streamId);
+            SickConnection.ResponseHandler handler = pending.remove(streamId);
             idGenerator.release(streamId);
             handler.callback.onSet(connection, response);
 

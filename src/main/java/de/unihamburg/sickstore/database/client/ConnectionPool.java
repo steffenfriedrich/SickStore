@@ -1,17 +1,10 @@
 package de.unihamburg.sickstore.database.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.Closeable;
-import java.net.ConnectException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by Steffen Friedrich on 17.08.2016.
@@ -19,16 +12,16 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ConnectionPool {
     private final Runnable newConnectionTask;
 
-    private final SickStoreClient client;
+    private final SickStoreConnectionPool client;
     private final int maxConnections;
-    final List<Connection> connections;
+    final List<SickConnection> connections;
     private final AtomicInteger open;
 
-    public ConnectionPool(SickStoreClient client) {
+    public ConnectionPool(SickStoreConnectionPool client) {
         this.client = client;
         this.open = new AtomicInteger();
         this.maxConnections = client.getMaxConnections();
-        this.connections = new CopyOnWriteArrayList<Connection>();
+        this.connections = new CopyOnWriteArrayList<SickConnection>();
         this.newConnectionTask = new Runnable() {
             @Override
             public void run() {
@@ -50,7 +43,7 @@ public class ConnectionPool {
             if (open.compareAndSet(opened, opened + 1))
                 break;
         }
-        Connection newConnection = null;
+        SickConnection newConnection = null;
         try {
             newConnection = client.getConnectionFactory().open(client.getHost());
             connections.add(newConnection);
@@ -63,10 +56,10 @@ public class ConnectionPool {
         return false;
     }
 
-    public Connection borrowConnection() throws SQLException {
+    public SickConnection borrowConnection() throws SQLException {
         int minInFlight = Integer.MAX_VALUE;
-        Connection leastBusy = null;
-        for (Connection connection : connections) {
+        SickConnection leastBusy = null;
+        for (SickConnection connection : connections) {
             int inFlight = connection.inFlight.get();
             if (inFlight < minInFlight) {
                 minInFlight = inFlight;
@@ -83,7 +76,7 @@ public class ConnectionPool {
         return leastBusy;
     }
 
-    private void close(final Connection connection) {
+    private void close(final SickConnection connection) {
         connection.closeAsync();
     }
 

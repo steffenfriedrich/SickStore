@@ -1,8 +1,10 @@
 package de.unihamburg.sickstore.database.client;
 
 import com.google.common.collect.Sets;
+import de.unihamburg.sickstore.database.hikari.ProxyConnection;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import de.unihamburg.sickstore.database.messages.ServerResponse;
+import org.hamcrest.core.IsInstanceOf;
 
 import java.sql.SQLException;
 import java.util.Set;
@@ -36,17 +38,17 @@ public class RequestHandler {
         execution.sendRequest();
     }
 
-    private void setFinalResult(Execution execution, Connection connection, ServerResponse response) {
+    private void setFinalResult(Execution execution, SickConnection connection, ServerResponse response) {
         callback.onSet(connection, response, request);
     }
 
-    interface Callback extends Connection.ResponseCallback {
-        void onSet(Connection connection, ServerResponse response, ClientRequest request);
+    interface Callback extends SickConnection.ResponseCallback {
+        void onSet(SickConnection connection, ServerResponse response, ClientRequest request);
 
         void register(RequestHandler handler);
     }
 
-    class Execution implements Connection.ResponseCallback {
+    class Execution implements SickConnection.ResponseCallback {
         final String id;
         private final ClientRequest request;
 
@@ -58,6 +60,10 @@ public class RequestHandler {
         void sendRequest() throws SQLException {
             Connection connection = client.getConnection();
             connection.write(this);
+            if(connection instanceof ProxyConnection)
+            {
+                ((ProxyConnection) connection).close();
+            }
         }
 
         @Override
@@ -66,7 +72,7 @@ public class RequestHandler {
         }
 
         @Override
-        public void onSet(Connection connection, ServerResponse response) {
+        public void onSet(SickConnection connection, ServerResponse response) {
             connection.release();
             RequestHandler.this.setFinalResult(this, connection, response);
         }

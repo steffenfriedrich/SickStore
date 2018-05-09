@@ -17,11 +17,12 @@ package de.unihamburg.sickstore.database.hikari;
 
 import com.zaxxer.hikari.util.ConcurrentBag.IConcurrentBagEntry;
 import com.zaxxer.hikari.util.FastList;
-import de.unihamburg.sickstore.database.client.Connection;
+import de.unihamburg.sickstore.database.client.SickConnection;
 import de.unihamburg.sickstore.database.messages.ClientRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
@@ -31,7 +32,7 @@ import static com.zaxxer.hikari.util.ClockSource.elapsedMillis;
 
 
 /**
- * Reimplemtation of HikariCP's {@link com.zaxxer.hikari.pool.PoolEntry}  for the use with SickStore
+ * Reimplemtation of HikariCP's {@link PoolEntry}  for the use with SickStore
  * @author Steffen Friedrich
  */
 final class PoolEntry implements IConcurrentBagEntry
@@ -39,7 +40,7 @@ final class PoolEntry implements IConcurrentBagEntry
    private static final Logger LOGGER = LoggerFactory.getLogger(PoolEntry.class);
    private static final AtomicIntegerFieldUpdater<PoolEntry> stateUpdater;
 
-   Connection connection;
+   SickConnection connection;
    long lastAccessed;
    long lastBorrowed;
 
@@ -57,7 +58,7 @@ final class PoolEntry implements IConcurrentBagEntry
       stateUpdater = AtomicIntegerFieldUpdater.newUpdater(PoolEntry.class, "state");
    }
 
-   PoolEntry(final Connection connection, final PoolBase pool) {
+   PoolEntry(final SickConnection connection, final PoolBase pool) {
       this.connection = connection;
       this.hikariPool = (HikariPool) pool;
       this.lastAccessed = currentTime();
@@ -77,6 +78,11 @@ final class PoolEntry implements IConcurrentBagEntry
       }
    }
 
+   void resetConnectionState(final ProxyConnection proxyConnection, final int dirtyBits) throws SQLException
+   {
+      hikariPool.resetConnectionState(connection, proxyConnection, dirtyBits);
+   }
+
    /**
     * Set the end of life {@link ScheduledFuture}.
     *
@@ -87,6 +93,10 @@ final class PoolEntry implements IConcurrentBagEntry
       this.endOfLife = endOfLife;
    }
 
+   ProxyConnection createProxyConnection(final ProxyLeakTask leakTask, final long now)
+   {
+      return ProxyFactory.getProxyConnection(this, connection, openStatements, leakTask, now, false, false);
+   }
 
    String getPoolName()
    {
@@ -149,14 +159,14 @@ final class PoolEntry implements IConcurrentBagEntry
       stateUpdater.set(this, update);
    }
 
-   Connection close()
+   SickConnection close()
    {
       ScheduledFuture<?> eol = endOfLife;
       if (eol != null && !eol.isDone() && !eol.cancel(false)) {
          LOGGER.warn("{} - maxLifeTime expiration task cancellation unexpectedly returned false for connection {}", getPoolName(), connection);
       }
 
-      Connection con = connection;
+      SickConnection con = connection;
       connection = null;
       endOfLife = null;
       return con;
