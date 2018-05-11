@@ -6,7 +6,7 @@ More information is available at: <http://nosqlmark.informatik.uni-hamburg.de>
 
 ## Download
 
-Download the latest Release [sickstore-1.9.6.tar.gz](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.6.tar.gz), [sickstore-1.9.6.zip](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.6.zip)  or grab dependency via Maven:
+Download the latest Release [sickstore-1.9.9.tar.gz](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.9.tar.gz), [sickstore-1.9.9.zip](http://nosqlmark.informatik.uni-hamburg.de/sickstore-1.9.9.zip)  or grab dependency via Maven:
 
 ```xml
 <repository>
@@ -20,7 +20,7 @@ Download the latest Release [sickstore-1.9.6.tar.gz](http://nosqlmark.informatik
 <dependency>
     <groupId>de.uni-hamburg.informatik.nosqlmark</groupId>
     <artifactId>sickstore</artifactId>
-    <version>1.9.6</version>
+    <version>1.9.9</version>
 </dependency>
 ```
 
