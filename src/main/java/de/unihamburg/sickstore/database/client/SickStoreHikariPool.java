@@ -32,9 +32,10 @@ public class SickStoreHikariPool extends SickClient {
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setMaximumPoolSize(maximumPoolSize);
         hikariConfig.setMinimumIdle(minimumIdle);
-        hikariConfig.setInitializationFailTimeout(100L);
-        hikariConfig.setIdleTimeout(30000);
-        hikariConfig.setLeakDetectionThreshold(60 * 1000);
+        //hikariConfig.setConnectionTimeout(8000);
+        //hikariConfig.setInitializationFailTimeout(100L);
+        //hikariConfig.setIdleTimeout(30000);
+        //hikariConfig.setLeakDetectionThreshold(60 * 1000);
         hikariConfig.validate();
         connectionFactory = new SickConnection.ConnectionFactory(this);
         this.pool = new HikariPool(this, hikariConfig);

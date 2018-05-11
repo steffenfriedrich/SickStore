@@ -4,8 +4,8 @@ queryHandler:
     class: de.unihamburg.sickstore.backend.QueryHandler
     warmup: 0
     logstaleness: false
-    loglatency: true
-    printstatus: true
+    loglatency: false
+    printstatus: false
     anomalyGenerator:
         class: de.unihamburg.sickstore.backend.anomaly.BasicAnomalyGenerator
         combinedGenerator:
@@ -29,7 +29,7 @@ queryHandler:
             primary: true
             clientLatency: 0
             throughput:
-                max: 10000.0
+                max: 100000.0
                 hickupAfter: 0
                 hickupDuration: 0
             tags:
@@ -40,7 +40,7 @@ queryHandler:
             name: secondary1
             clientLatency: 0
             throughput:
-                max: 10000.0
+                max: 100000.0
                 hickupAfter: 0
                 hickupDuration: 0
             tags:
@@ -50,7 +50,7 @@ queryHandler:
             name: secondary2
             clientLatency: 0
             throughput:
-                max: 10000.0
+                max: 100000.0
                 hickupAfter: 0
                 hickupDuration: 0
             tags:
